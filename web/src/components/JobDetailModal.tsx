@@ -193,7 +193,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
             href={safeApplyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-hover text-[#FFF0DC] font-semibold text-xs shadow-md shadow-brand-primary/25 hover:shadow-lg transition-all duration-200"
           >
             <span>Apply Directly</span>
             <ExternalLink className="w-3.5 h-3.5" />

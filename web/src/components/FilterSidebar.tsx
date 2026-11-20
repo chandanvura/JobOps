@@ -92,15 +92,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </div>
 
       {/* Freshness Gate Toggle (Strict 24h) */}
-      <div className="bg-brand-elevated border border-brand-border rounded-xl p-3.5 transition-colors">
+      <div className="bg-gradient-to-r from-brand-wine to-brand-elevated border border-brand-primary/40 rounded-xl p-3.5 transition-colors shadow-sm">
         <label className="flex items-center justify-between cursor-pointer select-none">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-brand-primary flex items-center justify-center text-white flex-shrink-0 shadow-sm">
-              <Zap className="w-4 h-4 fill-white text-white" />
+              <Zap className="w-4 h-4 fill-brand-gold text-brand-gold" />
             </div>
             <div>
               <span className="text-xs font-semibold text-brand-text block">Last 24 Hours Only</span>
-              <span className="text-[11px] text-brand-muted font-mono">Strict 24h Freshness</span>
+              <span className="text-[11px] text-brand-gold font-mono">Strict 24h Freshness</span>
             </div>
           </div>
           <input
@@ -128,7 +128,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 onClick={() => setFilters((prev) => ({ ...prev, roleCategory: role.id }))}
                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
                   isSelected
-                    ? "bg-brand-accent text-brand-text font-semibold border border-brand-primary/40"
+                    ? "bg-brand-primary text-[#FFF0DC] font-semibold border border-brand-hover shadow-sm"
                     : "text-brand-secondary hover:bg-brand-elevated hover:text-brand-text font-normal"
                 }`}
               >
@@ -137,7 +137,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   <span
                     className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
                       isSelected
-                        ? "bg-brand-primary/20 text-brand-text font-semibold"
+                        ? "bg-black/20 text-[#FFF0DC] font-semibold"
                         : "bg-brand-elevated text-brand-muted"
                     }`}
                   >
@@ -165,7 +165,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 onClick={() => setFilters((prev) => ({ ...prev, experienceLevel: level }))}
                 className={`px-2.5 py-1 text-xs rounded-full border transition-all ${
                   isSelected
-                    ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
+                    ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
                     : "bg-brand-elevated text-brand-secondary border-brand-border hover:border-brand-primary/50 hover:text-brand-text"
                 }`}
               >
@@ -192,7 +192,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 onClick={() => setFilters((prev) => ({ ...prev, city }))}
                 className={`px-2 py-1.5 text-xs text-left truncate rounded-lg border transition-all flex items-center justify-between ${
                   isSelected
-                    ? "bg-brand-accent border-brand-primary/40 text-brand-text font-semibold"
+                    ? "bg-brand-primary border-brand-hover text-[#FFF0DC] font-semibold shadow-sm"
                     : "bg-brand-elevated border-brand-border text-brand-secondary hover:text-brand-text hover:border-brand-primary/40"
                 }`}
               >
@@ -223,7 +223,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 onClick={() => setFilters((prev) => ({ ...prev, workMode: mode.id }))}
                 className={`px-2.5 py-1 text-xs rounded-full border transition-all ${
                   isSelected
-                    ? "bg-brand-primary text-white border-brand-primary font-semibold"
+                    ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
                     : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                 }`}
               >
@@ -249,7 +249,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 onClick={() => toggleSkill(skill)}
                 className={`px-2 py-0.5 text-[11px] font-mono rounded border transition-all ${
                   isSelected
-                    ? "bg-brand-accent text-brand-text border-brand-primary/50 font-semibold"
+                    ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
                     : "bg-brand-elevated text-brand-secondary border-brand-border hover:bg-brand-surface hover:text-brand-text hover:border-brand-primary/40"
                 }`}
               >

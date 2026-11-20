@@ -37,12 +37,12 @@ export const JobCard: React.FC<JobCardProps> = ({
   // Deterministic pastel tint for company monogram
   const getCompanyColor = (name: string) => {
     const tints = [
-      "bg-amber-950/20 text-amber-500 border-amber-800/40",
-      "bg-rose-950/20 text-rose-500 border-rose-800/40",
-      "bg-emerald-950/20 text-emerald-500 border-emerald-800/40",
-      "bg-sky-950/20 text-sky-500 border-sky-800/40",
-      "bg-purple-950/20 text-purple-500 border-purple-800/40",
-      "bg-orange-950/20 text-orange-500 border-orange-800/40",
+      "bg-gradient-to-br from-[#91111A]/20 to-[#2B1012] text-[#FFB3B8] border-[#91111A]/40",
+      "bg-gradient-to-br from-[#8A6A1A]/20 to-[#291F0B] text-[#E8D285] border-[#E8D285]/35",
+      "bg-gradient-to-br from-[#0D5C3A]/25 to-[#072417] text-[#6EE7B7] border-[#059669]/35",
+      "bg-gradient-to-br from-[#1E3A8A]/30 to-[#0F172A] text-[#93C5FD] border-[#3B82F6]/35",
+      "bg-gradient-to-br from-[#581C87]/30 to-[#2E1065] text-[#D8B4FE] border-[#A855F7]/35",
+      "bg-gradient-to-br from-[#7C2D12]/30 to-[#431407] text-[#FDBA74] border-[#EA580C]/35",
     ];
     let hash = 0;
     for (let i = 0; i < (name || "").length; i++) {
@@ -76,7 +76,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const safeApplyUrl = sanitizeExternalUrl(job.job_url);
 
   return (
-    <article className="bg-brand-surface rounded-2xl border border-brand-border p-4 sm:p-5 hover:border-brand-primary transition-all duration-200 flex flex-col justify-between group shadow-sm hover:shadow-md h-full relative">
+    <article className="bg-brand-surface rounded-2xl border border-brand-border p-4 sm:p-5 hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between group h-full relative">
       <div>
         {/* Top Header: Company Identity & Actions */}
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -119,11 +119,11 @@ export const JobCard: React.FC<JobCardProps> = ({
                 onClick={() => setShowScoreInfo(!showScoreInfo)}
                 onMouseEnter={() => setShowScoreInfo(true)}
                 onMouseLeave={() => setShowScoreInfo(false)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-brand-border bg-brand-elevated text-[11px] font-mono font-medium text-brand-secondary hover:text-brand-gold hover:border-brand-gold/40 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-brand-gold/30 bg-brand-goldBg text-[11px] font-mono font-medium text-brand-gold hover:border-brand-gold/60 transition-colors shadow-sm"
                 title="Job Relevance Score & Breakdown"
               >
-                <span className="text-brand-gold font-semibold">{relevance.score}%</span>
-                <Info className="w-3 h-3 text-brand-muted" />
+                <span className="text-brand-gold font-bold">{relevance.score}%</span>
+                <Info className="w-3 h-3 text-brand-gold/70" />
               </button>
 
               {/* Score Breakdown Popover */}
@@ -148,15 +148,15 @@ export const JobCard: React.FC<JobCardProps> = ({
             {/* Bookmark Button */}
             <button
               onClick={() => onToggleSave(job)}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`p-1.5 rounded-xl border transition-all ${
                 isSaved
-                  ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
-                  : "border-transparent text-brand-muted hover:text-brand-primary hover:bg-brand-elevated"
+                  ? "border-brand-gold/40 bg-brand-goldBg text-brand-gold shadow-sm"
+                  : "border-transparent text-brand-muted hover:text-brand-gold hover:bg-brand-elevated"
               }`}
               title={isSaved ? "Remove from saved pipeline" : "Save to my pipeline"}
               aria-label={isSaved ? "Unsave job" : "Save job"}
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-brand-primary" : ""}`} />
+              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-brand-gold" : ""}`} />
             </button>
           </div>
         </div>
@@ -173,8 +173,8 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Standardized Metadata Badges Row */}
         <div className="flex flex-wrap items-center gap-1.5 mb-3">
           {job.is_fresh_24h && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-accent text-brand-text border border-brand-primary/40">
-              <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-brand-wine text-brand-text border border-brand-primary/50 shadow-sm">
+              <Zap className="w-3 h-3 text-brand-gold fill-brand-gold" />
               <span>Fresh 24h</span>
             </span>
           )}
@@ -227,7 +227,7 @@ export const JobCard: React.FC<JobCardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onSelect(job)}
-            className="text-brand-secondary hover:text-brand-text font-medium px-2.5 py-1.5 rounded-lg hover:bg-brand-elevated transition-colors text-xs"
+            className="text-brand-secondary hover:text-brand-text font-medium px-3 py-1.5 rounded-xl hover:bg-brand-elevated transition-colors text-xs border border-transparent hover:border-brand-border"
           >
             Details
           </button>
@@ -235,7 +235,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             href={safeApplyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-semibold transition-colors shadow-sm text-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-primary hover:bg-brand-hover text-[#FFF0DC] font-semibold text-xs shadow-md shadow-brand-primary/20 hover:shadow-lg transition-all duration-200"
           >
             <span>Apply</span>
             <ExternalLink className="w-3 h-3" />

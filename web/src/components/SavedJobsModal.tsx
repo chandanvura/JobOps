@@ -238,7 +238,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
               onClick={() => setActiveStageFilter("All")}
               className={`px-2.5 py-1 rounded-full border transition-all ${
                 activeStageFilter === "All"
-                  ? "bg-brand-primary text-white border-brand-primary font-semibold"
+                  ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
                   : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text"
               }`}
             >
@@ -253,7 +253,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                   onClick={() => setActiveStageFilter(stg)}
                   className={`px-2.5 py-1 rounded-full border transition-all ${
                     activeStageFilter === stg
-                      ? "bg-brand-primary text-white border-brand-primary font-semibold"
+                      ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
                       : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text"
                   }`}
                 >

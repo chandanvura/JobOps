@@ -109,14 +109,14 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-accent border border-brand-primary/40 flex items-center justify-center text-brand-primary flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-goldBg border border-brand-gold/40 flex items-center justify-center text-brand-gold flex-shrink-0">
             <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
               Enterprise & Global Tech
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+            <span className="text-2xl sm:text-3xl font-bold text-brand-gold">
               {stats.f500 + stats.globalTech}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
@@ -143,7 +143,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-elevated border border-brand-border flex items-center justify-center text-brand-gold flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-wine border border-brand-primary/40 flex items-center justify-center text-brand-primary flex-shrink-0">
             <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>

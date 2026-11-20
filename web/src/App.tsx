@@ -397,8 +397,8 @@ export const App: React.FC = () => {
                       {filteredJobs.length.toLocaleString()} Openings Verified
                     </span>
                     {filters.freshOnly && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-accent text-brand-text border border-brand-primary/40">
-                        <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-wine text-brand-gold border border-brand-primary/40">
+                        <Zap className="w-3 h-3 text-brand-gold fill-brand-gold" />
                         <span>24h Ultra-Fresh</span>
                       </span>
                     )}
@@ -414,7 +414,7 @@ export const App: React.FC = () => {
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
                       className={`px-3 py-1.5 rounded-xl border font-semibold transition-all ${
                         filters.freshOnly
-                          ? "bg-brand-primary text-white border-brand-primary shadow-sm"
+                          ? "bg-brand-primary text-[#FFF0DC] border-brand-hover shadow-sm"
                           : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                       }`}
                     >

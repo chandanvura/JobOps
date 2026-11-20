@@ -67,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-serif font-bold text-xl sm:text-2xl tracking-tight text-brand-text">
                   JobOps
                 </span>
-                <span className="text-[10px] uppercase font-mono font-semibold tracking-wider px-1.5 py-0.5 rounded bg-brand-accent text-brand-text border border-brand-primary/40 hidden xs:inline-block">
+                <span className="text-[10px] uppercase font-mono font-semibold tracking-wider px-2 py-0.5 rounded-full bg-brand-wine text-brand-gold border border-brand-primary/40 hidden xs:inline-block shadow-sm">
                   Direct ATS
                 </span>
               </div>
@@ -151,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenFetchModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-xl bg-brand-accent text-brand-text hover:bg-brand-primary/20 border border-brand-primary/40 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-xl bg-brand-elevated hover:bg-brand-surface text-brand-text border border-brand-border hover:border-brand-primary/40 transition-colors shadow-sm"
             title="Trigger real-time ATS refresh"
           >
             <RefreshCw className="w-3.5 h-3.5 text-brand-primary" />
@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenAddModal}
-            className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-brand-secondary hover:text-brand-text hover:bg-brand-elevated border border-brand-border transition-colors"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-brand-secondary hover:text-brand-text hover:bg-brand-elevated border border-brand-border hover:border-brand-primary/40 transition-colors"
           >
             <PlusCircle className="w-3.5 h-3.5 text-brand-muted" />
             <span>Add ATS</span>
@@ -168,13 +168,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenSavedModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-xl bg-brand-elevated hover:bg-brand-surface text-brand-text border border-brand-border transition-colors relative"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-xl bg-brand-elevated hover:bg-brand-surface text-brand-text border border-brand-border hover:border-brand-primary/40 transition-colors relative shadow-sm"
             title="Saved applications & personal workspace"
           >
             <Bookmark className="w-3.5 h-3.5 text-brand-primary" />
             <span className="hidden sm:inline">Pipeline</span>
             {savedCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-brand-primary text-white font-mono text-[10px] font-bold">
+              <span className="px-1.5 py-0.5 rounded-full bg-brand-primary text-[#FFF0DC] font-mono text-[10px] font-bold shadow-sm">
                 {savedCount}
               </span>
             )}
