@@ -69,12 +69,13 @@ def main():
 
     elif args.command == "export":
         db = JobDatabase()
-        jobs = db.get_filtered_jobs(limit=1000)
+        jobs = db.get_filtered_jobs(limit=2500)
         out_path = Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(jobs, f, indent=2)
-        print(f"Exported {len(jobs)} jobs to {out_path.resolve()}")
+            # Compact JSON representation for faster edge loading over CDN
+            json.dump(jobs, f, separators=(",", ":"))
+        print(f"Exported {len(jobs)} active jobs to {out_path.resolve()}")
 
 
 if __name__ == "__main__":

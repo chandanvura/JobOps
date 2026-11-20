@@ -45,12 +45,27 @@ export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 24;
 
-  // Resilient multi-source data fetcher for GitHub Pages and local setups
+  // Fast Stale-While-Revalidate data loader with zero-latency sessionStorage hydration
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
+    try {
+      const cachedJobsStr = sessionStorage.getItem("jobops_cached_jobs");
+      const cachedCosStr = sessionStorage.getItem("jobops_cached_companies");
+      if (cachedJobsStr) {
+        const parsed = JSON.parse(cachedJobsStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setJobs(parsed);
+          setLoading(false);
+        }
+      }
+      if (cachedCosStr) {
+        const parsed = JSON.parse(cachedCosStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCompanies(parsed);
+        }
+      }
+    } catch {}
 
+    const loadData = async () => {
       // Candidates for jobs.json and companies.json
       const candidatePaths = [
         "./", // Relative path (works for subpath like /JobOps/)
@@ -93,12 +108,18 @@ export const App: React.FC = () => {
 
       if (loadedJobs) {
         setJobs(loadedJobs);
-      } else {
+        try {
+          sessionStorage.setItem("jobops_cached_jobs", JSON.stringify(loadedJobs));
+        } catch {}
+      } else if (!sessionStorage.getItem("jobops_cached_jobs")) {
         setError("Could not load jobs catalog. Check connection or reload.");
       }
 
       if (loadedCompanies) {
         setCompanies(loadedCompanies);
+        try {
+          sessionStorage.setItem("jobops_cached_companies", JSON.stringify(loadedCompanies));
+        } catch {}
       }
 
       setLoading(false);

@@ -1,4 +1,4 @@
-name: Ingest 24h Engineering Jobs
+name: Ingest 24h Engineering Jobs & Deploy
 
 on:
   schedule:
@@ -12,11 +12,21 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  ingest:
+  ingest-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout Repository
@@ -51,5 +61,32 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ web/public/jobs.json web/public/companies.json
+          git add web/public/jobs.json web/public/companies.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore(catalog): auto-sync latest 24h engineering jobs [skip ci]" && git push)
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: web/package.json
+
+      - name: Install Node Dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build Web Dashboard
+        working-directory: web
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "web/dist"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
