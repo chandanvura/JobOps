@@ -212,7 +212,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-ivory-100 dark:bg-espresso-950 text-espresso-900 dark:text-ivory-200 transition-colors">
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -231,10 +231,10 @@ export const App: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 flex items-center gap-3 text-xs">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-espresso-900 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center gap-3 text-xs">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-700" />
             <div>
-              <p className="font-bold">Catalog loading notice</p>
+              <p className="font-bold">Catalog notice</p>
               <p>{error}</p>
             </div>
           </div>
@@ -251,13 +251,13 @@ export const App: React.FC = () => {
             {/* Mobile Search Bar */}
             <div className="mb-4 md:hidden">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-400" />
                 <input
                   type="text"
                   placeholder="Search by title, company, or skills..."
                   value={filters.searchQuery}
                   onChange={(e) => setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 shadow-sm"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-espresso-900 border border-sage-200 dark:border-sage-800 rounded-xl focus:outline-none focus:border-crimson-600 shadow-sm text-espresso-900 dark:text-ivory-200"
                 />
               </div>
             </div>
@@ -272,19 +272,19 @@ export const App: React.FC = () => {
               />
 
               <section className="flex-1 w-full min-w-0">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
+                <div className="bg-white dark:bg-espresso-900 p-4 rounded-2xl border border-sage-200 dark:border-sage-800 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">
-                      {filteredJobs.length.toLocaleString()} Jobs Found
+                    <span className="font-serif text-base font-bold text-espresso-950 dark:text-ivory-100">
+                      {filteredJobs.length.toLocaleString()} Openings Verified
                     </span>
                     {filters.freshOnly && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        <Zap className="w-3 h-3 fill-emerald-600 text-emerald-600 dark:text-emerald-400" />
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-crimson-50 dark:bg-crimson-950 text-crimson-700 dark:text-ivory-300 border border-crimson-200 dark:border-crimson-800">
+                        <Zap className="w-3 h-3 fill-crimson-700 dark:fill-ivory-300 text-crimson-700 dark:text-ivory-300" />
                         <span>24h Ultra-Fresh</span>
                       </span>
                     )}
                     {filters.searchQuery && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-ivory-200 dark:bg-espresso-800 text-crimson-800 dark:text-ivory-300 font-semibold border border-ivory-300 dark:border-sage-700">
                         &ldquo;{filters.searchQuery}&rdquo;
                       </span>
                     )}
@@ -295,8 +295,8 @@ export const App: React.FC = () => {
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
                       className={`px-3 py-1.5 rounded-lg border font-semibold transition-all ${
                         filters.freshOnly
-                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                          : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                          ? "bg-crimson-700 text-ivory-100 border-crimson-700 shadow-sm"
+                          : "bg-ivory-50 dark:bg-espresso-800 text-espresso-800 dark:text-sage-300 border-sage-200 dark:border-sage-700 hover:bg-ivory-100 dark:hover:bg-espresso-700"
                       }`}
                     >
                       ⚡ Last 24 Hours ({freshCount})
@@ -307,21 +307,21 @@ export const App: React.FC = () => {
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse h-48" />
+                      <div key={i} className="bg-white dark:bg-espresso-900 p-6 rounded-2xl border border-sage-200 dark:border-sage-800 animate-pulse h-48" />
                     ))}
                   </div>
                 ) : filteredJobs.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center shadow-sm">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 mx-auto flex items-center justify-center text-slate-400 mb-3">
+                  <div className="bg-white dark:bg-espresso-900 rounded-3xl border border-sage-200 dark:border-sage-800 p-12 text-center shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-ivory-200 dark:bg-espresso-800 mx-auto flex items-center justify-center text-sage-500 mb-3">
                       <Filter className="w-6 h-6" />
                     </div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">No matching jobs found</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-                      Try clearing some filters or searching for broader terms like &ldquo;Python&rdquo; or &ldquo;Software&rdquo;.
+                    <h3 className="font-serif text-lg font-bold text-espresso-950 dark:text-ivory-100">No matching jobs found</h3>
+                    <p className="text-xs text-sage-600 dark:text-sage-400 mt-1 max-w-sm mx-auto">
+                      Try clearing some filters or searching for broader terms like &ldquo;Python&rdquo;, &ldquo;Go&rdquo;, or &ldquo;Frontend&rdquo;.
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors"
+                      className="mt-4 px-4 py-2 bg-crimson-700 hover:bg-crimson-800 text-ivory-100 rounded-xl text-xs font-bold transition-colors shadow-sm"
                     >
                       Reset All Filters
                     </button>
@@ -345,17 +345,17 @@ export const App: React.FC = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="p-2 rounded-xl border border-sage-200 dark:border-sage-800 bg-white dark:bg-espresso-900 hover:bg-ivory-50 dark:hover:bg-espresso-800 text-espresso-900 dark:text-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 px-3">
+                        <span className="text-xs font-mono font-bold text-espresso-900 dark:text-ivory-200 px-3">
                           Page {currentPage} of {totalPages}
                         </span>
                         <button
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="p-2 rounded-xl border border-sage-200 dark:border-sage-800 bg-white dark:bg-espresso-900 hover:bg-ivory-50 dark:hover:bg-espresso-800 text-espresso-900 dark:text-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
