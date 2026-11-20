@@ -1,0 +1,12 @@
+{
+  "cities": {
+    "Bengaluru": ["bengaluru", "bangalore", "blr", "whitefield", "electronic city", "koramangala", "bellandur", "marathahalli", "indiranagar"],
+    "Hyderabad": ["hyderabad", "secunderabad", "hitec city", "gachibowli", "madhapur", "kondapur", "cyberabad"],
+    "Pune": ["pune", "hinjewadi", "magarpatta", "kharadi", "viman nagar", "baner"],
+    "Delhi NCR": ["gurugram", "gurgaon", "noida", "greater noida", "new delhi", "delhi", "delhi ncr", "faridabad"],
+    "Mumbai": ["mumbai", "navi mumbai", "thane", "powai", "andheri", "bkc", "bandra"],
+    "Chennai": ["chennai", "omr", "taramani", "guindy", "siruseri"],
+    "Remote India": ["remote", "work from home", "wfh", "anywhere in india", "remote - india", "india (remote)"]
+  },
+  "country_tokens": ["india", "in", "bharat"]
+}

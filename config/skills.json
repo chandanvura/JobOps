@@ -1,0 +1,12 @@
+{
+  "skills": [
+    "Python", "JavaScript", "TypeScript", "Java", "Go", "Golang", "C++", "C#", "Rust", "Kotlin", "Swift", "PHP", "Ruby",
+    "React", "React.js", "Next.js", "Vue", "Vue.js", "Angular", "Svelte", "Node.js", "Express", "FastAPI", "Django", "Flask", "Spring Boot",
+    "AWS", "Amazon Web Services", "Azure", "GCP", "Google Cloud", "Kubernetes", "Docker", "Terraform", "Ansible", "CI/CD", "GitHub Actions", "Jenkins",
+    "PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "Cassandra", "DynamoDB", "SQLite", "GraphQL", "REST API", "gRPC", "Kafka", "RabbitMQ",
+    "PyTorch", "TensorFlow", "Hugging Face", "LLM", "LangChain", "LlamaIndex", "Scikit-Learn", "Pandas", "NumPy",
+    "Spark", "Apache Spark", "Airflow", "dbt", "Snowflake", "Databricks", "BigQuery",
+    "Playwright", "Cypress", "Selenium", "Jest", "Pytest", "JUnit",
+    "Linux", "Git", "Microservices", "System Design", "Agile", "Tailwind CSS", "HTML5", "CSS3"
+  ]
+}

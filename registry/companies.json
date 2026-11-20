@@ -1,0 +1,52 @@
+[
+  {
+    "id": "razorpay",
+    "name": "Razorpay",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "razorpaysoftwareprivatelimited",
+    "careers_url": "https://razorpay.com/jobs",
+    "priority": 1,
+    "enabled": true,
+    "tags": ["fintech", "unicorn"]
+  },
+  {
+    "id": "postman",
+    "name": "Postman",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "postman",
+    "careers_url": "https://www.postman.com/company/careers/",
+    "priority": 1,
+    "enabled": true,
+    "tags": ["developer-tools", "saas"]
+  },
+  {
+    "id": "atlassian",
+    "name": "Atlassian",
+    "ats_provider": "lever",
+    "ats_identifier": "atlassian",
+    "careers_url": "https://www.atlassian.com/company/careers",
+    "priority": 1,
+    "enabled": true,
+    "tags": ["enterprise", "global"]
+  },
+  {
+    "id": "swiggy",
+    "name": "Swiggy",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "swiggy",
+    "careers_url": "https://careers.swiggy.com",
+    "priority": 1,
+    "enabled": true,
+    "tags": ["foodtech", "consumer"]
+  },
+  {
+    "id": "groww",
+    "name": "Groww",
+    "ats_provider": "lever",
+    "ats_identifier": "groww",
+    "careers_url": "https://groww.in/careers",
+    "priority": 1,
+    "enabled": true,
+    "tags": ["fintech", "wealthtech"]
+  }
+]

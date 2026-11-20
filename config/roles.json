@@ -1,0 +1,80 @@
+{
+  "categories": {
+    "backend": {
+      "label": "Backend Engineering",
+      "patterns": [
+        "\\b(backend|back-end|back end|server-side|api engineer)\\b",
+        "\\b(java|golang|go developer|python developer|django|fastapi|node\\.js|nodejs|c\\+\\+|rust|ruby on rails|\\.net|c#)\\b.*\\b(engineer|developer)\\b",
+        "\\b(microservices|distributed systems)\\b"
+      ],
+      "negative": ["frontend", "full stack", "fullstack", "ui"]
+    },
+    "frontend": {
+      "label": "Frontend Engineering",
+      "patterns": [
+        "\\b(frontend|front-end|front end|ui engineer|ui developer|web developer)\\b",
+        "\\b(react|reactjs|vue|vuejs|angular|angularjs|svelte|next\\.js|nextjs|typescript|javascript)\\b.*\\b(engineer|developer)\\b"
+      ],
+      "negative": ["backend", "back-end"]
+    },
+    "fullstack": {
+      "label": "Full Stack Engineering",
+      "patterns": [
+        "\\b(fullstack|full-stack|full stack|software engineer|software development engineer|sde|mts|member of technical staff)\\b"
+      ],
+      "negative": []
+    },
+    "devops_cloud": {
+      "label": "DevOps / Cloud / SRE",
+      "patterns": [
+        "\\b(devops|dev-ops|devsecops|sre|site reliability|cloud engineer|cloud architect|infrastructure engineer|platform engineer|release engineer|systems engineer)\\b",
+        "\\b(kubernetes|docker|terraform|aws|gcp|azure)\\b.*\\b(engineer|specialist)\\b"
+      ],
+      "negative": []
+    },
+    "ai_ml": {
+      "label": "AI / ML / Data Science",
+      "patterns": [
+        "\\b(ai|artificial intelligence|ml|machine learning|deep learning|nlp|computer vision|llm|genai|generative ai)\\b.*\\b(engineer|scientist|researcher)\\b",
+        "\\b(data scientist|applied scientist|machine learning engineer|mle)\\b"
+      ],
+      "negative": []
+    },
+    "data_eng": {
+      "label": "Data Engineering",
+      "patterns": [
+        "\\b(data engineer|big data|analytics engineer|etl developer|data platform)\\b",
+        "\\b(spark|kafka|hadoop|snowflake|databricks|dbt)\\b.*\\b(engineer|developer)\\b"
+      ],
+      "negative": ["data scientist", "data analyst"]
+    },
+    "mobile": {
+      "label": "Mobile Engineering",
+      "patterns": [
+        "\\b(mobile engineer|mobile developer|ios engineer|ios developer|android engineer|android developer|react native|flutter)\\b"
+      ],
+      "negative": []
+    },
+    "qa_sdet": {
+      "label": "QA / SDET / Automation",
+      "patterns": [
+        "\\b(sdet|qa engineer|quality assurance|software test engineer|automation engineer|test automation)\\b"
+      ],
+      "negative": []
+    },
+    "security": {
+      "label": "Security Engineering",
+      "patterns": [
+        "\\b(security engineer|cyber security|application security|appsec|infosec|soc analyst|penetration tester|cloud security)\\b"
+      ],
+      "negative": []
+    },
+    "embedded_iot": {
+      "label": "Embedded / Systems / IoT",
+      "patterns": [
+        "\\b(embedded engineer|firmware engineer|iot engineer|hardware engineer|rtos|device driver|kernel developer)\\b"
+      ],
+      "negative": []
+    }
+  }
+}
