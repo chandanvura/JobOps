@@ -9,6 +9,7 @@ import { SavedJobsModal } from "./components/SavedJobsModal";
 import { CompaniesPage, CompanyItem } from "./components/CompaniesPage";
 import { useDarkMode } from "./hooks/useDarkMode";
 import { Search, Filter, ChevronLeft, ChevronRight, Zap, AlertCircle } from "lucide-react";
+import { matchJobSearch, matchJobExperience, matchJobCity } from "./utils/jobUtils";
 
 const ALLOWED_ROLES = [
   "all",
@@ -289,8 +290,8 @@ export const App: React.FC = () => {
     return jobs.filter((job) => {
       if (filters.freshOnly && !job.is_fresh_24h) return false;
       if (filters.roleCategory !== "all" && job.role_category !== filters.roleCategory) return false;
-      if (filters.experienceLevel !== "All" && job.experience_level !== filters.experienceLevel) return false;
-      if (filters.city !== "All" && job.city !== filters.city) return false;
+      if (!matchJobExperience(job, filters.experienceLevel)) return false;
+      if (!matchJobCity(job, filters.city)) return false;
       if (filters.workMode !== "all" && job.work_mode !== filters.workMode) return false;
 
       if (filters.selectedSkills.length > 0) {
@@ -300,13 +301,7 @@ export const App: React.FC = () => {
         if (!hasAll) return false;
       }
 
-      if (filters.searchQuery.trim()) {
-        const q = filters.searchQuery.toLowerCase().trim();
-        const inTitle = job.title.toLowerCase().includes(q);
-        const inCo = job.company_name.toLowerCase().includes(q);
-        const inSkills = job.skills?.some((s) => s.toLowerCase().includes(q));
-        if (!inTitle && !inCo && !inSkills) return false;
-      }
+      if (!matchJobSearch(job, filters.searchQuery)) return false;
 
       return true;
     });

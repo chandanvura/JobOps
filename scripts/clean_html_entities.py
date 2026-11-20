@@ -37,6 +37,9 @@ def main():
 
         for j in jobs:
             s = sanitize_text(j.get("summary", ""))
+            t = sanitize_text(j.get("title", ""))
+            if t:
+                j["title"] = t
             if not s:
                 s = f"{j.get('title')} at {j.get('company_name')}"
             j["summary"] = s[:320]
@@ -52,11 +55,28 @@ def main():
         rows = cursor.fetchall()
         for j_id, summary, title, company_name in rows:
             s = sanitize_text(summary or "")
+            t = sanitize_text(title or "")
             if not s:
-                s = f"{title} at {company_name}"
-            cursor.execute("UPDATE jobs SET summary = ? WHERE id = ?", (s[:320], j_id))
+                s = f"{t} at {company_name}"
+            cursor.execute("UPDATE jobs SET summary = ?, title = ? WHERE id = ?", (s[:320], t, j_id))
         conn.commit()
         conn.close()
+
+    # Also clean data/jobs.json
+    data_json = Path("F:/Dev/JobOps/data/jobs.json")
+    if data_json.exists():
+        with open(data_json, "r", encoding="utf-8") as f:
+            djobs = json.load(f)
+        for j in djobs:
+            s = sanitize_text(j.get("summary", ""))
+            t = sanitize_text(j.get("title", ""))
+            if t:
+                j["title"] = t
+            if not s:
+                s = f"{t} at {j.get('company_name')}"
+            j["summary"] = s[:320]
+        with open(data_json, "w", encoding="utf-8") as f:
+            json.dump(djobs, f, indent=2)
 
     # Re-verify
     with open(json_path, "r", encoding="utf-8") as f:

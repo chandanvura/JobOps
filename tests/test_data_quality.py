@@ -16,8 +16,9 @@ def test_no_raw_html_entities_in_jobs_catalog():
     bad_entities = []
     for j in jobs:
         summary = j.get("summary", "")
-        if any(marker in summary for marker in ["&lt;", "&gt;", "&amp;lt;", "<div", "<p", "<span", "&quot;"]):
-            bad_entities.append((j.get("id"), j.get("company_name"), summary[:60]))
+        title = j.get("title", "")
+        if any(marker in summary or marker in title for marker in ["&lt;", "&gt;", "&amp;lt;", "<div", "<p", "<span", "&quot;", "&amp;"]):
+            bad_entities.append((j.get("id"), j.get("company_name"), title, summary[:60]))
 
     assert len(bad_entities) == 0, f"Found {len(bad_entities)} jobs with uncleaned HTML: {bad_entities[:3]}"
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Job } from "../types/job";
 import { X, Bookmark, ExternalLink, Trash2, Download, FileText, ChevronDown, Calendar } from "lucide-react";
-import { sanitizeExternalUrl, formatLocation } from "../utils/jobUtils";
+import { sanitizeExternalUrl, formatLocation, cleanJobText } from "../utils/jobUtils";
 
 export type PipelineStage =
   | "Interested"
@@ -309,7 +309,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                         <span className="text-xs text-brand-muted">•</span>
                         <span className="text-[11px] text-brand-secondary truncate">{job.role_label}</span>
                       </div>
-                      <h3 className="text-sm font-semibold text-brand-text truncate">{job.title}</h3>
+                      <h3 className="text-sm font-semibold text-brand-text truncate">{cleanJobText(job.title)}</h3>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-brand-muted">
                         <span>{formatLocation(job.city, job.location_raw)}</span>
                         <span>•</span>

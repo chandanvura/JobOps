@@ -69,6 +69,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 
   const initial = job.company_name ? job.company_name.charAt(0).toUpperCase() : "C";
   const cleanSummary = cleanJobText(job.summary || `${job.title} at ${job.company_name}`);
+  const cleanTitle = cleanJobText(job.title);
   const locationDisplay = formatLocation(job.city, job.location_raw);
   const workModeDisplay = formatWorkMode(job.work_mode);
   const timeDisplay = formatPostingTime(job.posted_at, job.age_hours);
@@ -164,9 +165,9 @@ export const JobCard: React.FC<JobCardProps> = ({
         <h2
           onClick={() => onSelect(job)}
           className="text-base font-semibold text-brand-text group-hover:text-brand-primary transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug mb-2.5"
-          title={job.title}
+          title={cleanTitle}
         >
-          {job.title}
+          {cleanTitle}
         </h2>
 
         {/* Standardized Metadata Badges Row */}

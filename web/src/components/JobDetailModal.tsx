@@ -39,6 +39,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
   if (!isOpen || !job) return null;
 
   const cleanSummary = cleanJobText(job.summary || `${job.title} at ${job.company_name}`);
+  const cleanTitle = cleanJobText(job.title);
   const safeApplyUrl = sanitizeExternalUrl(job.job_url);
   const locationDisplay = formatLocation(job.city, job.location_raw);
   const workModeDisplay = formatWorkMode(job.work_mode);
@@ -74,7 +75,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
                 <span className="text-[11px] text-brand-secondary">{job.role_label}</span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-brand-text leading-snug">
-                {job.title}
+                {cleanTitle}
               </h1>
             </div>
           </div>

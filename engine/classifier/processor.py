@@ -141,9 +141,9 @@ class JobClassifier:
         elif "chennai" in combined:
             return "Chennai", mode, is_india
         elif mode == WorkMode.REMOTE:
-            return "Remote-India", mode, is_india
+            return "Remote", mode, is_india
         
-        return "Other-India", mode, is_india
+        return "India" if is_india else (loc_raw.strip() if loc_raw else "Global"), mode, is_india
 
     def process(self, raw_job: RawJob, job_hash: str, age_hours: float) -> ProcessedJob:
         full_text = f"{raw_job.title} {raw_job.location_raw} {raw_job.description_text}"
