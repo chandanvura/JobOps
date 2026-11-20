@@ -97,6 +97,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           <div>
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Total Employers</span>
             <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{companies.length.toLocaleString()}</span>
+            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">Across Indian Tech Hubs</span>
           </div>
         </div>
 
@@ -107,6 +108,9 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           <div>
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Fortune 500 & Tech</span>
             <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{stats.f500 + stats.globalTech}</span>
+            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">
+              {stats.f500} F500 · {stats.globalTech} Global Tech
+            </span>
           </div>
         </div>
 
@@ -119,6 +123,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
             <span className="font-serif text-3xl font-bold text-emerald-700 dark:text-emerald-400">
               {companies.length > 0 ? `${Math.round((stats.healthy / companies.length) * 100)}%` : "100%"}
             </span>
+            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">HTTP 200 Live Status</span>
           </div>
         </div>
 
@@ -129,6 +134,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           <div>
             <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Active Postings</span>
             <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{stats.totalJobs.toLocaleString()}</span>
+            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">Direct ATS Feeds</span>
           </div>
         </div>
       </div>
