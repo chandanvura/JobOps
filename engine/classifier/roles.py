@@ -24,40 +24,38 @@ class RoleClassifier:
         """
         clean_title = title.lower().strip()
 
-        # Check priority order: AI/ML -> DevOps -> Data -> Mobile -> Security -> QA -> Embedded -> Frontend -> Backend -> Fullstack
         check_order = [
-            ("ai_ml", RoleCategory.AI_ML),
-            ("devops_cloud", RoleCategory.DEVOPS_CLOUD),
-            ("data_eng", RoleCategory.DATA_ENG),
-            ("mobile", RoleCategory.MOBILE),
-            ("security", RoleCategory.SECURITY),
-            ("qa_sdet", RoleCategory.QA_SDET),
-            ("embedded_iot", RoleCategory.EMBEDDED_IOT),
-            ("frontend", RoleCategory.FRONTEND),
-            ("backend", RoleCategory.BACKEND),
-            ("fullstack", RoleCategory.FULLSTACK),
+            ("ai_ml", RoleCategory.AI_ML, "AI / Machine Learning"),
+            ("devops_cloud", RoleCategory.DEVOPS_SRE, "DevOps / SRE / Cloud"),
+            ("data_eng", RoleCategory.DATA_ENGINEERING, "Data Engineering"),
+            ("mobile", RoleCategory.MOBILE, "Mobile Engineering"),
+            ("security", RoleCategory.SECURITY, "Security Engineering"),
+            ("qa_sdet", RoleCategory.QA_SDET, "QA / SDET"),
+            ("embedded_iot", RoleCategory.SYSTEMS_EMBEDDED, "Systems / Embedded"),
+            ("frontend", RoleCategory.FRONTEND, "Frontend Engineering"),
+            ("backend", RoleCategory.BACKEND, "Backend Engineering"),
+            ("fullstack", RoleCategory.FULLSTACK, "Full Stack Engineering"),
         ]
 
-        for cat_key, role_enum in check_order:
+        for cat_key, role_enum, default_label in check_order:
             cat_cfg = self.rules.get(cat_key, {})
             patterns = cat_cfg.get("patterns", [])
             negatives = cat_cfg.get("negative", [])
 
-            # Skip if negative keyword present in title
             if any(neg in clean_title for neg in negatives):
                 continue
 
             for pat in patterns:
                 if re.search(pat, clean_title, re.IGNORECASE):
-                    return role_enum, cat_cfg.get("label", role_enum.value.replace("_", " ").title())
+                    return role_enum, cat_cfg.get("label", default_label)
 
         # Check description snippet if title is generic
         desc_sample = description[:1000].lower()
-        for cat_key, role_enum in check_order:
+        for cat_key, role_enum, default_label in check_order:
             cat_cfg = self.rules.get(cat_key, {})
             patterns = cat_cfg.get("patterns", [])
             for pat in patterns:
                 if re.search(pat, desc_sample, re.IGNORECASE):
-                    return role_enum, cat_cfg.get("label", role_enum.value.replace("_", " ").title())
+                    return role_enum, cat_cfg.get("label", default_label)
 
-        return RoleCategory.ENGINEERING_GENERAL, "Software Engineering"
+        return RoleCategory.SOFTWARE_GENERAL, "Software Engineering"

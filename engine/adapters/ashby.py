@@ -1,67 +1,55 @@
-"""
-Ashby Public Job Board API Adapter.
-Public endpoint: https://api.ashbyhq.com/posting-api/job-board/{organizationId}
-"""
-from datetime import datetime
 from typing import List
-from dateutil import parser as dt_parser
-from selectolax.lexbor import LexborHTMLParser as HTMLParser
+import httpx
 from engine.adapters.base import BaseATS
+from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
 
 
 class AshbyAdapter(BaseATS):
-    BASE_URL = "https://api.ashbyhq.com/posting-api/job-board/{orgId}"
+    provider_name = "ashby"
 
-    async def fetch_jobs(self, company: Company) -> List[RawJob]:
-        url = self.BASE_URL.format(orgId=company.ats_identifier)
-        try:
-            resp = await self.client.get(url, timeout=15.0)
-            if resp.status_code != 200:
-                return []
-            data = resp.json()
-        except Exception:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+        org_id = company.ats_identifier.strip()
+        url = f"https://api.ashbyhq.com/posting-api/job-board/{org_id}?includeCompensation=true"
+
+        response = await client.get(url, timeout=20.0)
+        if response.status_code != 200:
             return []
 
-        jobs: List[RawJob] = []
-        raw_jobs = data.get("jobs", [])
+        data = response.json()
+        jobs_list = data.get("jobs", [])
+        results: List[RawJob] = []
 
-        for item in raw_jobs:
-            ext_id = str(item.get("id"))
-            title = (item.get("title") or "").strip()
-            job_url = item.get("jobUrl") or item.get("applyUrl") or ""
-            
-            loc_name = item.get("location") or ""
-            secondary_locs = item.get("secondaryLocations") or []
-            if secondary_locs:
-                loc_name += " " + " ".join(secondary_locs)
+        for item in jobs_list:
+            if item.get("isListed") is False:
+                continue
 
-            desc_html = item.get("descriptionHtml") or item.get("descriptionPlain") or ""
-            text_desc = ""
-            if desc_html:
-                tree = HTMLParser(desc_html)
-                text_desc = tree.text(separator=" ").strip()
+            job_id = str(item.get("id"))
+            title = item.get("title", "").strip()
+            if not title:
+                continue
 
-            published_at_str = item.get("publishedAt")
-            posted_at = datetime.utcnow()
-            if published_at_str:
-                try:
-                    posted_at = dt_parser.parse(published_at_str).replace(tzinfo=None)
-                except Exception:
-                    pass
+            loc_name = item.get("locationName", "")
+            raw_desc = item.get("descriptionHtml", "")
+            clean_desc = self.clean_html(raw_desc) or item.get("descriptionPlain", "")
 
-            jobs.append(RawJob(
-                external_id=ext_id,
-                company_id=company.id,
-                company_name=company.name,
-                ats_provider="ashby",
-                title=title,
-                job_url=job_url,
-                location_raw=loc_name,
-                description_html=desc_html,
-                description_text=text_desc,
-                posted_at=posted_at,
-                raw_payload={"id": ext_id}
-            ))
+            posted_at = parse_datetime(item.get("publishedAt"))
+            job_url = item.get("jobUrl") or f"https://jobs.ashbyhq.com/{org_id}/{job_id}"
 
-        return jobs
+            results.append(
+                RawJob(
+                    external_id=job_id,
+                    company_id=company.id,
+                    company_name=company.name,
+                    ats_provider=self.provider_name,
+                    title=title,
+                    job_url=job_url,
+                    location_raw=loc_name,
+                    description_text=clean_desc,
+                    description_html=raw_desc,
+                    posted_at=posted_at,
+                    raw_payload={"department": item.get("departmentName")},
+                )
+            )
+
+        return results

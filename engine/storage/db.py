@@ -1,102 +1,227 @@
-"""
-Lightweight SQLite state store for jobs, companies, and discovery runs.
-Supports zero-cost operation and export to JSON for static edge deployment.
-"""
-import sqlite3
 import json
+import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
-from datetime import datetime
-from engine.models import ProcessedJob, Company
+from typing import Any, Dict, List, Optional, Set
+from engine.models import Company, ProcessedJob
+
+DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "jobops.db"
 
 
-class JobStorage:
-    def __init__(self, db_path: str = "data/jobops.db"):
-        self.db_path = Path(db_path)
+class JobDatabase:
+    def __init__(self, db_path: Path = DEFAULT_DB_PATH):
+        self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_db()
+        self.init_db()
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
 
-    def _init_db(self):
+    def init_db(self) -> None:
         with self._get_conn() as conn:
-            conn.execute("""
-            CREATE TABLE IF NOT EXISTS jobs (
-                id TEXT PRIMARY KEY,
-                external_id TEXT NOT NULL,
-                company_id TEXT NOT NULL,
-                company_name TEXT NOT NULL,
-                ats_provider TEXT NOT NULL,
-                title TEXT NOT NULL,
-                job_url TEXT NOT NULL,
-                is_engineering INTEGER NOT NULL,
-                role_category TEXT NOT NULL,
-                location_raw TEXT,
-                normalized_city TEXT NOT NULL,
-                work_mode TEXT NOT NULL,
-                is_india INTEGER NOT NULL,
-                min_years REAL,
-                max_years REAL,
-                seniority_level TEXT,
-                skills TEXT,
-                posted_at TEXT NOT NULL,
-                age_hours REAL,
-                summary TEXT,
-                first_seen_at TEXT NOT NULL,
-                last_seen_at TEXT NOT NULL,
-                is_active INTEGER NOT NULL DEFAULT 1
-            );
-            """)
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_jobs_filter ON jobs(is_engineering, is_india, normalized_city, role_category);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_jobs_posted ON jobs(posted_at DESC);")
-            conn.commit()
+            conn.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS companies (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    ats_provider TEXT NOT NULL,
+                    ats_identifier TEXT NOT NULL,
+                    careers_url TEXT,
+                    priority INTEGER DEFAULT 1,
+                    enabled INTEGER DEFAULT 1,
+                    last_checked_at TEXT,
+                    last_success_at TEXT,
+                    total_jobs_found INTEGER DEFAULT 0
+                );
 
-    def save_job(self, job: ProcessedJob):
+                CREATE TABLE IF NOT EXISTS jobs (
+                    id TEXT PRIMARY KEY,
+                    external_id TEXT NOT NULL,
+                    company_id TEXT NOT NULL,
+                    company_name TEXT NOT NULL,
+                    ats_provider TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    job_url TEXT NOT NULL,
+                    is_engineering INTEGER DEFAULT 1,
+                    role_category TEXT NOT NULL,
+                    role_label TEXT NOT NULL,
+                    location_raw TEXT,
+                    city TEXT,
+                    work_mode TEXT NOT NULL,
+                    is_india INTEGER DEFAULT 1,
+                    min_years REAL,
+                    max_years REAL,
+                    experience_level TEXT NOT NULL,
+                    skills TEXT,
+                    posted_at TEXT,
+                    age_hours REAL,
+                    is_fresh_24h INTEGER DEFAULT 0,
+                    first_seen_at TEXT NOT NULL,
+                    last_seen_at TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 1,
+                    summary TEXT
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_jobs_fresh ON jobs(is_active, is_fresh_24h, is_india);
+                CREATE INDEX IF NOT EXISTS idx_jobs_role ON jobs(role_category, is_active);
+                CREATE INDEX IF NOT EXISTS idx_jobs_city ON jobs(city, is_active);
+                CREATE INDEX IF NOT EXISTS idx_jobs_posted ON jobs(posted_at DESC);
+
+                CREATE TABLE IF NOT EXISTS ingestion_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    started_at TEXT NOT NULL,
+                    finished_at TEXT,
+                    companies_checked INTEGER DEFAULT 0,
+                    raw_jobs_found INTEGER DEFAULT 0,
+                    new_jobs_saved INTEGER DEFAULT 0,
+                    fresh_24h_jobs INTEGER DEFAULT 0,
+                    duration_seconds REAL,
+                    status TEXT DEFAULT 'running'
+                );
+                """
+            )
+
+    def get_seen_job_ids(self) -> Set[str]:
         with self._get_conn() as conn:
-            conn.execute("""
-            INSERT INTO jobs (
-                id, external_id, company_id, company_name, ats_provider,
-                title, job_url, is_engineering, role_category,
-                location_raw, normalized_city, work_mode, is_india,
-                min_years, max_years, seniority_level, skills,
-                posted_at, age_hours, summary, first_seen_at, last_seen_at, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
-                last_seen_at = excluded.last_seen_at,
-                is_active = 1;
-            """, (
-                job.id, job.external_id, job.company_id, job.company_name, job.ats_provider,
-                job.title, job.job_url, 1 if job.is_engineering else 0, job.role_category.value,
-                job.location_raw, job.normalized_city, job.work_mode.value, 1 if job.is_india else 0,
-                job.min_years, job.max_years, job.seniority_level, json.dumps(job.skills),
-                job.posted_at.isoformat(), job.age_hours, job.summary,
-                job.first_seen_at.isoformat(), job.last_seen_at.isoformat(), 1
-            ))
-            conn.commit()
+            cursor = conn.execute("SELECT id FROM jobs")
+            return {row["id"] for row in cursor.fetchall()}
 
-    def get_active_jobs(self, limit: int = 100) -> List[dict]:
+    def upsert_company(self, company: Company) -> None:
         with self._get_conn() as conn:
-            cur = conn.cursor()
-            cur.execute("""
-            SELECT * FROM jobs 
-            WHERE is_engineering = 1 AND is_active = 1
-            ORDER BY posted_at DESC 
-            LIMIT ?;
-            """, (limit,))
-            rows = cur.fetchall()
-            return [dict(r) for r in rows]
+            conn.execute(
+                """
+                INSERT INTO companies (id, name, ats_provider, ats_identifier, careers_url, priority, enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    ats_provider = excluded.ats_provider,
+                    ats_identifier = excluded.ats_identifier,
+                    careers_url = excluded.careers_url,
+                    priority = excluded.priority,
+                    enabled = excluded.enabled
+                """,
+                (company.id, company.name, company.ats_provider, company.ats_identifier, company.careers_url, company.priority, 1 if company.enabled else 0),
+            )
 
-    def export_catalog_json(self, output_path: str = "data/catalog.json"):
-        """Exports the active catalog to a static JSON file for zero-cost edge distribution."""
-        jobs = self.get_active_jobs(limit=5000)
-        p = Path(output_path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        with open(p, "w", encoding="utf-8") as f:
-            json.dump({
-                "generated_at": datetime.utcnow().isoformat(),
-                "total_jobs": len(jobs),
-                "jobs": jobs
-            }, f, indent=2)
+    def save_processed_jobs(self, jobs: List[ProcessedJob]) -> int:
+        if not jobs:
+            return 0
+        new_count = 0
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        with self._get_conn() as conn:
+            for job in jobs:
+                cursor = conn.execute("SELECT id FROM jobs WHERE id = ?", (job.id,))
+                exists = cursor.fetchone() is not None
+
+                if exists:
+                    conn.execute(
+                        "UPDATE jobs SET last_seen_at = ?, is_active = 1 WHERE id = ?",
+                        (now_str, job.id),
+                    )
+                else:
+                    new_count += 1
+                    conn.execute(
+                        """
+                        INSERT INTO jobs (
+                            id, external_id, company_id, company_name, ats_provider,
+                            title, job_url, is_engineering, role_category, role_label,
+                            location_raw, city, work_mode, is_india,
+                            min_years, max_years, experience_level, skills,
+                            posted_at, age_hours, is_fresh_24h,
+                            first_seen_at, last_seen_at, is_active, summary
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            job.id,
+                            job.external_id,
+                            job.company_id,
+                            job.company_name,
+                            job.ats_provider,
+                            job.title,
+                            job.job_url,
+                            1 if job.is_engineering else 0,
+                            job.role_category.value,
+                            job.role_label,
+                            job.location_raw,
+                            job.city,
+                            job.work_mode.value,
+                            1 if job.is_india else 0,
+                            job.min_years,
+                            job.max_years,
+                            job.experience_level,
+                            json.dumps(job.skills),
+                            job.posted_at.isoformat() if job.posted_at else None,
+                            job.age_hours,
+                            1 if job.is_fresh_24h else 0,
+                            job.first_seen_at.isoformat(),
+                            job.last_seen_at.isoformat(),
+                            1,
+                            job.summary,
+                        ),
+                    )
+        return new_count
+
+    def get_filtered_jobs(
+        self,
+        role: Optional[str] = None,
+        experience_level: Optional[str] = None,
+        city: Optional[str] = None,
+        work_mode: Optional[str] = None,
+        fresh_only: bool = False,
+        search_term: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM jobs WHERE is_active = 1 AND is_engineering = 1"
+        params: List[Any] = []
+
+        if fresh_only:
+            query += " AND is_fresh_24h = 1"
+
+        if role and role != "All":
+            query += " AND role_category = ?"
+            params.append(role)
+
+        if experience_level and experience_level != "All":
+            query += " AND experience_level = ?"
+            params.append(experience_level)
+
+        if city and city != "All":
+            query += " AND city = ?"
+            params.append(city)
+
+        if work_mode and work_mode != "All":
+            query += " AND work_mode = ?"
+            params.append(work_mode)
+
+        if search_term:
+            term = f"%{search_term.lower()}%"
+            query += " AND (LOWER(title) LIKE ? OR LOWER(company_name) LIKE ? OR LOWER(skills) LIKE ?)"
+            params.extend([term, term, term])
+
+        query += " ORDER BY is_fresh_24h DESC, posted_at DESC NULLS LAST LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        with self._get_conn() as conn:
+            cursor = conn.execute(query, params)
+            rows = cursor.fetchall()
+            results = []
+            for r in rows:
+                d = dict(r)
+                d["skills"] = json.loads(d["skills"]) if d.get("skills") else []
+                results.append(d)
+            return results
+
+    def get_stats(self) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            total_jobs = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_engineering = 1").fetchone()[0]
+            fresh_24h = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_fresh_24h = 1 AND is_engineering = 1").fetchone()[0]
+            companies_count = conn.execute("SELECT COUNT(*) FROM companies WHERE enabled = 1").fetchone()[0]
+            return {
+                "total_engineering_jobs": total_jobs,
+                "fresh_24h_jobs": fresh_24h,
+                "active_companies": companies_count,
+            }

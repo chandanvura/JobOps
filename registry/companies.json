@@ -4,49 +4,179 @@
     "name": "Razorpay",
     "ats_provider": "greenhouse",
     "ats_identifier": "razorpaysoftwareprivatelimited",
-    "careers_url": "https://razorpay.com/jobs",
+    "careers_url": "https://razorpay.com/jobs/",
     "priority": 1,
-    "enabled": true,
-    "tags": ["fintech", "unicorn"]
+    "enabled": true
   },
   {
-    "id": "postman",
-    "name": "Postman",
+    "id": "fivetran",
+    "name": "Fivetran",
     "ats_provider": "greenhouse",
-    "ats_identifier": "postman",
-    "careers_url": "https://www.postman.com/company/careers/",
+    "ats_identifier": "fivetran",
+    "careers_url": "https://www.fivetran.com/careers",
     "priority": 1,
-    "enabled": true,
-    "tags": ["developer-tools", "saas"]
+    "enabled": true
   },
   {
-    "id": "atlassian",
-    "name": "Atlassian",
-    "ats_provider": "lever",
-    "ats_identifier": "atlassian",
-    "careers_url": "https://www.atlassian.com/company/careers",
-    "priority": 1,
-    "enabled": true,
-    "tags": ["enterprise", "global"]
-  },
-  {
-    "id": "swiggy",
-    "name": "Swiggy",
+    "id": "cockroachlabs",
+    "name": "Cockroach Labs",
     "ats_provider": "greenhouse",
-    "ats_identifier": "swiggy",
-    "careers_url": "https://careers.swiggy.com",
+    "ats_identifier": "cockroachlabs",
+    "careers_url": "https://www.cockroachlabs.com/careers/",
     "priority": 1,
-    "enabled": true,
-    "tags": ["foodtech", "consumer"]
+    "enabled": true
   },
   {
-    "id": "groww",
-    "name": "Groww",
-    "ats_provider": "lever",
-    "ats_identifier": "groww",
-    "careers_url": "https://groww.in/careers",
+    "id": "coupang",
+    "name": "Coupang",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "coupang",
+    "careers_url": "https://www.coupang.jobs/",
     "priority": 1,
-    "enabled": true,
-    "tags": ["fintech", "wealthtech"]
+    "enabled": true
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "figma",
+    "careers_url": "https://www.figma.com/careers/",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "purestorage",
+    "name": "Pure Storage",
+    "ats_provider": "greenhouse",
+    "ats_identifier": "purestorage",
+    "careers_url": "https://www.purestorage.com/company/careers.html",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "hevodata",
+    "name": "Hevo Data",
+    "ats_provider": "lever",
+    "ats_identifier": "hevodata",
+    "careers_url": "https://hevodata.com/careers/",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "zimperium",
+    "name": "Zimperium",
+    "ats_provider": "lever",
+    "ats_identifier": "zimperium",
+    "careers_url": "https://www.zimperium.com/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "jumpcloud",
+    "name": "JumpCloud",
+    "ats_provider": "lever",
+    "ats_identifier": "jumpcloud",
+    "careers_url": "https://jumpcloud.com/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "acceldata",
+    "name": "Acceldata",
+    "ats_provider": "lever",
+    "ats_identifier": "acceldata",
+    "careers_url": "https://www.acceldata.io/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "sarvam",
+    "name": "Sarvam AI",
+    "ats_provider": "ashby",
+    "ats_identifier": "sarvam",
+    "careers_url": "https://www.sarvam.ai/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "ema",
+    "name": "Ema",
+    "ats_provider": "ashby",
+    "ats_identifier": "ema",
+    "careers_url": "https://www.ema.co/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "ats_provider": "ashby",
+    "ats_identifier": "linear",
+    "careers_url": "https://linear.app/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "ats_provider": "ashby",
+    "ats_identifier": "openai",
+    "careers_url": "https://openai.com/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "retool",
+    "name": "Retool",
+    "ats_provider": "ashby",
+    "ats_identifier": "retool",
+    "careers_url": "https://retool.com/careers",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "bosch",
+    "name": "Bosch Group",
+    "ats_provider": "smartrecruiters",
+    "ats_identifier": "BoschGroup",
+    "careers_url": "https://www.bosch.in/careers/",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "servicenow",
+    "name": "ServiceNow",
+    "ats_provider": "smartrecruiters",
+    "ats_identifier": "ServiceNow",
+    "careers_url": "https://jobs.smartrecruiters.com/ServiceNow",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "sandisk",
+    "name": "Sandisk",
+    "ats_provider": "smartrecruiters",
+    "ats_identifier": "Sandisk",
+    "careers_url": "https://jobs.smartrecruiters.com/Sandisk",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "linkedin",
+    "name": "LinkedIn",
+    "ats_provider": "smartrecruiters",
+    "ats_identifier": "LinkedIn3",
+    "careers_url": "https://jobs.smartrecruiters.com/LinkedIn3",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "id": "adobe",
+    "name": "Adobe",
+    "ats_provider": "workday",
+    "ats_identifier": "adobe.wd5.myworkdayjobs.com|adobe|external_experienced",
+    "careers_url": "https://adobe.wd5.myworkdayjobs.com/adobe",
+    "priority": 1,
+    "enabled": true
   }
 ]

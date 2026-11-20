@@ -1,64 +1,62 @@
-"""
-Lever Public Postings API Adapter.
-Public endpoint: https://api.lever.co/v0/postings/{company}?mode=json
-"""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
+import httpx
 from engine.adapters.base import BaseATS
 from engine.models import Company, RawJob
 
 
 class LeverAdapter(BaseATS):
-    BASE_URL = "https://api.lever.co/v0/postings/{company}?mode=json"
+    provider_name = "lever"
 
-    async def fetch_jobs(self, company: Company) -> List[RawJob]:
-        url = self.BASE_URL.format(company=company.ats_identifier)
-        try:
-            resp = await self.client.get(url, timeout=15.0)
-            if resp.status_code != 200:
-                return []
-            items = resp.json()
-            if not isinstance(items, list):
-                return []
-        except Exception:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+        site_token = company.ats_identifier.strip()
+        url = f"https://api.lever.co/v0/postings/{site_token}?mode=json"
+
+        response = await client.get(url, timeout=20.0)
+        if response.status_code != 200:
             return []
 
-        jobs: List[RawJob] = []
+        postings = response.json()
+        if not isinstance(postings, list):
+            return []
 
-        for item in items:
-            ext_id = str(item.get("id"))
-            title = (item.get("text") or "").strip()
-            job_url = item.get("hostedUrl") or item.get("applyUrl") or ""
-            
-            categories = item.get("categories") or {}
-            loc_name = categories.get("location") or ""
-            commitment = categories.get("commitment") or ""
-            
-            # Plain text description
-            desc_plain = item.get("descriptionPlain") or ""
-            desc_html = item.get("description") or ""
+        results: List[RawJob] = []
 
-            # Created timestamp (in milliseconds epoch)
+        for item in postings:
+            job_id = str(item.get("id"))
+            title = item.get("text", "").strip()
+            if not title:
+                continue
+
+            cats = item.get("categories", {})
+            loc_name = cats.get("location", "") if isinstance(cats, dict) else ""
+
+            clean_desc = item.get("descriptionPlain", "")
+            if not clean_desc:
+                clean_desc = self.clean_html(item.get("description", ""))
+
+            # Handle createdAt (epoch ms)
             created_at_ms = item.get("createdAt")
-            posted_at = datetime.utcnow()
-            if created_at_ms:
-                try:
-                    posted_at = datetime.utcfromtimestamp(created_at_ms / 1000.0)
-                except Exception:
-                    pass
+            posted_at = None
+            if created_at_ms and isinstance(created_at_ms, (int, float)):
+                posted_at = datetime.fromtimestamp(created_at_ms / 1000.0, tz=timezone.utc)
 
-            jobs.append(RawJob(
-                external_id=ext_id,
-                company_id=company.id,
-                company_name=company.name,
-                ats_provider="lever",
-                title=title,
-                job_url=job_url,
-                location_raw=f"{loc_name} {commitment}".strip(),
-                description_html=desc_html,
-                description_text=desc_plain,
-                posted_at=posted_at,
-                raw_payload={"id": ext_id}
-            ))
+            job_url = item.get("hostedUrl") or f"https://jobs.lever.co/{site_token}/{job_id}"
 
-        return jobs
+            results.append(
+                RawJob(
+                    external_id=job_id,
+                    company_id=company.id,
+                    company_name=company.name,
+                    ats_provider=self.provider_name,
+                    title=title,
+                    job_url=job_url,
+                    location_raw=loc_name,
+                    description_text=clean_desc,
+                    description_html=item.get("description", ""),
+                    posted_at=posted_at,
+                    raw_payload={"categories": cats},
+                )
+            )
+
+        return results

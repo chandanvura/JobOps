@@ -1,70 +1,54 @@
-"""
-Greenhouse Public Boards API Adapter.
-Public endpoint: https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs?content=true
-"""
-from datetime import datetime
 from typing import List
-from dateutil import parser as dt_parser
-from selectolax.lexbor import LexborHTMLParser as HTMLParser
+import httpx
 from engine.adapters.base import BaseATS
+from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
 
 
 class GreenhouseAdapter(BaseATS):
-    BASE_URL = "https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true"
+    provider_name = "greenhouse"
 
-    async def fetch_jobs(self, company: Company) -> List[RawJob]:
-        url = self.BASE_URL.format(token=company.ats_identifier)
-        try:
-            resp = await self.client.get(url, timeout=15.0)
-            if resp.status_code != 200:
-                return []
-            data = resp.json()
-        except Exception:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+        board_token = company.ats_identifier.strip()
+        url = f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs?content=true"
+
+        response = await client.get(url, timeout=20.0)
+        if response.status_code != 200:
             return []
 
-        jobs: List[RawJob] = []
-        raw_jobs = data.get("jobs", [])
+        data = response.json()
+        jobs_list = data.get("jobs", [])
+        results: List[RawJob] = []
 
-        for item in raw_jobs:
-            ext_id = str(item.get("id"))
-            title = (item.get("title") or "").strip()
-            job_url = item.get("absolute_url") or ""
-            
-            # Location
-            loc_obj = item.get("location") or {}
-            loc_name = loc_obj.get("name") or ""
-            
-            # Content / description
-            content_html = item.get("content") or ""
-            text_desc = ""
-            if content_html:
-                tree = HTMLParser(content_html)
-                text_desc = tree.text(separator=" ").strip()
+        for item in jobs_list:
+            job_id = str(item.get("id"))
+            title = item.get("title", "").strip()
+            if not title:
+                continue
 
-            # Date parsing
-            updated_at_str = item.get("updated_at")
-            posted_at = None
-            if updated_at_str:
-                try:
-                    posted_at = dt_parser.parse(updated_at_str).replace(tzinfo=None)
-                except Exception:
-                    posted_at = datetime.utcnow()
-            else:
-                posted_at = datetime.utcnow()
+            loc_obj = item.get("location", {})
+            loc_name = loc_obj.get("name", "") if isinstance(loc_obj, dict) else str(loc_obj)
 
-            jobs.append(RawJob(
-                external_id=ext_id,
-                company_id=company.id,
-                company_name=company.name,
-                ats_provider="greenhouse",
-                title=title,
-                job_url=job_url,
-                location_raw=loc_name,
-                description_html=content_html,
-                description_text=text_desc,
-                posted_at=posted_at,
-                raw_payload={"id": ext_id}
-            ))
+            raw_desc = item.get("content", "")
+            clean_desc = self.clean_html(raw_desc)
 
-        return jobs
+            posted_at = parse_datetime(item.get("updated_at"))
+            job_url = item.get("absolute_url") or f"https://boards.greenhouse.io/{board_token}/jobs/{job_id}"
+
+            results.append(
+                RawJob(
+                    external_id=job_id,
+                    company_id=company.id,
+                    company_name=company.name,
+                    ats_provider=self.provider_name,
+                    title=title,
+                    job_url=job_url,
+                    location_raw=loc_name,
+                    description_text=clean_desc,
+                    description_html=raw_desc,
+                    posted_at=posted_at,
+                    raw_payload={"departments": item.get("departments", [])},
+                )
+            )
+
+        return results
