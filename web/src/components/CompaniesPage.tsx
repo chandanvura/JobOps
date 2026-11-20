@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Building2, Search, ExternalLink, Activity, Globe, ShieldCheck, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { sanitizeExternalUrl } from "../utils/jobUtils";
 
 export interface CompanyItem {
   id: string;
@@ -78,73 +79,93 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
   const getTierBadge = (tier: string) => {
     switch (tier) {
       case "Fortune 500":
-        return "bg-ivory-300 dark:bg-espresso-800 text-amber-900 dark:text-ivory-200 border-ivory-400 dark:border-sage-700 font-bold font-mono";
+        return "bg-amber-500/10 text-amber-500 border-amber-500/30 font-semibold font-mono";
       case "Global Tech":
-        return "bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800 font-semibold font-mono";
+        return "bg-purple-500/10 text-purple-500 border-purple-500/30 font-semibold font-mono";
       default:
-        return "bg-ivory-100 dark:bg-espresso-800 text-sage-800 dark:text-sage-300 border-sage-200 dark:border-sage-700 font-medium font-mono";
+        return "bg-brand-elevated text-brand-secondary border-brand-border font-medium font-mono";
     }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
       {/* Top Banner KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-espresso-900 p-5 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-ivory-200 dark:bg-espresso-800 border border-sage-200 dark:border-sage-700 flex items-center justify-center text-crimson-700 dark:text-ivory-300 flex-shrink-0">
-            <Building2 className="w-6 h-6" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-elevated border border-brand-border flex items-center justify-center text-brand-primary flex-shrink-0">
+            <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Total Employers</span>
-            <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{companies.length.toLocaleString()}</span>
-            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">Across Indian Tech Hubs</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-espresso-900 p-5 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-ivory-300 dark:bg-espresso-800 border border-ivory-400 dark:border-sage-700 flex items-center justify-center text-crimson-800 dark:text-ivory-200 flex-shrink-0">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Fortune 500 & Tech</span>
-            <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{stats.f500 + stats.globalTech}</span>
-            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">
-              {stats.f500} F500 · {stats.globalTech} Global Tech
+            <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
+              Direct Employers
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+              {companies.length.toLocaleString()}
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
+              100% Native ATS Endpoints
             </span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-espresso-900 p-5 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-300 flex-shrink-0">
-            <Activity className="w-6 h-6" />
+        <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-accent border border-brand-primary/40 flex items-center justify-center text-brand-primary flex-shrink-0">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Portal Health Rate</span>
-            <span className="font-serif text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+            <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
+              Enterprise & Global Tech
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+              {stats.f500 + stats.globalTech}
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
+              {stats.f500} F500 • {stats.globalTech} Global Leaders
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 flex-shrink-0">
+            <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div>
+            <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
+              Portal Health Rate
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-emerald-500">
               {companies.length > 0 ? `${Math.round((stats.healthy / companies.length) * 100)}%` : "100%"}
             </span>
-            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">HTTP 200 Live Status</span>
+            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
+              Active HTTP 200 Handshakes
+            </span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-espresso-900 p-5 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-crimson-50 dark:bg-crimson-950 border border-crimson-200 dark:border-crimson-900 flex items-center justify-center text-crimson-700 dark:text-ivory-300 flex-shrink-0">
-            <Globe className="w-6 h-6" />
+        <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-elevated border border-brand-border flex items-center justify-center text-brand-gold flex-shrink-0">
+            <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sage-600 dark:text-sage-400 block">Active Postings</span>
-            <span className="font-serif text-3xl font-bold text-espresso-950 dark:text-ivory-100">{stats.totalJobs.toLocaleString()}</span>
-            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400 block mt-0.5">Direct ATS Feeds</span>
+            <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
+              Active Postings
+            </span>
+            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+              {stats.totalJobs.toLocaleString()}
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
+              Strict 24h & Active Openings
+            </span>
           </div>
         </div>
       </div>
 
       {/* Filter & Controls Bar */}
-      <div className="bg-white dark:bg-espresso-900 p-4 sm:p-5 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm space-y-4 transition-colors">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm space-y-4 transition-colors">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
           {/* Search */}
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
             <input
               type="text"
               placeholder="Search employer by name or ATS slug..."
@@ -153,13 +174,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-ivory-50 dark:bg-espresso-950 border border-sage-200 dark:border-sage-800 text-espresso-900 dark:text-ivory-200 rounded-xl focus:outline-none focus:border-crimson-600 focus:bg-white dark:focus:bg-espresso-950 placeholder:text-sage-400 dark:placeholder:text-sage-500"
+              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-brand-elevated border border-brand-border text-brand-text rounded-xl focus:outline-none focus:border-brand-primary placeholder:text-brand-muted"
             />
           </div>
 
           <button
             onClick={onOpenAddModal}
-            className="w-full md:w-auto px-4 py-2 rounded-xl bg-crimson-700 hover:bg-crimson-800 text-ivory-100 text-xs font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full md:w-auto px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Register New Company ATS</span>
@@ -167,9 +188,9 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-sage-100 dark:border-sage-800 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-sage-500 dark:text-sage-400">Tier:</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2 border-t border-brand-border text-xs">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-medium text-brand-secondary">Tier:</span>
             {["all", "Fortune 500", "Global Tech", "Growth Tech"].map((tier) => (
               <button
                 key={tier}
@@ -179,8 +200,8 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-lg border transition-all ${
                   selectedTier === tier
-                    ? "bg-crimson-700 text-ivory-100 border-crimson-700 font-bold"
-                    : "bg-ivory-50 dark:bg-espresso-800 text-espresso-800 dark:text-sage-300 border-sage-200 dark:border-sage-700 hover:bg-ivory-100 dark:hover:bg-espresso-700"
+                    ? "bg-brand-primary text-white border-brand-primary font-semibold"
+                    : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text"
                 }`}
               >
                 {tier === "all" ? "All Tiers" : tier}
@@ -189,14 +210,14 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 ml-auto">
-            <span className="font-semibold text-sage-500 dark:text-sage-400">ATS Platform:</span>
+            <span className="font-medium text-brand-secondary">ATS:</span>
             <select
               value={selectedAts}
               onChange={(e) => {
                 setSelectedAts(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-2.5 py-1 rounded-lg border border-sage-200 dark:border-sage-700 bg-ivory-50 dark:bg-espresso-800 text-espresso-800 dark:text-ivory-200 font-medium focus:outline-none focus:border-crimson-600"
+              className="px-2.5 py-1 rounded-lg border border-brand-border bg-brand-elevated text-brand-text font-medium focus:outline-none focus:border-brand-primary text-xs"
             >
               <option value="all">All Platforms</option>
               <option value="greenhouse">Greenhouse</option>
@@ -204,108 +225,113 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
               <option value="ashby">Ashby</option>
               <option value="lever">Lever</option>
               <option value="smartrecruiters">SmartRecruiters</option>
-              <option value="custom">Custom Portal</option>
+              <option value="eightfold">Eightfold</option>
+              <option value="darwinbox">Darwinbox</option>
+              <option value="phenom">Phenom</option>
+              <option value="amazon">Amazon Jobs</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* Companies Directory Table */}
-      <div className="bg-white dark:bg-espresso-900 rounded-2xl border border-sage-200 dark:border-sage-800 shadow-sm overflow-hidden transition-colors">
+      <div className="bg-brand-surface rounded-2xl border border-brand-border shadow-sm overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-ivory-100/90 dark:bg-espresso-800/90 border-b border-sage-200 dark:border-sage-800 text-sage-700 dark:text-sage-300 uppercase tracking-wider font-semibold font-serif">
+            <thead className="bg-brand-elevated/70 border-b border-brand-border text-brand-secondary uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3.5 px-4">Company</th>
-                <th className="py-3.5 px-4">Tier & Priority</th>
-                <th className="py-3.5 px-4">ATS Feed & Slug</th>
-                <th className="py-3.5 px-4">Indian Hubs</th>
-                <th className="py-3.5 px-4">Portal Health</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3 px-4">Company</th>
+                <th className="py-3 px-4">Tier & Priority</th>
+                <th className="py-3 px-4">ATS Feed & Slug</th>
+                <th className="py-3 px-4">Indian Hubs</th>
+                <th className="py-3 px-4">Portal Health</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sage-100 dark:divide-sage-800">
+            <tbody className="divide-y divide-brand-border">
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-sage-500 dark:text-sage-400">
+                  <td colSpan={6} className="py-12 text-center text-brand-muted">
                     No employers match the current filter criteria.
                   </td>
                 </tr>
               ) : (
                 paginated.map((comp) => {
                   const isProbing = probingId === comp.id;
+                  const safeCareersUrl = sanitizeExternalUrl(comp.careers_url);
+
                   return (
-                    <tr key={comp.id} className="hover:bg-ivory-50/60 dark:hover:bg-espresso-800/50 transition-colors">
-                      <td className="py-3.5 px-4">
+                    <tr key={comp.id} className="hover:bg-brand-elevated/40 transition-colors">
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-ivory-300 dark:bg-espresso-800 border border-ivory-400/60 dark:border-sage-700 flex items-center justify-center font-serif font-bold text-crimson-800 dark:text-ivory-300 text-xs">
+                          <div className="w-8 h-8 rounded-lg bg-brand-elevated border border-brand-border flex items-center justify-center font-bold text-brand-text text-xs flex-shrink-0">
                             {comp.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="font-serif font-bold text-espresso-950 dark:text-ivory-100 block leading-tight">{comp.name}</span>
-                            <span className="text-[11px] font-mono text-sage-500 dark:text-sage-400">~{comp.jobs_found} Indian positions</span>
+                            <span className="font-semibold text-brand-text block leading-tight">{comp.name}</span>
+                            <span className="text-[11px] font-mono text-brand-muted">~{comp.jobs_found} Indian positions</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3 px-4">
                         <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full border ${getTierBadge(comp.tier)}`}>
                           {comp.tier}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-semibold text-espresso-800 dark:text-ivory-300 uppercase">{comp.ats_provider}</span>
-                          <span className="text-[10px] text-sage-500 dark:text-sage-400 font-mono">({comp.ats_identifier})</span>
+                          <span className="text-[11px] font-semibold text-brand-text uppercase">{comp.ats_provider}</span>
+                          <span className="text-[10px] text-brand-muted font-mono">({comp.ats_identifier})</span>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
                           {comp.indian_hubs.map((hub) => (
-                            <span key={hub} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-ivory-100 dark:bg-espresso-800 text-sage-700 dark:text-sage-300 border border-sage-200/60 dark:border-sage-700">
+                            <span key={hub} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-elevated text-brand-secondary border border-brand-border">
                               {hub}
                             </span>
                           ))}
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                           </span>
-                          <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Healthy</span>
-                          <span className="text-[10px] text-sage-500 dark:text-sage-400 font-mono">({comp.response_time_ms}ms)</span>
+                          <span className="text-[11px] font-medium text-emerald-500">Healthy</span>
+                          <span className="text-[10px] text-brand-muted font-mono">({comp.response_time_ms}ms)</span>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => probeHealth(comp.id)}
                             disabled={isProbing}
-                            className="p-1.5 rounded-lg text-sage-500 hover:text-crimson-700 dark:hover:text-ivory-300 hover:bg-ivory-100 dark:hover:bg-espresso-800 transition-colors"
-                            title="Probe live portal health"
+                            className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-elevated transition-colors"
+                            title="Probe live portal health handshake"
                           >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isProbing ? "animate-spin text-crimson-700" : ""}`} />
+                            <RefreshCw className={`w-3.5 h-3.5 ${isProbing ? "animate-spin text-brand-primary" : ""}`} />
                           </button>
 
                           <button
                             onClick={() => onSelectCompany(comp.name)}
-                            className="px-2.5 py-1 rounded-lg bg-crimson-50 dark:bg-crimson-950/80 hover:bg-crimson-100 dark:hover:bg-crimson-900 text-crimson-700 dark:text-ivory-300 font-semibold text-[11px] transition-colors border border-crimson-200/60 dark:border-crimson-900"
+                            className="px-2.5 py-1 rounded-lg bg-brand-accent hover:bg-brand-primary/20 text-brand-text font-semibold text-[11px] transition-colors border border-brand-primary/40"
                           >
                             View Jobs
                           </button>
 
-                          {comp.careers_url && (
+                          {safeCareersUrl !== "#" && (
                             <a
-                              href={comp.careers_url}
+                              href={safeCareersUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg text-sage-500 hover:text-espresso-950 dark:hover:text-white hover:bg-ivory-100 dark:hover:bg-espresso-800 transition-colors"
+                              className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-elevated transition-colors"
                               title="Visit official careers portal"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
@@ -323,26 +349,26 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-sage-100 dark:border-sage-800 flex items-center justify-between text-xs text-sage-600 dark:text-sage-400">
+          <div className="p-4 border-t border-brand-border flex items-center justify-between text-xs text-brand-secondary">
             <span>
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, filteredCompanies.length)} of {filteredCompanies.length} companies
+              {Math.min(currentPage * pageSize, filteredCompanies.length)} of {filteredCompanies.length} employers
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded-lg border border-sage-200 dark:border-sage-700 hover:bg-ivory-50 dark:hover:bg-espresso-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-brand-border hover:bg-brand-elevated disabled:opacity-40 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-bold text-espresso-900 dark:text-white font-mono">
+              <span className="font-semibold text-brand-text font-mono">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded-lg border border-sage-200 dark:border-sage-700 hover:bg-ivory-50 dark:hover:bg-espresso-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-brand-border hover:bg-brand-elevated disabled:opacity-40 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

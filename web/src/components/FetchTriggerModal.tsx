@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { X, RefreshCw, PlusCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { X, RefreshCw, PlusCircle, CheckCircle2, ArrowRight, AlertTriangle } from "lucide-react";
+import { cleanJobText } from "../utils/jobUtils";
 
 interface FetchTriggerModalProps {
   isOpen: boolean;
@@ -7,6 +8,21 @@ interface FetchTriggerModalProps {
   onTriggerRefresh: () => void;
   isFetching: boolean;
 }
+
+const SUPPORTED_ATS = [
+  { id: "greenhouse", label: "Greenhouse" },
+  { id: "lever", label: "Lever" },
+  { id: "ashby", label: "Ashby" },
+  { id: "smartrecruiters", label: "SmartRecruiters" },
+  { id: "workday", label: "Workday" },
+  { id: "eightfold", label: "Eightfold" },
+  { id: "darwinbox", label: "Darwinbox" },
+  { id: "phenom", label: "Phenom People" },
+  { id: "amazon", label: "Amazon Jobs" },
+  { id: "jobvite", label: "Jobvite" },
+  { id: "recruitee", label: "Recruitee" },
+  { id: "workable", label: "Workable" },
+];
 
 export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
   isOpen,
@@ -17,54 +33,114 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
   const [atsProvider, setAtsProvider] = useState("greenhouse");
   const [atsIdentifier, setAtsIdentifier] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Handle Escape key to close modal
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const handleAddCompany = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!atsIdentifier || !companyName) return;
+    setErrorMessage(null);
+    setStatusMessage(null);
 
-    setStatusMessage(`Added "${companyName}" (${atsProvider}) to discovery registry. It will be collected in the next scheduled shard!`);
+    const cleanCo = cleanJobText(companyName).slice(0, 80).trim();
+    const cleanId = atsIdentifier.trim();
+
+    if (!cleanCo) {
+      setErrorMessage("Please enter a valid company name.");
+      return;
+    }
+
+    if (!cleanId) {
+      setErrorMessage("Please enter an ATS identifier or company slug.");
+      return;
+    }
+
+    // SSRF & Path Traversal Prevention: Strict slug validation ^[a-zA-Z0-9_-]{1,64}$
+    const slugRegex = /^[a-zA-Z0-9_-]{1,64}$/;
+    if (!slugRegex.test(cleanId)) {
+      setErrorMessage(
+        "Invalid identifier. ATS slug must contain only alphanumeric characters, hyphens, and underscores (1-64 characters). No slashes, dots, or query strings allowed."
+      );
+      return;
+    }
+
+    // Store in custom discovery registry
+    try {
+      const stored = localStorage.getItem("jobops_custom_ats");
+      const list = stored ? JSON.parse(stored) : [];
+      list.push({
+        company: cleanCo,
+        provider: atsProvider,
+        identifier: cleanId,
+        submittedAt: new Date().toISOString(),
+      });
+      localStorage.setItem("jobops_custom_ats", JSON.stringify(list));
+    } catch {}
+
+    setStatusMessage(
+      `Successfully added "${cleanCo}" (${atsProvider}: ${cleanId}) to community ingestion queue! It will be verified and collected in the next scheduled cycle.`
+    );
     setCompanyName("");
     setAtsIdentifier("");
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-espresso-950/70 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-espresso-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-sage-200 dark:border-sage-800 animate-in fade-in zoom-in-95 duration-150 transition-colors">
-        <div className="flex items-center justify-between pb-4 border-b border-sage-100 dark:border-sage-800 mb-5">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Live Ingestion & ATS Trigger"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div className="bg-brand-surface rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-brand-border animate-in fade-in zoom-in-95 duration-150 transition-colors">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-brand-border mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-crimson-50 dark:bg-crimson-950 border border-crimson-200 dark:border-crimson-800 flex items-center justify-center text-crimson-700 dark:text-ivory-300">
+            <div className="w-9 h-9 rounded-xl bg-brand-accent border border-brand-primary/40 flex items-center justify-center text-brand-primary">
               <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             </div>
             <div>
-              <h2 className="font-serif text-lg font-bold text-espresso-950 dark:text-ivory-100">Live Ingestion & ATS Trigger</h2>
-              <p className="text-xs text-sage-600 dark:text-sage-400">Zero-cost community engineering radar</p>
+              <h2 className="font-serif text-base sm:text-lg font-bold text-brand-text">
+                Live Ingestion & ATS Trigger
+              </h2>
+              <p className="text-xs text-brand-secondary">Autonomous Direct ATS Radar Engine</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-sage-400 hover:text-crimson-800 dark:hover:text-white hover:bg-ivory-100 dark:hover:bg-espresso-800"
+            className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-elevated transition-colors"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Action 1: On-Demand Fetch */}
-        <div className="bg-ivory-50 dark:bg-espresso-800/60 rounded-2xl p-4 border border-sage-200/80 dark:border-sage-700 mb-5">
+        <div className="bg-brand-elevated rounded-2xl p-4 border border-brand-border mb-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
-              <h3 className="font-serif text-sm font-bold text-espresso-950 dark:text-ivory-100">Trigger Real-Time Ingestion</h3>
-              <p className="text-xs text-sage-600 dark:text-sage-400 mt-0.5">
-                Probes all 757 configured ATS endpoints for new jobs posted in the strict 24-hour freshness window.
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-text">
+                Trigger Real-Time Ingestion
+              </h3>
+              <p className="text-xs text-brand-secondary mt-1">
+                Scans 757 verified employer ATS endpoints for new engineering jobs posted in the strict 24-hour freshness window.
               </p>
             </div>
           </div>
           <button
             onClick={onTriggerRefresh}
             disabled={isFetching}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-crimson-700 hover:bg-crimson-800 disabled:bg-sage-400 text-ivory-100 font-bold text-xs shadow-md shadow-crimson-900/10 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition-all"
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             <span>{isFetching ? "Scanning ATS Endpoints..." : "Fetch Latest 24h Jobs Now"}</span>
@@ -73,66 +149,81 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
 
         {/* Action 2: Add New ATS Source */}
         <div>
-          <h3 className="font-serif text-sm font-bold text-espresso-950 dark:text-ivory-100 mb-1 flex items-center gap-1.5">
-            <PlusCircle className="w-4 h-4 text-crimson-700 dark:text-ivory-400" />
-            <span>Submit a New Company ATS Source</span>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-text mb-1 flex items-center gap-1.5">
+            <PlusCircle className="w-4 h-4 text-brand-primary" />
+            <span>Submit a New Employer ATS Endpoint</span>
           </h3>
-          <p className="text-xs text-sage-600 dark:text-sage-400 mb-3">
-            Found an employer using Greenhouse, Lever, Ashby, or Workday? Add their identifier to the public radar:
+          <p className="text-xs text-brand-secondary mb-3">
+            Know a tech company with a direct ATS board? Add their slug to the radar:
           </p>
 
           <form onSubmit={handleAddCompany} className="space-y-3">
             <div>
-              <label className="text-[11px] font-mono font-semibold text-espresso-800 dark:text-ivory-300 block mb-1">Company Name</label>
+              <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
+                Company Name
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Swiggy, Cred, Zerodha"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-sage-200 dark:border-sage-700 focus:outline-none focus:border-crimson-600 bg-ivory-50 dark:bg-espresso-950 text-espresso-900 dark:text-white placeholder:text-sage-400 dark:placeholder:text-sage-500"
+                maxLength={80}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-brand-border focus:outline-none focus:border-brand-primary bg-brand-elevated text-brand-text placeholder:text-brand-muted"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-mono font-semibold text-espresso-800 dark:text-ivory-300 block mb-1">ATS Platform</label>
+                <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
+                  ATS Platform
+                </label>
                 <select
                   value={atsProvider}
                   onChange={(e) => setAtsProvider(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-sage-200 dark:border-sage-700 focus:outline-none focus:border-crimson-600 bg-ivory-50 dark:bg-espresso-950 text-espresso-900 dark:text-white font-medium"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-brand-border focus:outline-none focus:border-brand-primary bg-brand-elevated text-brand-text font-medium"
                 >
-                  <option value="greenhouse">Greenhouse</option>
-                  <option value="lever">Lever</option>
-                  <option value="ashby">Ashby</option>
-                  <option value="smartrecruiters">SmartRecruiters</option>
-                  <option value="workday">Workday</option>
+                  {SUPPORTED_ATS.map((ats) => (
+                    <option key={ats.id} value={ats.id}>
+                      {ats.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-mono font-semibold text-espresso-800 dark:text-ivory-300 block mb-1">ATS Identifier / Slug</label>
+                <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
+                  ATS Slug / Identifier
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. razorpay, linear"
                   value={atsIdentifier}
                   onChange={(e) => setAtsIdentifier(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-sage-200 dark:border-sage-700 focus:outline-none focus:border-crimson-600 bg-ivory-50 dark:bg-espresso-950 text-espresso-900 dark:text-white placeholder:text-sage-400 dark:placeholder:text-sage-500"
+                  maxLength={64}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-brand-border focus:outline-none focus:border-brand-primary bg-brand-elevated text-brand-text placeholder:text-brand-muted font-mono"
                 />
               </div>
             </div>
 
+            {errorMessage && (
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-rose-500 text-xs">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-xl bg-crimson-700 hover:bg-crimson-800 text-ivory-100 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2.5 px-4 rounded-xl bg-brand-elevated hover:bg-brand-surface text-brand-text border border-brand-border font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <span>Add to Ingestion Registry</span>
+              <span>Add to Ingestion Queue</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
 
           {statusMessage && (
-            <div className="mt-3 p-3 bg-ivory-200 dark:bg-espresso-800 border border-ivory-400 dark:border-sage-700 rounded-xl flex items-center gap-2 text-espresso-900 dark:text-ivory-200 text-xs">
-              <CheckCircle2 className="w-4 h-4 text-crimson-700 dark:text-ivory-400 flex-shrink-0" />
+            <div className="mt-3 p-3 bg-brand-elevated border border-brand-border rounded-xl flex items-start gap-2 text-brand-text text-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
               <span>{statusMessage}</span>
             </div>
           )}

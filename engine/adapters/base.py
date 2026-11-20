@@ -17,15 +17,21 @@ class BaseATS(ABC):
 
     @staticmethod
     def clean_html(html_text: str) -> str:
-        """Strips HTML tags and normalizes whitespace."""
+        """Strips HTML tags and normalizes whitespace, properly decoding entities."""
         if not html_text:
             return ""
+        import html as html_lib
+        # Recursively unescape to handle double-encoded entities like &amp;lt;div...
+        text = html_lib.unescape(html_text)
+        if "&amp;" in text or "&lt;" in text or "&gt;" in text or "&quot;" in text:
+            text = html_lib.unescape(text)
+
         try:
             from selectolax.parser import HTMLParser
-            tree = HTMLParser(html_text)
-            text = tree.text(separator=" ", strip=True)
-            return re.sub(r"\s+", " ", text).strip()
+            tree = HTMLParser(text)
+            clean = tree.text(separator=" ", strip=True)
+            return re.sub(r"\s+", " ", clean).strip()
         except Exception:
             # Fallback regex
-            clean = re.sub(r"<[^>]+>", " ", html_text)
+            clean = re.sub(r"<[^>]+>", " ", text)
             return re.sub(r"\s+", " ", clean).strip()

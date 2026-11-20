@@ -3,33 +3,54 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #fcf9f2;
-    color: #1d1915;
+  :root {
+    --bg-main: #FBF8F4;
+    --surface-primary: #FFFFFF;
+    --surface-elevated: #F5EFE6;
+    --text-primary: #1D1915;
+    --text-secondary: #5E564D;
+    --text-muted: #8C8276;
+    --border-color: #E2D8CC;
+    --action-primary: #A61921;
+    --action-hover: #8E121B;
+    --accent-bg: #FDF2F2;
+    --highlight-gold: #B39542;
   }
 
-  .dark body {
-    background-color: #13100d;
-    color: #f7f1e5;
+  .dark {
+    --bg-main: #15120F;
+    --surface-primary: #211C18;
+    --surface-elevated: #28221C;
+    --text-primary: #F4EEE5;
+    --text-secondary: #B9B0A5;
+    --text-muted: #978B7B;
+    --border-color: #423A31;
+    --action-primary: #A61921;
+    --action-hover: #BD252D;
+    --accent-bg: #321416;
+    --highlight-gold: #D1B56A;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
   }
 }
 
-/* Editorial custom scrollbar */
+/* Custom refined scrollbar matching the token palette */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f7f1e5;
-}
-.dark ::-webkit-scrollbar-track {
-  background: #1d1915;
+  background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: #a5a79b;
+  background: var(--border-color);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #790b13;
+  background: var(--action-primary);
 }

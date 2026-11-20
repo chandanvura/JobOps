@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Job, FilterState } from "./types/job";
 import { Navbar } from "./components/Navbar";
 import { FilterSidebar } from "./components/FilterSidebar";
@@ -10,21 +10,76 @@ import { CompaniesPage, CompanyItem } from "./components/CompaniesPage";
 import { useDarkMode } from "./hooks/useDarkMode";
 import { Search, Filter, ChevronLeft, ChevronRight, Zap, AlertCircle } from "lucide-react";
 
+const ALLOWED_ROLES = [
+  "all",
+  "backend",
+  "frontend",
+  "fullstack",
+  "devops_sre",
+  "ai_ml",
+  "data_engineering",
+  "mobile",
+  "qa_sdet",
+  "security",
+  "systems_embedded",
+  "software_general",
+];
+
+const ALLOWED_EXPERIENCES = [
+  "All",
+  "Fresher / 0-1 yr",
+  "1-3 yrs",
+  "3-5 yrs",
+  "5+ yrs",
+];
+
+const ALLOWED_MODES = ["all", "remote", "hybrid", "onsite"];
+
 export const App: React.FC = () => {
   const { isDark, toggleDarkMode } = useDarkMode();
-  const [currentTab, setCurrentTab] = useState<"jobs" | "companies">("jobs");
+
+  // Parse Initial URL State
+  const initialUrlParams = useMemo(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const q = (sp.get("q") || "").slice(0, 100).replace(/[<>]/g, "");
+      const role = ALLOWED_ROLES.includes(sp.get("role") || "") ? sp.get("role")! : "all";
+      const exp = ALLOWED_EXPERIENCES.includes(sp.get("exp") || "") ? sp.get("exp")! : "All";
+      const city = (sp.get("city") || "All").slice(0, 40).replace(/[<>]/g, "");
+      const mode = ALLOWED_MODES.includes(sp.get("mode") || "") ? sp.get("mode")! : "all";
+      const fresh = sp.get("fresh") === "true" || sp.get("fresh") === "1";
+      const tab: "jobs" | "companies" = sp.get("tab") === "companies" ? "companies" : "jobs";
+      const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
+      const jobId = sp.get("job") || null;
+      return { q, role, exp, city, mode, fresh, tab, page, jobId };
+    } catch {
+      return {
+        q: "",
+        role: "all",
+        exp: "All",
+        city: "All",
+        mode: "all",
+        fresh: false,
+        tab: "jobs" as const,
+        page: 1,
+        jobId: null,
+      };
+    }
+  }, []);
+
+  const [currentTab, setCurrentTab] = useState<"jobs" | "companies">(initialUrlParams.tab);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<FilterState>({
-    searchQuery: "",
-    roleCategory: "all",
-    experienceLevel: "All",
-    city: "All",
-    workMode: "all",
-    freshOnly: false,
+    searchQuery: initialUrlParams.q,
+    roleCategory: initialUrlParams.role,
+    experienceLevel: initialUrlParams.exp,
+    city: initialUrlParams.city,
+    workMode: initialUrlParams.mode,
+    freshOnly: initialUrlParams.fresh,
     selectedSkills: [],
   });
 
@@ -41,11 +96,52 @@ export const App: React.FC = () => {
   const [isFetchModalOpen, setIsFetchModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
-
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialUrlParams.page);
   const pageSize = 24;
 
-  // Fast Stale-While-Revalidate data loader with zero-latency sessionStorage hydration
+  // Sync state back to URL parameters safely
+  const updateUrlState = useCallback(() => {
+    try {
+      const params = new URLSearchParams();
+      if (currentTab === "companies") {
+        params.set("tab", "companies");
+      }
+      if (filters.searchQuery.trim()) {
+        params.set("q", filters.searchQuery.trim());
+      }
+      if (filters.roleCategory !== "all") {
+        params.set("role", filters.roleCategory);
+      }
+      if (filters.experienceLevel !== "All") {
+        params.set("exp", filters.experienceLevel);
+      }
+      if (filters.city !== "All") {
+        params.set("city", filters.city);
+      }
+      if (filters.workMode !== "all") {
+        params.set("mode", filters.workMode);
+      }
+      if (filters.freshOnly) {
+        params.set("fresh", "true");
+      }
+      if (currentPage > 1) {
+        params.set("page", String(currentPage));
+      }
+      if (selectedJob) {
+        params.set("job", selectedJob.id);
+      }
+
+      const queryString = params.toString();
+      const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    } catch {}
+  }, [currentTab, filters, currentPage, selectedJob]);
+
+  useEffect(() => {
+    updateUrlState();
+  }, [updateUrlState]);
+
+  // Fast Stale-While-Revalidate data loader with zero-latency hydration
   useEffect(() => {
     try {
       const cachedJobsStr = sessionStorage.getItem("jobops_cached_jobs");
@@ -66,9 +162,8 @@ export const App: React.FC = () => {
     } catch {}
 
     const loadData = async () => {
-      // Candidates for jobs.json and companies.json
       const candidatePaths = [
-        "./", // Relative path (works for subpath like /JobOps/)
+        "./",
         import.meta.env.BASE_URL || "./",
         "/JobOps/",
         "/",
@@ -111,6 +206,12 @@ export const App: React.FC = () => {
         try {
           sessionStorage.setItem("jobops_cached_jobs", JSON.stringify(loadedJobs));
         } catch {}
+
+        // Check if a deep-linked job_id was in URL
+        if (initialUrlParams.jobId) {
+          const match = loadedJobs.find((j) => j.id === initialUrlParams.jobId);
+          if (match) setSelectedJob(match);
+        }
       } else if (!sessionStorage.getItem("jobops_cached_jobs")) {
         setError("Could not load jobs catalog. Check connection or reload.");
       }
@@ -126,7 +227,7 @@ export const App: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [initialUrlParams.jobId]);
 
   const toggleSaveJob = (job: Job) => {
     setSavedJobIds((prev) => {
@@ -164,6 +265,7 @@ export const App: React.FC = () => {
       selectedSkills: [],
     }));
     setCurrentTab("jobs");
+    setCurrentPage(1);
   };
 
   // Role Counts & City Counts Aggregations
@@ -233,7 +335,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-ivory-100 dark:bg-espresso-950 text-espresso-900 dark:text-ivory-200 transition-colors">
+    <div className="min-h-screen flex flex-col bg-brand-bg text-brand-text transition-colors">
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -252,10 +354,10 @@ export const App: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-espresso-900 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center gap-3 text-xs">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-700" />
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center gap-3 text-xs">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <div>
-              <p className="font-bold">Catalog notice</p>
+              <p className="font-bold">Catalog Notice</p>
               <p>{error}</p>
             </div>
           </div>
@@ -272,13 +374,13 @@ export const App: React.FC = () => {
             {/* Mobile Search Bar */}
             <div className="mb-4 md:hidden">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sage-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
                 <input
                   type="text"
                   placeholder="Search by title, company, or skills..."
                   value={filters.searchQuery}
                   onChange={(e) => setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-espresso-900 border border-sage-200 dark:border-sage-800 rounded-xl focus:outline-none focus:border-crimson-600 shadow-sm text-espresso-900 dark:text-ivory-200"
+                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-brand-surface border border-brand-border rounded-xl focus:outline-none focus:border-brand-primary shadow-sm text-brand-text placeholder:text-brand-muted"
                 />
               </div>
             </div>
@@ -293,19 +395,20 @@ export const App: React.FC = () => {
               />
 
               <section className="flex-1 w-full min-w-0">
-                <div className="bg-white dark:bg-espresso-900 p-4 rounded-2xl border border-sage-200 dark:border-sage-800 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="font-serif text-base font-bold text-espresso-950 dark:text-ivory-100">
+                {/* Results Header Bar */}
+                <div className="bg-brand-surface p-4 rounded-2xl border border-brand-border mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm sm:text-base font-bold text-brand-text">
                       {filteredJobs.length.toLocaleString()} Openings Verified
                     </span>
                     {filters.freshOnly && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-crimson-50 dark:bg-crimson-950 text-crimson-700 dark:text-ivory-300 border border-crimson-200 dark:border-crimson-800">
-                        <Zap className="w-3 h-3 fill-crimson-700 dark:fill-ivory-300 text-crimson-700 dark:text-ivory-300" />
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-accent text-brand-text border border-brand-primary/40">
+                        <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
                         <span>24h Ultra-Fresh</span>
                       </span>
                     )}
                     {filters.searchQuery && (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-ivory-200 dark:bg-espresso-800 text-crimson-800 dark:text-ivory-300 font-semibold border border-ivory-300 dark:border-sage-700">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-brand-elevated text-brand-text border border-brand-border">
                         &ldquo;{filters.searchQuery}&rdquo;
                       </span>
                     )}
@@ -314,10 +417,10 @@ export const App: React.FC = () => {
                   <div className="flex items-center gap-2 text-xs">
                     <button
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
-                      className={`px-3 py-1.5 rounded-lg border font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all ${
                         filters.freshOnly
-                          ? "bg-crimson-700 text-ivory-100 border-crimson-700 shadow-sm"
-                          : "bg-ivory-50 dark:bg-espresso-800 text-espresso-800 dark:text-sage-300 border-sage-200 dark:border-sage-700 hover:bg-ivory-100 dark:hover:bg-espresso-700"
+                          ? "bg-brand-primary text-white border-brand-primary shadow-sm"
+                          : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                       }`}
                     >
                       ⚡ Last 24 Hours ({freshCount})
@@ -328,21 +431,21 @@ export const App: React.FC = () => {
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="bg-white dark:bg-espresso-900 p-6 rounded-2xl border border-sage-200 dark:border-sage-800 animate-pulse h-48" />
+                      <div key={i} className="bg-brand-surface p-6 rounded-2xl border border-brand-border animate-pulse h-48" />
                     ))}
                   </div>
                 ) : filteredJobs.length === 0 ? (
-                  <div className="bg-white dark:bg-espresso-900 rounded-3xl border border-sage-200 dark:border-sage-800 p-12 text-center shadow-sm">
-                    <div className="w-12 h-12 rounded-2xl bg-ivory-200 dark:bg-espresso-800 mx-auto flex items-center justify-center text-sage-500 mb-3">
+                  <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-elevated mx-auto flex items-center justify-center text-brand-muted mb-3">
                       <Filter className="w-6 h-6" />
                     </div>
-                    <h3 className="font-serif text-lg font-bold text-espresso-950 dark:text-ivory-100">No matching jobs found</h3>
-                    <p className="text-xs text-sage-600 dark:text-sage-400 mt-1 max-w-sm mx-auto">
-                      Try clearing some filters or searching for broader terms like &ldquo;Python&rdquo;, &ldquo;Go&rdquo;, or &ldquo;Frontend&rdquo;.
+                    <h3 className="font-serif text-lg font-bold text-brand-text">No matching positions found</h3>
+                    <p className="text-xs text-brand-secondary mt-1.5 max-w-sm mx-auto">
+                      Try clearing some filters or searching for broader skills like &ldquo;Python&rdquo;, &ldquo;Go&rdquo;, &ldquo;React&rdquo;, or &ldquo;Kubernetes&rdquo;.
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="mt-4 px-4 py-2 bg-crimson-700 hover:bg-crimson-800 text-ivory-100 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
                     >
                       Reset All Filters
                     </button>
@@ -357,6 +460,9 @@ export const App: React.FC = () => {
                           isSaved={savedJobIds.includes(job.id)}
                           onToggleSave={toggleSaveJob}
                           onSelect={(j) => setSelectedJob(j)}
+                          searchQuery={filters.searchQuery}
+                          selectedSkills={filters.selectedSkills}
+                          selectedRole={filters.roleCategory}
                         />
                       ))}
                     </div>
@@ -366,17 +472,19 @@ export const App: React.FC = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 rounded-xl border border-sage-200 dark:border-sage-800 bg-white dark:bg-espresso-900 hover:bg-ivory-50 dark:hover:bg-espresso-800 text-espresso-900 dark:text-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="p-2 rounded-xl border border-brand-border bg-brand-surface hover:bg-brand-elevated text-brand-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Previous page"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-xs font-mono font-bold text-espresso-900 dark:text-ivory-200 px-3">
+                        <span className="text-xs font-mono font-medium text-brand-secondary px-3">
                           Page {currentPage} of {totalPages}
                         </span>
                         <button
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 rounded-xl border border-sage-200 dark:border-sage-800 bg-white dark:bg-espresso-900 hover:bg-ivory-50 dark:hover:bg-espresso-800 text-espresso-900 dark:text-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="p-2 rounded-xl border border-brand-border bg-brand-surface hover:bg-brand-elevated text-brand-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Next page"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
