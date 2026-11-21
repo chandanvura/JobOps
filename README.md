@@ -182,6 +182,9 @@ JobOps includes an offline-first, private candidate application tracker supporti
   - `P` — Open Personal Pipeline & Saved Jobs tracker
   - `D` — Toggle display density (Comfortable / Compact)
   - `F` — Open Add Company / Fetch Jobs modal
+- **Accessible Skip to Content Link:** Immediate `#main-content` keyboard bypass link appearing on Tab focus for screen readers and power keyboard users.
+- **Precision Engineered Footer:** Features version telemetry (`v1.4.0`), live ATS ingestion stats, an interactive shortcut cheat sheet trigger, and smooth back-to-top scroll navigation.
+- **100% Token Unification:** Total elimination of ad-hoc font sizes (`text-[10px]`, `text-[11px]`) and un-themed color classes, consolidating the complete interface into semantic tokens with an optimized 32kB CSS bundle.
 - **Accessible Toast Notifications:**
   - Auto-dismissing status updates with manual dismiss and contextual action buttons (such as "Undo" job removal).
   - Built with `role="status"` and `aria-live="polite"` for full screen-reader compliance.

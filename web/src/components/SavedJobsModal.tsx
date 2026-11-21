@@ -45,7 +45,7 @@ const STAGES: PipelineStage[] = [
 const getStageBadge = (stage: PipelineStage) => {
   switch (stage) {
     case "Saved":
-      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+      return "bg-brand-elevated text-brand-secondary border-brand-border";
     case "Interested":
       return "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800";
     case "Applied":
@@ -59,11 +59,11 @@ const getStageBadge = (stage: PipelineStage) => {
     case "Rejected":
       return "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
     case "Withdrawn":
-      return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700";
+      return "bg-brand-elevated text-brand-muted border-brand-border";
     case "Follow-up":
       return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
     default:
-      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+      return "bg-brand-elevated text-brand-secondary border-brand-border";
   }
 };
 
@@ -373,10 +373,10 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
           <div className="px-5 sm:px-6 py-2.5 border-b border-brand-border bg-brand-surface flex items-center gap-1.5 overflow-x-auto text-xs">
             <button
               onClick={() => setActiveStageFilter("All")}
-              className={`px-3 py-1 rounded-full border transition-all ${
+              className={`px-3 py-1 rounded-full border active:scale-[0.98] transition-all ${
                 activeStageFilter === "All"
-                  ? "bg-blue-600 text-white border-blue-600 font-semibold shadow-sm"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
+                  : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text"
               }`}
             >
               All ({savedJobs.length})
@@ -388,10 +388,10 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                 <button
                   key={stg}
                   onClick={() => setActiveStageFilter(stg)}
-                  className={`px-3 py-1 rounded-full border transition-all ${
+                  className={`px-3 py-1 rounded-full border active:scale-[0.98] transition-all ${
                     activeStageFilter === stg
-                      ? "bg-blue-600 text-white border-blue-600 font-semibold shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200"
+                      ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
+                      : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text"
                   }`}
                 >
                   {stg} ({count})
@@ -405,16 +405,16 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
           {savedJobs.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 mx-auto flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-brand-elevated text-brand-primary border border-brand-border mx-auto flex items-center justify-center mb-3">
                 <Bookmark className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">No saved jobs in your pipeline</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-                Bookmark verified engineering roles from the Jobs Radar to track your applications and private interview notes here.
+              <h3 className="text-base font-bold text-brand-text">No saved jobs in your pipeline</h3>
+              <p className="text-xs text-brand-secondary mt-1 max-w-sm mx-auto">
+                Bookmark verified engineering roles from the jobs radar to track your applications and private interview notes here.
               </p>
             </div>
           ) : filteredSavedJobs.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
+            <div className="text-center py-12 text-brand-muted text-xs">
               No jobs currently in the &ldquo;{activeStageFilter}&rdquo; stage.
             </div>
           ) : (
@@ -429,29 +429,29 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
               return (
                 <div
                   key={job.id}
-                  className="bg-slate-50/70 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col gap-3 transition-colors"
+                  className="bg-brand-surface p-4 rounded-xl border border-brand-border flex flex-col gap-3 transition-colors"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{job.company_name}</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <span className="text-xs font-bold text-brand-text">{job.company_name}</span>
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-brand-elevated text-brand-secondary border border-brand-border uppercase">
                           {job.ats_provider}
                         </span>
-                        <span className="text-xs text-slate-400">•</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{job.role_label}</span>
+                        <span className="text-xs text-brand-muted">•</span>
+                        <span className="text-xs text-brand-secondary truncate">{job.role_label}</span>
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <h3 className="text-sm font-semibold text-brand-text truncate">
                         {cleanJobText(job.title)}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-brand-secondary flex-wrap">
                         <span>{formatLocation(job.city, job.location_raw)}</span>
                         <span>•</span>
-                        <span>{job.experience_level || "Any Exp"}</span>
+                        <span>{job.experience_level || "Any exp"}</span>
                         {tracking.appliedAt && (
                           <>
                             <span>•</span>
-                            <span className="text-blue-600 dark:text-blue-400 font-mono flex items-center gap-1">
+                            <span className="text-brand-primary font-mono flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               Applied {new Date(tracking.appliedAt).toLocaleDateString()}
                             </span>
@@ -460,7 +460,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                         {tracking.followUpDate && (
                           <>
                             <span>•</span>
-                            <span className="text-amber-600 dark:text-amber-400 font-mono flex items-center gap-1">
+                            <span className="text-amber-500 font-mono flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               Target {new Date(tracking.followUpDate).toLocaleDateString()}
                             </span>
@@ -476,12 +476,12 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                         <select
                           value={tracking.stage || "Saved"}
                           onChange={(e) => updateStage(job.id, e.target.value as PipelineStage)}
-                          className={`text-xs font-semibold py-1.5 pl-3 pr-8 rounded-xl border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${getStageBadge(
+                          className={`text-xs font-semibold py-1.5 pl-3 pr-8 rounded-xl border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-primary/20 ${getStageBadge(
                             tracking.stage || "Saved"
                           )}`}
                         >
                           {STAGES.map((stg) => (
-                            <option key={stg} value={stg} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                            <option key={stg} value={stg} className="bg-brand-surface text-brand-text">
                               {stg}
                             </option>
                           ))}
@@ -491,10 +491,10 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                       {/* Notes Toggle Button */}
                       <button
                         onClick={() => setEditingNotesId(isNotesOpen ? null : job.id)}
-                        className={`p-2 rounded-xl border text-xs flex items-center gap-1 transition-colors ${
+                        className={`p-2 rounded-xl border text-xs flex items-center gap-1 active:scale-[0.98] transition-colors ${
                           tracking.notes?.trim() || tracking.followUpDate
-                            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-                            : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                            ? "bg-brand-elevated text-brand-primary border-brand-primary/40"
+                            : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text"
                         }`}
                         title="Candidate private notes"
                       >
@@ -507,7 +507,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                         href={sanitizeExternalUrl(job.job_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        className="p-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white active:scale-[0.98] transition-colors"
                         title="Open direct job application"
                         aria-label="Open job application"
                       >
@@ -516,20 +516,20 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
                       {/* Remove Button with Confirmation Guard */}
                       {confirmDeleteId === job.id ? (
-                        <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/40 p-1 rounded-xl border border-rose-200 dark:border-rose-900/60 animate-in fade-in duration-100">
-                          <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 pl-1">Remove?</span>
+                        <div className="flex items-center gap-1.5 bg-rose-500/10 p-1 rounded-xl border border-rose-500/30 animate-in fade-in duration-100">
+                          <span className="text-xs font-semibold text-rose-500 pl-1">Remove?</span>
                           <button
                             onClick={() => {
                               onRemove(job.id);
                               setConfirmDeleteId(null);
                             }}
-                            className="px-2 py-1 rounded-lg bg-rose-600 text-white font-semibold text-[11px] hover:bg-rose-700 transition-colors shadow-sm"
+                            className="px-2 py-1 rounded-lg bg-rose-600 text-white font-semibold text-xs hover:bg-rose-700 active:scale-[0.98] transition-colors shadow-sm"
                           >
                             Yes
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-[11px] hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                            className="px-2 py-1 rounded-lg bg-brand-elevated text-brand-text font-medium text-xs hover:bg-brand-surface active:scale-[0.98] transition-colors"
                           >
                             Cancel
                           </button>
@@ -537,7 +537,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteId(job.id)}
-                          className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-colors"
+                          className="p-2 rounded-xl text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 active:scale-[0.98] transition-colors"
                           title="Remove from pipeline"
                           aria-label="Remove job"
                         >
@@ -549,29 +549,29 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
                   {/* Private Notes Expandable Section */}
                   {isNotesOpen && (
-                    <div className="pt-2.5 border-t border-slate-200 dark:border-slate-700/80 space-y-2.5 animate-in fade-in duration-100">
+                    <div className="pt-2.5 border-t border-brand-border space-y-2.5 animate-in fade-in duration-100">
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
-                          Private Candidate Notes (Saved automatically)
+                        <label className="text-xs font-semibold text-brand-secondary block mb-1">
+                          Private candidate notes (Saved automatically)
                         </label>
                         <textarea
                           value={tracking.notes || ""}
                           onChange={(e) => updateNotes(job.id, e.target.value)}
                           placeholder="e.g. Referred by Priya on LinkedIn. Prepared questions for round 2 system design. Salary range discuss..."
-                          className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 resize-y min-h-[64px]"
+                          className="w-full text-xs p-2.5 rounded-xl border border-brand-border bg-brand-elevated text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 resize-y min-h-[64px]"
                         />
                       </div>
 
                       <div className="flex items-center gap-2 max-w-xs">
-                        <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1 flex-shrink-0">
-                          <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                          <span>Interview / Target Date:</span>
+                        <label className="text-xs font-semibold text-brand-secondary flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="w-3.5 h-3.5 text-brand-primary" />
+                          <span>Interview / target date:</span>
                         </label>
                         <input
                           type="date"
                           value={tracking.followUpDate || ""}
                           onChange={(e) => updateFollowUpDate(job.id, e.target.value)}
-                          className="px-2 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+                          className="px-2 py-1 text-xs rounded-xl border border-brand-border bg-brand-elevated text-brand-text focus:outline-none focus:border-brand-primary"
                         />
                       </div>
                     </div>

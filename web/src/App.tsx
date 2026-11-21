@@ -518,6 +518,14 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg text-brand-text transition-colors">
+      {/* Accessible Skip-to-Content Link for Keyboard Users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to main content
+      </a>
+
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -535,7 +543,7 @@ export const App: React.FC = () => {
         onToggleMobileFilter={() => setIsMobileFilterOpen(true)}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
         {error && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center gap-3 text-xs">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -759,6 +767,53 @@ export const App: React.FC = () => {
           </>
         )}
       </main>
+
+      {/* Precision Engineered Footer */}
+      <footer className="mt-auto border-t border-brand-border bg-brand-surface/60 backdrop-blur-sm transition-colors py-8 text-xs text-brand-secondary">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="font-bold tracking-tight text-brand-text">
+              Job<span className="text-brand-primary">Ops</span>
+            </span>
+            <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-brand-elevated border border-brand-border text-brand-secondary tabular-nums">
+              v1.4.0
+            </span>
+            <span className="text-brand-muted">•</span>
+            <span className="text-brand-secondary">
+              Direct ATS engineering radar
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs">
+            <button
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-elevated border border-brand-border hover:text-brand-text active:scale-[0.98] transition-colors font-mono text-xs"
+            >
+              <span>Press</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-brand-surface border border-brand-border font-bold">?</kbd>
+              <span>for shortcuts</span>
+            </button>
+            <a
+              href="https://github.com/chandanvura/JobOps"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-brand-text transition-colors"
+            >
+              Source code
+            </a>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="hover:text-brand-text transition-colors"
+            >
+              Back to top ↑
+            </button>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 pt-3 border-t border-brand-border/40 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-brand-muted">
+          <span>Zero third-party trackers • 100% client-side pipeline storage • Direct career portals only</span>
+          <span>MIT Licensed & Open Source</span>
+        </div>
+      </footer>
 
       <JobDetailModal
         job={selectedJob}

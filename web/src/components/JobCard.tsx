@@ -67,7 +67,7 @@ export const JobCard: React.FC<JobCardProps> = ({
       case "smartrecruiters":
         return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60";
       default:
-        return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+        return "bg-brand-elevated text-brand-secondary border-brand-border";
     }
   };
 

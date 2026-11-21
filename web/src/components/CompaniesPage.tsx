@@ -321,9 +321,9 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
                           <button
                             onClick={() => onSelectCompany(comp.name)}
-                            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-semibold text-[11px] transition-colors border border-blue-200 dark:border-blue-800/60"
+                            className="px-2.5 py-1 rounded-lg bg-brand-surface hover:bg-brand-elevated text-brand-primary font-semibold text-xs active:scale-[0.98] transition-colors border border-brand-border shadow-sm"
                           >
-                            View Jobs
+                            View jobs
                           </button>
 
                           {safeCareersUrl !== "#" && (

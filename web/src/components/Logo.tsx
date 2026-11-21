@@ -74,7 +74,7 @@ export const Logo: React.FC<LogoProps> = ({
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className={`${textSizes[size]} font-bold tracking-tight text-slate-900 dark:text-slate-100 font-sans leading-none`}
+              className={`${textSizes[size]} font-bold tracking-tight text-brand-text font-sans leading-none`}
             >
               Job<span className="text-blue-600 dark:text-blue-400">Ops</span>
             </span>

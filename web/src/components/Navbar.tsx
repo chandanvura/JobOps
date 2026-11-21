@@ -114,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 text-xs sm:text-sm bg-brand-elevated focus:bg-brand-surface text-brand-text border border-brand-border focus:border-brand-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all placeholder:text-brand-muted shadow-sm"
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface text-brand-muted hidden sm:inline-block">
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface text-brand-muted hidden sm:inline-block">
                 /
               </span>
             </div>
