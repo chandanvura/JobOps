@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Job } from "../types/job";
-import { X, Bookmark, ExternalLink, Trash2, Download, FileText, ChevronDown, Calendar } from "lucide-react";
+import { X, Bookmark, ExternalLink, Trash2, Download, FileText, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 import { sanitizeExternalUrl, formatLocation, cleanJobText } from "../utils/jobUtils";
 
 export type PipelineStage =
-  | "Interested"
   | "Saved"
+  | "Interested"
   | "Applied"
-  | "Interviewing"
+  | "Assessment"
+  | "Interview"
   | "Offer"
   | "Rejected"
-  | "Archived";
+  | "Withdrawn"
+  | "Follow-up";
 
 export interface JobTrackingInfo {
   stage: PipelineStage;
@@ -27,14 +29,41 @@ interface SavedJobsModalProps {
 }
 
 const STAGES: PipelineStage[] = [
-  "Interested",
   "Saved",
+  "Interested",
   "Applied",
-  "Interviewing",
+  "Assessment",
+  "Interview",
   "Offer",
   "Rejected",
-  "Archived",
+  "Withdrawn",
+  "Follow-up",
 ];
+
+const getStageBadge = (stage: PipelineStage) => {
+  switch (stage) {
+    case "Saved":
+      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+    case "Interested":
+      return "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800";
+    case "Applied":
+      return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+    case "Assessment":
+      return "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
+    case "Interview":
+      return "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800";
+    case "Offer":
+      return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
+    case "Rejected":
+      return "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
+    case "Withdrawn":
+      return "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700";
+    case "Follow-up":
+      return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+    default:
+      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+  }
+};
 
 export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
   isOpen,
@@ -108,138 +137,157 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
     });
   };
 
-  const getStageColor = (stage: PipelineStage) => {
-    switch (stage) {
-      case "Interested":
-        return "bg-sky-500/10 text-sky-500 border-sky-500/30";
-      case "Saved":
-        return "bg-brand-elevated text-brand-secondary border-brand-border";
-      case "Applied":
-        return "bg-amber-500/10 text-amber-500 border-amber-500/30";
-      case "Interviewing":
-        return "bg-purple-500/10 text-purple-500 border-purple-500/30";
-      case "Offer":
-        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 font-bold";
-      case "Rejected":
-        return "bg-rose-500/10 text-rose-500 border-rose-500/30";
-      case "Archived":
-        return "bg-brand-elevated/40 text-brand-muted border-brand-border/40";
-    }
-  };
-
-  // Export to CSV
-  const exportCSV = () => {
-    if (savedJobs.length === 0) return;
-    const headers = ["Company", "Title", "Discipline", "Location", "Stage", "Notes", "Job URL", "Saved Date", "Applied Date"];
-    const rows = savedJobs.map((j) => {
-      const track = trackingData[j.id] || { stage: "Saved", notes: "", savedAt: "" };
-      return [
-        `"${(j.company_name || "").replace(/"/g, '""')}"`,
-        `"${(j.title || "").replace(/"/g, '""')}"`,
-        `"${(j.role_label || "").replace(/"/g, '""')}"`,
-        `"${(formatLocation(j.city, j.location_raw) || "").replace(/"/g, '""')}"`,
-        `"${track.stage}"`,
-        `"${(track.notes || "").replace(/"/g, '""')}"`,
-        `"${j.job_url || ""}"`,
-        `"${track.savedAt || ""}"`,
-        `"${track.appliedAt || ""}"`,
-      ].join(",");
-    });
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `jobops_pipeline_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Export to JSON
-  const exportJSON = () => {
-    if (savedJobs.length === 0) return;
-    const payload = savedJobs.map((j) => ({
-      ...j,
-      pipeline: trackingData[j.id] || { stage: "Saved", notes: "", savedAt: new Date().toISOString() },
-    }));
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `jobops_pipeline_${new Date().toISOString().split("T")[0]}.json`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const filteredJobs = savedJobs.filter((j) => {
+  const filteredSavedJobs = savedJobs.filter((job) => {
     if (activeStageFilter === "All") return true;
-    const track = trackingData[j.id] || { stage: "Saved" };
-    return track.stage === activeStageFilter;
+    const info = trackingData[job.id];
+    const stage = info ? info.stage : "Saved";
+    return stage === activeStageFilter;
   });
+
+  // Calculate Pipeline Metrics
+  const metrics = {
+    total: savedJobs.length,
+    applied: savedJobs.filter((j) => (trackingData[j.id]?.stage || "Saved") === "Applied").length,
+    inProgress: savedJobs.filter((j) => {
+      const s = trackingData[j.id]?.stage;
+      return s === "Assessment" || s === "Interview" || s === "Follow-up";
+    }).length,
+    offers: savedJobs.filter((j) => (trackingData[j.id]?.stage || "Saved") === "Offer").length,
+  };
+
+  // Export Pipeline as CSV
+  const exportToCSV = () => {
+    if (savedJobs.length === 0) return;
+    const headers = ["Company", "Title", "Location", "ATS Provider", "Stage", "Applied Date", "Notes", "Job URL"];
+    const rows = savedJobs.map((job) => {
+      const tracking = trackingData[job.id] || { stage: "Saved", notes: "", appliedAt: "" };
+      return [
+        `"${job.company_name.replace(/"/g, '""')}"`,
+        `"${job.title.replace(/"/g, '""')}"`,
+        `"${formatLocation(job.city, job.location_raw)}"`,
+        `"${job.ats_provider}"`,
+        `"${tracking.stage}"`,
+        `"${tracking.appliedAt || ""}"`,
+        `"${(tracking.notes || "").replace(/"/g, '""')}"`,
+        `"${job.job_url}"`,
+      ];
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `jobops-pipeline-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export Pipeline as JSON
+  const exportToJSON = () => {
+    if (savedJobs.length === 0) return;
+    const exportData = savedJobs.map((job) => ({
+      ...job,
+      pipelineTracking: trackingData[job.id] || { stage: "Saved", notes: "" },
+    }));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const link = document.createElement("a");
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", `jobops-pipeline-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Application Pipeline"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+      aria-label="Personal Pipeline & Application Workspace"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
     >
-      <div className="bg-brand-surface rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-brand-border animate-in fade-in zoom-in-95 duration-150 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150 transition-colors">
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-brand-border flex items-center justify-between">
+        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-accent border border-brand-primary/40 flex items-center justify-center text-brand-primary">
-              <Bookmark className="w-5 h-5 fill-brand-primary" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center">
+              <Bookmark className="w-5 h-5 fill-blue-600 dark:fill-blue-400" />
             </div>
             <div>
-              <h2 className="font-serif text-lg font-bold text-brand-text">Personal Pipeline Workspace</h2>
-              <p className="text-xs text-brand-secondary">
-                {savedJobs.length} tracked engineering jobs stored privately in your browser
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>Personal Pipeline & Workspace</span>
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                  {savedJobs.length} active
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Track interview stages, private candidate notes, and export your application history.
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             {savedJobs.length > 0 && (
-              <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <button
-                  onClick={exportCSV}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-brand-border bg-brand-elevated text-xs font-medium text-brand-secondary hover:text-brand-text hover:border-brand-primary/40 transition-colors"
+                  onClick={exportToCSV}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
                   title="Export pipeline to CSV spreadsheet"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Export CSV</span>
+                  <span>Export CSV</span>
                 </button>
                 <button
-                  onClick={exportJSON}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-brand-border bg-brand-elevated text-xs font-medium text-brand-secondary hover:text-brand-text hover:border-brand-primary/40 transition-colors"
-                  title="Export pipeline to JSON"
+                  onClick={exportToJSON}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
+                  title="Export pipeline as JSON"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">JSON</span>
+                  <span>JSON</span>
                 </button>
               </div>
             )}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-brand-muted hover:text-brand-text hover:bg-brand-elevated transition-colors"
-              aria-label="Close pipeline modal"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Stage Filter Chips */}
+        {/* Compact Pipeline Metrics Cards */}
         {savedJobs.length > 0 && (
-          <div className="px-5 sm:px-6 py-2.5 border-b border-brand-border bg-brand-elevated/40 flex items-center gap-1.5 overflow-x-auto text-xs">
+          <div className="px-5 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Saved</span>
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-mono">{metrics.total}</span>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Applied</span>
+              <span className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono">{metrics.applied}</span>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">Interviewing</span>
+              <span className="text-base font-bold text-violet-600 dark:text-violet-400 font-mono">{metrics.inProgress}</span>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Offers</span>
+              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">{metrics.offers}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Stage Filter Tabs */}
+        {savedJobs.length > 0 && (
+          <div className="px-5 sm:px-6 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-1.5 overflow-x-auto text-xs">
             <button
               onClick={() => setActiveStageFilter("All")}
-              className={`px-2.5 py-1 rounded-full border transition-all ${
+              className={`px-3 py-1 rounded-full border transition-all ${
                 activeStageFilter === "All"
-                  ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
-                  : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text"
+                  ? "bg-blue-600 text-white border-blue-600 font-semibold shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               All ({savedJobs.length})
@@ -251,10 +299,10 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                 <button
                   key={stg}
                   onClick={() => setActiveStageFilter(stg)}
-                  className={`px-2.5 py-1 rounded-full border transition-all ${
+                  className={`px-3 py-1 rounded-full border transition-all ${
                     activeStageFilter === stg
-                      ? "bg-brand-primary text-[#FFF0DC] border-brand-hover font-semibold shadow-sm"
-                      : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text"
+                      ? "bg-blue-600 text-white border-blue-600 font-semibold shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   {stg} ({count})
@@ -265,59 +313,56 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
         )}
 
         {/* Saved Jobs List */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-3.5 flex-1">
           {savedJobs.length === 0 ? (
-            <div className="text-center py-16 text-brand-muted text-xs">
-              <Bookmark className="w-10 h-10 mx-auto mb-3 opacity-30 text-brand-primary" />
-              <p className="font-serif font-bold text-base text-brand-text">Your Pipeline is Empty</p>
-              <p className="mt-1.5 text-brand-secondary max-w-sm mx-auto">
-                Bookmark verified engineering roles from the main radar to track application stages, add personal notes, and export your job hunt data.
+            <div className="text-center py-16 px-4">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 mx-auto flex items-center justify-center mb-3">
+                <Bookmark className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">No saved jobs in your pipeline</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                Bookmark verified engineering roles from the Jobs Radar to track your applications and private interview notes here.
               </p>
             </div>
-          ) : filteredJobs.length === 0 ? (
-            <div className="text-center py-12 text-brand-muted text-xs">
-              <p className="text-brand-text font-semibold">No jobs in stage &ldquo;{activeStageFilter}&rdquo;</p>
-              <button
-                onClick={() => setActiveStageFilter("All")}
-                className="mt-2 text-brand-primary hover:underline"
-              >
-                View all saved jobs
-              </button>
+          ) : filteredSavedJobs.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
+              No jobs currently in the &ldquo;{activeStageFilter}&rdquo; stage.
             </div>
           ) : (
-            filteredJobs.map((job) => {
+            filteredSavedJobs.map((job) => {
               const tracking = trackingData[job.id] || {
                 stage: "Saved",
                 notes: "",
                 savedAt: new Date().toISOString(),
               };
-              const safeUrl = sanitizeExternalUrl(job.job_url);
               const isNotesOpen = editingNotesId === job.id;
 
               return (
                 <div
                   key={job.id}
-                  className="bg-brand-elevated/70 p-4 rounded-2xl border border-brand-border flex flex-col gap-3 transition-colors"
+                  className="bg-slate-50/70 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col gap-3 transition-colors"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-brand-text">{job.company_name}</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-surface text-brand-secondary border border-brand-border">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{job.company_name}</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                           {job.ats_provider}
                         </span>
-                        <span className="text-xs text-brand-muted">•</span>
-                        <span className="text-[11px] text-brand-secondary truncate">{job.role_label}</span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{job.role_label}</span>
                       </div>
-                      <h3 className="text-sm font-semibold text-brand-text truncate">{cleanJobText(job.title)}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-brand-muted">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {cleanJobText(job.title)}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
                         <span>{formatLocation(job.city, job.location_raw)}</span>
                         <span>•</span>
                         <span>{job.experience_level || "Any Exp"}</span>
                         {tracking.appliedAt && (
                           <>
                             <span>•</span>
-                            <span className="text-amber-500 font-mono flex items-center gap-1">
+                            <span className="text-blue-600 dark:text-blue-400 font-mono flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               Applied {new Date(tracking.appliedAt).toLocaleDateString()}
                             </span>
@@ -326,48 +371,47 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-                      {/* Pipeline Stage Select */}
+                    {/* Pipeline Stage Dropdown & Action Buttons */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                      {/* Stage Selector */}
                       <div className="relative">
                         <select
-                          value={tracking.stage}
+                          value={tracking.stage || "Saved"}
                           onChange={(e) => updateStage(job.id, e.target.value as PipelineStage)}
-                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border appearance-none pr-7 focus:outline-none focus:border-brand-primary ${getStageColor(
-                            tracking.stage
-                          )} bg-brand-surface`}
+                          className={`text-xs font-semibold py-1.5 pl-3 pr-8 rounded-xl border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${getStageBadge(
+                            tracking.stage || "Saved"
+                          )}`}
                         >
                           {STAGES.map((stg) => (
-                            <option key={stg} value={stg} className="bg-brand-surface text-brand-text">
+                            <option key={stg} value={stg} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
                               {stg}
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60" />
                       </div>
 
                       {/* Notes Toggle Button */}
                       <button
                         onClick={() => setEditingNotesId(isNotesOpen ? null : job.id)}
-                        className={`p-1.5 rounded-lg border text-xs flex items-center gap-1 transition-colors ${
-                          tracking.notes
-                            ? "bg-brand-accent border-brand-primary/40 text-brand-text font-medium"
-                            : "bg-brand-surface border-brand-border text-brand-muted hover:text-brand-text"
+                        className={`p-2 rounded-xl border text-xs flex items-center gap-1 transition-colors ${
+                          tracking.notes?.trim()
+                            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                            : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
                         }`}
-                        title="Add/edit personal private notes"
+                        title="Candidate private notes"
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span className="text-[11px] hidden sm:inline">
-                          {tracking.notes ? "Notes" : "+ Note"}
-                        </span>
+                        <FileText className="w-4 h-4" />
+                        <span className="hidden sm:inline">{tracking.notes?.trim() ? "Notes" : "+ Note"}</span>
                       </button>
 
-                      {/* Apply Link */}
+                      {/* Direct Apply Button */}
                       <a
-                        href={safeUrl}
+                        href={sanitizeExternalUrl(job.job_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-brand-text hover:text-brand-primary hover:bg-brand-surface border border-brand-border transition-colors"
+                        className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                         title="Open direct job application"
+                        aria-label="Open job application"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -375,7 +419,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                       {/* Remove Button */}
                       <button
                         onClick={() => onRemove(job.id)}
-                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-colors"
+                        className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-colors"
                         title="Remove from pipeline"
                         aria-label="Remove job"
                       >
@@ -386,15 +430,15 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
                   {/* Private Notes Expandable Section */}
                   {isNotesOpen && (
-                    <div className="pt-2 border-t border-brand-border animate-in fade-in duration-100">
-                      <label className="text-[11px] font-semibold text-brand-secondary block mb-1">
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700/80 animate-in fade-in duration-100">
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                         Private Candidate Notes (Saved automatically)
                       </label>
                       <textarea
                         value={tracking.notes || ""}
                         onChange={(e) => updateNotes(job.id, e.target.value)}
                         placeholder="e.g. Referred by Priya on LinkedIn. Prepared questions for round 2 system design. Salary range discuss..."
-                        className="w-full text-xs p-2.5 rounded-xl border border-brand-border bg-brand-surface text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-primary resize-y min-h-[64px]"
+                        className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 resize-y min-h-[64px]"
                       />
                     </div>
                   )}

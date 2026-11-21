@@ -109,14 +109,14 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-goldBg border border-brand-gold/40 flex items-center justify-center text-brand-gold flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
             <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
               Enterprise & Global Tech
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-brand-gold">
+            <span className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
               {stats.f500 + stats.globalTech}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
@@ -133,7 +133,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
               Portal Health Rate
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-emerald-500">
+            <span className="text-2xl sm:text-3xl font-bold text-emerald-500 tabular-nums">
               {companies.length > 0 ? `${Math.round((stats.healthy / companies.length) * 100)}%` : "100%"}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
@@ -143,14 +143,14 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-brand-wine border border-brand-primary/40 flex items-center justify-center text-brand-primary flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
             <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
               Active Postings
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+            <span className="text-2xl sm:text-3xl font-bold text-brand-text tabular-nums">
               {stats.totalJobs.toLocaleString()}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
@@ -321,7 +321,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
                           <button
                             onClick={() => onSelectCompany(comp.name)}
-                            className="px-2.5 py-1 rounded-lg bg-brand-accent hover:bg-brand-primary/20 text-brand-text font-semibold text-[11px] transition-colors border border-brand-primary/40"
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-semibold text-[11px] transition-colors border border-blue-200 dark:border-blue-800/60"
                           >
                             View Jobs
                           </button>

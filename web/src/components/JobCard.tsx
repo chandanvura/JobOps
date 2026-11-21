@@ -34,15 +34,15 @@ export const JobCard: React.FC<JobCardProps> = ({
   // Compute transparent relevance score
   const relevance = calculateRelevanceScore(job, searchQuery, selectedSkills, selectedRole);
 
-  // Deterministic pastel tint for company monogram
+  // Deterministic clean pastel monogram
   const getCompanyColor = (name: string) => {
     const tints = [
-      "bg-gradient-to-br from-[#91111A]/20 to-[#2B1012] text-[#FFB3B8] border-[#91111A]/40",
-      "bg-gradient-to-br from-[#8A6A1A]/20 to-[#291F0B] text-[#E8D285] border-[#E8D285]/35",
-      "bg-gradient-to-br from-[#0D5C3A]/25 to-[#072417] text-[#6EE7B7] border-[#059669]/35",
-      "bg-gradient-to-br from-[#1E3A8A]/30 to-[#0F172A] text-[#93C5FD] border-[#3B82F6]/35",
-      "bg-gradient-to-br from-[#581C87]/30 to-[#2E1065] text-[#D8B4FE] border-[#A855F7]/35",
-      "bg-gradient-to-br from-[#7C2D12]/30 to-[#431407] text-[#FDBA74] border-[#EA580C]/35",
+      "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+      "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+      "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
+      "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+      "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+      "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
     ];
     let hash = 0;
     for (let i = 0; i < (name || "").length; i++) {
@@ -55,15 +55,17 @@ export const JobCard: React.FC<JobCardProps> = ({
   const getAtsBadgeColor = (ats: string) => {
     switch (ats?.toLowerCase()) {
       case "greenhouse":
-        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+        return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60";
       case "lever":
-        return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20";
+        return "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/60";
       case "ashby":
-        return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+        return "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60";
       case "workday":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+        return "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60";
+      case "smartrecruiters":
+        return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60";
       default:
-        return "bg-brand-elevated text-brand-secondary border-brand-border";
+        return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
     }
   };
 
@@ -76,7 +78,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const safeApplyUrl = sanitizeExternalUrl(job.job_url);
 
   return (
-    <article className="bg-brand-surface rounded-2xl border border-brand-border p-4 sm:p-5 hover:border-brand-primary/60 hover:shadow-lg hover:shadow-brand-primary/5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between group h-full relative">
+    <article className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800/90 p-4 sm:p-5 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all duration-200 flex flex-col justify-between group h-full relative">
       <div>
         {/* Top Header: Company Identity & Actions */}
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -92,7 +94,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             </div>
 
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-brand-text truncate leading-tight group-hover:text-brand-primary transition-colors">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {job.company_name}
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -103,8 +105,8 @@ export const JobCard: React.FC<JobCardProps> = ({
                 >
                   {job.ats_provider || "DIRECT"}
                 </span>
-                <span className="text-[11px] text-brand-muted">•</span>
-                <span className="text-[11px] text-brand-secondary truncate max-w-[140px]">
+                <span className="text-[11px] text-slate-400">•</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">
                   {job.role_label || "Engineering"}
                 </span>
               </div>
@@ -119,24 +121,24 @@ export const JobCard: React.FC<JobCardProps> = ({
                 onClick={() => setShowScoreInfo(!showScoreInfo)}
                 onMouseEnter={() => setShowScoreInfo(true)}
                 onMouseLeave={() => setShowScoreInfo(false)}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-brand-gold/30 bg-brand-goldBg text-[11px] font-mono font-medium text-brand-gold hover:border-brand-gold/60 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/80 bg-blue-50/80 dark:bg-blue-950/50 text-[11px] font-mono font-medium text-blue-700 dark:text-blue-300 hover:border-blue-400 dark:hover:border-blue-500 transition-colors shadow-sm"
                 title="Job Relevance Score & Breakdown"
               >
-                <span className="text-brand-gold font-bold">{relevance.score}%</span>
-                <Info className="w-3 h-3 text-brand-gold/70" />
+                <span className="text-blue-700 dark:text-blue-300 font-bold">{relevance.score}%</span>
+                <Info className="w-3 h-3 text-blue-500 dark:text-blue-400" />
               </button>
 
               {/* Score Breakdown Popover */}
               {showScoreInfo && (
-                <div className="absolute right-0 top-full mt-1.5 w-64 p-3 bg-brand-elevated border border-brand-border rounded-xl shadow-xl z-30 text-xs text-brand-text animate-in fade-in zoom-in-95 duration-150">
-                  <div className="font-semibold text-brand-gold mb-1.5 flex items-center justify-between">
+                <div className="absolute right-0 top-full mt-1.5 w-64 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 text-xs text-slate-800 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="font-semibold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center justify-between">
                     <span>Relevance Breakdown</span>
                     <span className="font-mono text-[11px]">{relevance.score}/100</span>
                   </div>
-                  <ul className="space-y-1 text-[11px] text-brand-secondary">
+                  <ul className="space-y-1 text-[11px] text-slate-600 dark:text-slate-300">
                     {relevance.breakdown.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-brand-primary">•</span>
+                        <span className="text-blue-500">•</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -150,13 +152,13 @@ export const JobCard: React.FC<JobCardProps> = ({
               onClick={() => onToggleSave(job)}
               className={`p-1.5 rounded-xl border transition-all ${
                 isSaved
-                  ? "border-brand-gold/40 bg-brand-goldBg text-brand-gold shadow-sm"
-                  : "border-transparent text-brand-muted hover:text-brand-gold hover:bg-brand-elevated"
+                  ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "border-transparent text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
-              title={isSaved ? "Remove from saved pipeline" : "Save to my pipeline"}
+              title={isSaved ? "Remove from pipeline" : "Save to my pipeline"}
               aria-label={isSaved ? "Unsave job" : "Save job"}
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-brand-gold" : ""}`} />
+              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-blue-600 dark:fill-blue-400" : ""}`} />
             </button>
           </div>
         </div>
@@ -164,7 +166,7 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Job Title: Clamped to 2 lines with consistent min-height to prevent grid jitter */}
         <h2
           onClick={() => onSelect(job)}
-          className="text-base font-semibold text-brand-text group-hover:text-brand-primary transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug mb-2.5"
+          className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug mb-2.5"
           title={cleanTitle}
         >
           {cleanTitle}
@@ -173,30 +175,30 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Standardized Metadata Badges Row */}
         <div className="flex flex-wrap items-center gap-1.5 mb-3">
           {job.is_fresh_24h && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-brand-wine text-brand-text border border-brand-primary/50 shadow-sm">
-              <Zap className="w-3 h-3 text-brand-gold fill-brand-gold" />
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 shadow-sm">
+              <Zap className="w-3 h-3 text-sky-500 fill-sky-500" />
               <span>Fresh 24h</span>
             </span>
           )}
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-elevated text-brand-secondary border border-brand-border">
-            <Clock className="w-3 h-3 text-brand-muted" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+            <Clock className="w-3 h-3 text-slate-400" />
             <span>{job.experience_level || "Any Experience"}</span>
           </span>
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-elevated text-brand-secondary border border-brand-border">
-            <MapPin className="w-3 h-3 text-brand-muted" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+            <MapPin className="w-3 h-3 text-slate-400" />
             <span>{locationDisplay}</span>
           </span>
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-elevated text-brand-secondary border border-brand-border">
-            <Laptop className="w-3 h-3 text-brand-muted" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+            <Laptop className="w-3 h-3 text-slate-400" />
             <span>{workModeDisplay}</span>
           </span>
         </div>
 
         {/* Clean Job Summary (strictly entity-free and HTML-stripped) */}
-        <p className="text-xs text-brand-secondary line-clamp-2 min-h-[2.5rem] leading-relaxed mb-3">
+        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 min-h-[2.5rem] leading-relaxed mb-3">
           {cleanSummary}
         </p>
 
@@ -206,13 +208,13 @@ export const JobCard: React.FC<JobCardProps> = ({
             {job.skills.slice(0, 4).map((skill) => (
               <span
                 key={skill}
-                className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-brand-elevated text-brand-secondary border border-brand-border"
+                className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60"
               >
                 {skill}
               </span>
             ))}
             {job.skills.length > 4 && (
-              <span className="text-[10px] font-mono text-brand-muted px-1.5 py-0.5 rounded bg-brand-elevated/50 border border-brand-border/60">
+              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/40">
                 +{job.skills.length - 4}
               </span>
             )}
@@ -221,13 +223,13 @@ export const JobCard: React.FC<JobCardProps> = ({
       </div>
 
       {/* Aligned Card Footer */}
-      <div className="pt-3 border-t border-brand-border flex items-center justify-between text-xs mt-auto">
-        <span className="text-brand-muted font-mono text-[11px]">{timeDisplay}</span>
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs mt-auto">
+        <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px]">{timeDisplay}</span>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => onSelect(job)}
-            className="text-brand-secondary hover:text-brand-text font-medium px-3 py-1.5 rounded-xl hover:bg-brand-elevated transition-colors text-xs border border-transparent hover:border-brand-border"
+            className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-medium px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
           >
             Details
           </button>
@@ -235,7 +237,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             href={safeApplyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-primary hover:bg-brand-hover text-[#FFF0DC] font-semibold text-xs shadow-md shadow-brand-primary/20 hover:shadow-lg transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 hover:shadow transition-all duration-200"
           >
             <span>Apply</span>
             <ExternalLink className="w-3 h-3" />

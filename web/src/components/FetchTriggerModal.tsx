@@ -106,11 +106,11 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-brand-border mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-accent border border-brand-primary/40 flex items-center justify-center text-brand-primary">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             </div>
             <div>
-              <h2 className="font-serif text-base sm:text-lg font-bold text-brand-text">
+              <h2 className="text-base sm:text-lg font-bold text-brand-text">
                 Live Ingestion & ATS Trigger
               </h2>
               <p className="text-xs text-brand-secondary">Autonomous Direct ATS Radar Engine</p>

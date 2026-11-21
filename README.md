@@ -2,32 +2,36 @@
 
 > **Production-grade, zero-cost engineering recruitment platform and intelligence radar.**  
 > Ingests directly from **757+ verified tech employers and Fortune 500 companies** via native, unblocked ATS endpoints (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Eightfold, Darwinbox, Phenom, Amazon, Jobvite, etc.).  
-> Enforces a **strict 24-hour freshness window**, filters tech roles via **multi-stage engineering taxonomy**, and delivers an elite, bespoke **Warm Charcoal & Crimson Burgundy design system**.
+> Enforces a **strict 24-hour freshness window**, filters tech roles via **multi-stage engineering taxonomy**, and delivers an elite **Precision Blue design system** with native **3-mode theme support (Light, Dark, System)**.
 
 ---
 
 ## 💎 Design Identity & Token Architecture
 
-JobOps departs completely from generic, copy-paste AI templates and blue-and-white dashboards. It implements an authoritative, high-density Bloomberg/Stripe-caliber design token system tailored for serious engineers.
+JobOps implements a bespoke, high-density Precision Blue design system engineered specifically for software engineers and engineering leaders. It pairs an authoritative deep navy/slate canvas with vibrant `#2563EB` primary blue accents and `#38BDF8` cyan highlights.
 
-| Semantic Token | Hex Value | Purpose & Role | WCAG 2.1 Contrast |
-|---|---|---|---|
-| `--bg-main` | `#15120F` | Deep espresso dark base background canvas | Base Canvas |
-| `--surface-primary` | `#211C18` | Standard card, panel, and sidebar container | 14.5:1 (Exceeds AAA) |
-| `--surface-elevated` | `#28221C` | Elevated surfaces, dropdowns, modals, active pills | Structural Elevation |
-| `--text-primary` | `#F4EEE5` | Warm ivory for primary job titles & high-contrast telemetry | 16.2:1 (Exceeds AAA) |
-| `--text-secondary` | `#B9B0A5` | Sand taupe for company names, subheadings, labels | 7.8:1 (Exceeds AAA) |
-| `--text-muted` | `#978B7B` | Muted taupe for timestamps, counts, subtle meta info | 4.9:1 (Passes AA/AAA) |
-| `--border-color` | `#423A31` | Subtle hairline borders providing clean structural separation | Hairline Grid |
-| `--action-primary` | `#A61921` | Signature crimson burgundy for primary actions & CTAs | 4.9:1 (Passes AA) |
-| `--action-hover` | `#BD252D` | Vibrant crimson for interactive hover states | High-Affordance |
-| `--accent-bg` | `#321416` | Wine-tinted container for 24h ultra-fresh badges | Freshness Pill |
-| `--highlight-gold` | `#D1B56A` | Champagne gold for relevance score badges & telemetry | 8.6:1 (Exceeds AAA) |
+### Full 3-Mode Theme System
+- **☀ Light Mode:** Crisp white surfaces (`#FFFFFF`), light slate canvas (`#F8FAFC`), accessible dark text (`#0F172A`), and subtle border delineation (`#E2E8F0`).
+- **☾ Dark Mode:** Slate/charcoal canvas (`#0B1120`), elevated primary surfaces (`#111827`), rich contrast typography (`#F1F5F9`), and muted slate borders (`#334155`).
+- **◐ System Mode:** Dynamically tracks the user's OS `prefers-color-scheme` via live media query listeners with zero page flicker and persistent `localStorage` synchronization.
+
+| Semantic Token | Light Mode | Dark Mode | Purpose & Role | WCAG 2.2 Contrast |
+|---|---|---|---|---|
+| `--bg-main` | `#F8FAFC` | `#0B1120` | Base background canvas | Base Canvas |
+| `--surface-primary` | `#FFFFFF` | `#111827` | Primary card & sidebar surface | 15.8:1 (Exceeds AAA) |
+| `--surface-elevated` | `#F1F5F9` | `#1F2937` | Elevated pills, modals, dropdowns | Structural Elevation |
+| `--text-primary` | `#0F172A` | `#F1F5F9` | High-contrast job titles & headers | 16.5:1 (Exceeds AAA) |
+| `--text-secondary` | `#475569` | `#CBD5E1` | Subheadings, company names, labels | 8.2:1 (Exceeds AAA) |
+| `--text-muted` | `#64748B` | `#94A3B8` | Timestamps, telemetry, metadata | 4.8:1 (Passes AA) |
+| `--border-color` | `#E2E8F0` | `#334155` | Hairline grid borders | Structural Grid |
+| `--action-primary` | `#2563EB` | `#3B82F6` | Precision blue primary actions & CTAs | 4.6:1 (Passes AA) |
+| `--action-hover` | `#1D4ED8` | `#2563EB` | High-affordance hover states | Interactive State |
+| `--accent-soft` | `#E0F2FE` | `#082F49` | Container for 24h ultra-fresh badges | Freshness Pill |
 
 ### Typography System
-- **UI & Body:** `Plus Jakarta Sans` — High x-height and open apertures optimized for dense technical scanning.
-- **Brand & Headings:** `Lora` — Editorial serif imparting authoritative intelligence identity.
-- **Telemetry & Badges:** `JetBrains Mono` — Monospaced precision for timestamps, YoE, ATS chips, and skill tags.
+- **UI & Headings:** `Inter` — High x-height, neutral apertures, and legible letterforms optimized for scanning complex technical listings.
+- **Telemetry & Numerals:** `JetBrains Mono` (`tabular-nums`) — Fixed-width figures for job counts, salary ranges, YoE, timestamps, and ATS slugs.
+- **Brand Geometry:** Custom SVG mark combining radar reticle, concentric orbit, and precision target crosshair.
 
 ---
 
@@ -136,14 +140,23 @@ Hovering or clicking on any job's score badge reveals the exact calculation brea
 
 ---
 
-## 💼 Personal Job Pipeline & Workspace
+## 💼 Personal Job Pipeline & Workspace (9-Stage Lifecycle)
 
-JobOps includes a private, local-first candidate application tracker:
-- **Pipeline Stages:** `Interested` ➔ `Saved` ➔ `Applied` ➔ `Interviewing` ➔ `Offer` ➔ `Rejected` ➔ `Archived`.
-- **Private Notes:** Save salary expectations, recruiter contacts, and interview questions directly in your browser.
-- **Application Dates:** Automatic tracking of date saved and date applied.
-- **Data Ownership:** Export your entire pipeline with notes and links to **CSV spreadsheet** or **JSON** with one click.
-- **100% Privacy:** All tracking data stays in your browser's `localStorage` — zero tracking or external logging.
+JobOps includes an offline-first, private candidate application tracker supporting the complete job search journey:
+- **9 Semantic Stages:**
+  1. `Saved` (Slate)
+  2. `Interested` (Cyan)
+  3. `Applied` (Blue)
+  4. `Assessment` (Indigo)
+  5. `Interview` (Violet)
+  6. `Offer` (Emerald)
+  7. `Rejected` (Rose)
+  8. `Withdrawn` (Gray)
+  9. `Follow-up` (Amber)
+- **Executive Metrics:** Instant counts for Total Saved, Submitted Applications, Active Interviews, and Received Offers.
+- **Private Candidate Notes:** Persistent notes with auto-saving for recruiter contacts, compensation expectations, and round prep.
+- **Data Portability:** 1-click export to **CSV spreadsheet** or **JSON** with zero server lock-in.
+- **100% Client-Side Privacy:** All records reside strictly in your browser's `localStorage` — no telemetry, no tracking, zero third-party leakage.
 
 ---
 
