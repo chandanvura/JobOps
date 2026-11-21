@@ -4,7 +4,16 @@ import re
 from typing import List
 from urllib.parse import urlparse, urljoin
 import httpx
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+
+try:
+    from selectolax.parser import HTMLParser
+except ImportError:
+    HTMLParser = None
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -74,10 +83,29 @@ class GenericPlatformAdapter(BaseATS):
 
         # Parse JSON-LD JobPosting blocks
         raw_jobs = []
-        soup = BeautifulSoup(html, "html.parser")
-        for tag in soup.find_all("script", type=re.compile(r"application/ld\+json", re.I)):
+        script_texts = []
+
+        if BeautifulSoup is not None:
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup.find_all("script", type=re.compile(r"application/ld\+json", re.I)):
+                text = tag.get_text().strip()
+                if text:
+                    script_texts.append(text)
+        elif HTMLParser is not None:
+            tree = HTMLParser(html)
+            for node in tree.css('script[type*="ld+json"]'):
+                text = node.text(strip=True)
+                if text:
+                    script_texts.append(text)
+        else:
+            for match in re.finditer(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.DOTALL | re.IGNORECASE):
+                text = match.group(1).strip()
+                if text:
+                    script_texts.append(text)
+
+        for script_text in script_texts:
             try:
-                data = json.loads(tag.get_text().strip())
+                data = json.loads(script_text)
                 items = data if isinstance(data, list) else [data]
                 for item in items:
                     if not isinstance(item, dict):

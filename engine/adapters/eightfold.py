@@ -4,7 +4,6 @@ import logging
 import re
 from typing import List
 import httpx
-from bs4 import BeautifulSoup
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
