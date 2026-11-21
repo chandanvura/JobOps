@@ -18,6 +18,7 @@ interface JobCardProps {
   searchQuery?: string;
   selectedSkills?: string[];
   selectedRole?: string;
+  density?: "comfortable" | "compact";
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -28,6 +29,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   searchQuery = "",
   selectedSkills = [],
   selectedRole = "all",
+  density = "comfortable",
 }) => {
   const [showScoreInfo, setShowScoreInfo] = useState(false);
 
@@ -77,17 +79,21 @@ export const JobCard: React.FC<JobCardProps> = ({
   const timeDisplay = formatPostingTime(job.posted_at, job.age_hours);
   const safeApplyUrl = sanitizeExternalUrl(job.job_url);
 
+  const isCompact = density === "compact";
+
   return (
-    <article className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800/90 p-4 sm:p-5 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all duration-200 flex flex-col justify-between group h-full relative">
+    <article className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800/90 hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all duration-200 flex flex-col justify-between group h-full relative ${
+      isCompact ? "p-3.5 sm:p-4" : "p-4 sm:p-5"
+    }`}>
       <div>
         {/* Top Header: Company Identity & Actions */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className={`flex items-start justify-between gap-3 ${isCompact ? "mb-2" : "mb-3"}`}>
           <div className="flex items-center gap-3 min-w-0">
             {/* Deterministic monogram fallback */}
             <div
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors ${getCompanyColor(
-                job.company_name
-              )}`}
+              className={`rounded-xl border flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors ${
+                isCompact ? "w-8 h-8 text-xs" : "w-10 h-10"
+              } ${getCompanyColor(job.company_name)}`}
               aria-label={`${job.company_name} initial`}
             >
               {initial}
@@ -163,17 +169,21 @@ export const JobCard: React.FC<JobCardProps> = ({
           </div>
         </div>
 
-        {/* Job Title: Clamped to 2 lines with consistent min-height to prevent grid jitter */}
+        {/* Job Title */}
         <h2
           onClick={() => onSelect(job)}
-          className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug mb-2.5"
+          className={`font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer leading-snug ${
+            isCompact
+              ? "text-sm line-clamp-1 min-h-0 mb-1.5"
+              : "text-base line-clamp-2 min-h-[2.75rem] mb-2.5"
+          }`}
           title={cleanTitle}
         >
           {cleanTitle}
         </h2>
 
         {/* Standardized Metadata Badges Row */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+        <div className={`flex flex-wrap items-center gap-1.5 ${isCompact ? "mb-2" : "mb-3"}`}>
           {job.is_fresh_24h && (
             <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 shadow-sm">
               <Zap className="w-3 h-3 text-sky-500 fill-sky-500" />
@@ -197,15 +207,17 @@ export const JobCard: React.FC<JobCardProps> = ({
           </span>
         </div>
 
-        {/* Clean Job Summary (strictly entity-free and HTML-stripped) */}
-        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 min-h-[2.5rem] leading-relaxed mb-3">
-          {cleanSummary}
-        </p>
+        {/* Clean Job Summary */}
+        {!isCompact && (
+          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 min-h-[2.5rem] leading-relaxed mb-3">
+            {cleanSummary}
+          </p>
+        )}
 
-        {/* Skill Tags (max 4 visible with overflow pill) */}
+        {/* Skill Tags */}
         {job.skills && job.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
-            {job.skills.slice(0, 4).map((skill) => (
+          <div className={`flex flex-wrap gap-1 ${isCompact ? "mb-2.5" : "mb-4"}`}>
+            {job.skills.slice(0, isCompact ? 3 : 4).map((skill) => (
               <span
                 key={skill}
                 className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60"
@@ -213,9 +225,9 @@ export const JobCard: React.FC<JobCardProps> = ({
                 {skill}
               </span>
             ))}
-            {job.skills.length > 4 && (
+            {job.skills.length > (isCompact ? 3 : 4) && (
               <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/40">
-                +{job.skills.length - 4}
+                +{job.skills.length - (isCompact ? 3 : 4)}
               </span>
             )}
           </div>

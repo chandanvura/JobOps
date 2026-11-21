@@ -7,9 +7,31 @@ import { JobDetailModal } from "./components/JobDetailModal";
 import { FetchTriggerModal } from "./components/FetchTriggerModal";
 import { SavedJobsModal } from "./components/SavedJobsModal";
 import { CompaniesPage, CompanyItem } from "./components/CompaniesPage";
+import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
+import { ToastContainer, ToastMessage } from "./components/Toast";
 import { useTheme } from "./hooks/useDarkMode";
-import { Search, Filter, ChevronLeft, ChevronRight, Zap, AlertCircle, SlidersHorizontal } from "lucide-react";
-import { matchJobSearch, matchJobExperience, matchJobCity } from "./utils/jobUtils";
+import {
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  AlertCircle,
+  SlidersHorizontal,
+  LayoutGrid,
+  Rows3,
+  ArrowUpDown,
+  HelpCircle,
+} from "lucide-react";
+import { matchJobSearch, matchJobExperience, matchJobCity, calculateRelevanceScore, cleanJobText } from "./utils/jobUtils";
+
+const ALLOWED_SORTS = [
+  "newest",
+  "relevance",
+  "experience_asc",
+  "experience_desc",
+  "company_asc",
+];
 
 const ALLOWED_ROLES = [
   "all",
@@ -53,7 +75,8 @@ export const App: React.FC = () => {
       const tab: "jobs" | "companies" = sp.get("tab") === "companies" ? "companies" : "jobs";
       const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
       const jobId = sp.get("job") || null;
-      return { q, role, exp, city, mode, fresh, tab, page, jobId };
+      const sort = ALLOWED_SORTS.includes(sp.get("sort") || "") ? sp.get("sort")! : "newest";
+      return { q, role, exp, city, mode, fresh, tab, page, jobId, sort };
     } catch {
       return {
         q: "",
@@ -65,6 +88,7 @@ export const App: React.FC = () => {
         tab: "jobs" as const,
         page: 1,
         jobId: null,
+        sort: "newest",
       };
     }
   }, []);
@@ -85,6 +109,39 @@ export const App: React.FC = () => {
     selectedSkills: [],
   });
 
+  const [sortBy, setSortBy] = useState<string>(initialUrlParams.sort);
+  const [density, setDensity] = useState<"comfortable" | "compact">(() => {
+    try {
+      return (localStorage.getItem("jobops_density") as "comfortable" | "compact") || "comfortable";
+    } catch {
+      return "comfortable";
+    }
+  });
+
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = useCallback((
+    type: ToastMessage["type"],
+    message: string,
+    title?: string,
+    action?: ToastMessage["action"]
+  ) => {
+    const id = Math.random().toString(36).slice(2, 9);
+    setToasts((prev) => [...prev, { id, type, message, title, action }]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Persist density preference
+  useEffect(() => {
+    try {
+      localStorage.setItem("jobops_density", density);
+    } catch {}
+  }, [density]);
+
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [savedJobIds, setSavedJobIds] = useState<string[]>(() => {
     try {
@@ -100,6 +157,58 @@ export const App: React.FC = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [currentPage, setCurrentPage] = useState(initialUrlParams.page);
   const pageSize = 24;
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      const isEditing =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (document.activeElement as HTMLElement)?.isContentEditable;
+
+      if (e.key === "Escape") {
+        setIsFetchModalOpen(false);
+        setIsSavedModalOpen(false);
+        setSelectedJob(null);
+        setIsMobileFilterOpen(false);
+        setIsShortcutsModalOpen(false);
+        return;
+      }
+
+      if (isEditing) return;
+
+      if (e.key === "?") {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+      } else if (e.key === "t" || e.key === "T") {
+        e.preventDefault();
+        const nextTheme = themeMode === "light" ? "dark" : themeMode === "dark" ? "system" : "light";
+        setThemeMode(nextTheme);
+        addToast("info", `Theme switched to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)} Mode`);
+      } else if (e.key === "p" || e.key === "P") {
+        e.preventDefault();
+        setIsSavedModalOpen(true);
+      } else if (e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        setDensity((prev) => {
+          const next = prev === "comfortable" ? "compact" : "comfortable";
+          addToast("info", `Display density set to ${next}`);
+          return next;
+        });
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        setFilters((prev) => {
+          const next = !prev.freshOnly;
+          addToast("info", next ? "Filtered to Last 24 Hours only" : "All active positions displayed");
+          return { ...prev, freshOnly: next };
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [themeMode, setThemeMode, addToast]);
 
   // Sync state back to URL parameters safely
   const updateUrlState = useCallback(() => {
@@ -125,6 +234,9 @@ export const App: React.FC = () => {
       }
       if (filters.freshOnly) {
         params.set("fresh", "true");
+      }
+      if (sortBy !== "newest") {
+        params.set("sort", sortBy);
       }
       if (currentPage > 1) {
         params.set("page", String(currentPage));
@@ -238,8 +350,47 @@ export const App: React.FC = () => {
       try {
         localStorage.setItem("jobops_saved_ids", JSON.stringify(next));
       } catch {}
+
+      if (exists) {
+        addToast("info", `Removed "${cleanJobText(job.title)}" from pipeline.`, undefined, {
+          label: "Undo",
+          onClick: () => {
+            setSavedJobIds((current) => {
+              const restored = [...current, job.id];
+              try {
+                localStorage.setItem("jobops_saved_ids", JSON.stringify(restored));
+              } catch {}
+              return restored;
+            });
+            addToast("success", `Restored "${cleanJobText(job.title)}" to pipeline.`);
+          },
+        });
+      } else {
+        addToast("success", `Saved "${cleanJobText(job.title)}" at ${job.company_name} to your pipeline.`, "Job Saved");
+      }
+
       return next;
     });
+  };
+
+  const handleImportBackup = (importedJobs: Job[]) => {
+    const newIds = importedJobs.map((j) => j.id);
+    setSavedJobIds((prev) => {
+      const merged = Array.from(new Set([...prev, ...newIds]));
+      try {
+        localStorage.setItem("jobops_saved_ids", JSON.stringify(merged));
+      } catch {}
+      return merged;
+    });
+    setJobs((prevJobs) => {
+      const existingIds = new Set(prevJobs.map((j) => j.id));
+      const missing = importedJobs.filter((j) => !existingIds.has(j.id));
+      if (missing.length > 0) {
+        return [...prevJobs, ...missing];
+      }
+      return prevJobs;
+    });
+    addToast("success", `Successfully imported ${importedJobs.length} jobs into your pipeline.`, "Backup Restored");
   };
 
   const resetFilters = () => {
@@ -308,15 +459,50 @@ export const App: React.FC = () => {
     });
   }, [jobs, filters]);
 
+  // Main Sorting Logic
+  const sortedJobs = useMemo(() => {
+    const list = [...filteredJobs];
+    if (sortBy === "relevance") {
+      return list.sort((a, b) => {
+        const scoreA = calculateRelevanceScore(a, filters.searchQuery, filters.selectedSkills, filters.roleCategory).score;
+        const scoreB = calculateRelevanceScore(b, filters.searchQuery, filters.selectedSkills, filters.roleCategory).score;
+        return scoreB - scoreA;
+      });
+    }
+    if (sortBy === "company_asc") {
+      return list.sort((a, b) => a.company_name.localeCompare(b.company_name));
+    }
+    if (sortBy === "experience_asc" || sortBy === "experience_desc") {
+      const expWeight = (exp?: string) => {
+        if (!exp || exp.includes("Fresher") || exp.includes("0-1")) return 1;
+        if (exp.includes("1-3")) return 2;
+        if (exp.includes("3-5")) return 3;
+        if (exp.includes("5+")) return 4;
+        return 2;
+      };
+      return list.sort((a, b) =>
+        sortBy === "experience_asc"
+          ? expWeight(a.experience_level) - expWeight(b.experience_level)
+          : expWeight(b.experience_level) - expWeight(a.experience_level)
+      );
+    }
+    // Default: newest first
+    return list.sort((a, b) => {
+      if (a.is_fresh_24h && !b.is_fresh_24h) return -1;
+      if (!a.is_fresh_24h && b.is_fresh_24h) return 1;
+      return (a.age_hours ?? 9999) - (b.age_hours ?? 9999);
+    });
+  }, [filteredJobs, sortBy, filters.searchQuery, filters.selectedSkills, filters.roleCategory]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+  }, [filters, sortBy]);
 
-  const totalPages = Math.ceil(filteredJobs.length / pageSize) || 1;
+  const totalPages = Math.ceil(sortedJobs.length / pageSize) || 1;
   const paginatedJobs = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filteredJobs.slice(start, start + pageSize);
-  }, [filteredJobs, currentPage]);
+    return sortedJobs.slice(start, start + pageSize);
+  }, [sortedJobs, currentPage]);
 
   const savedJobs = useMemo(() => {
     return jobs.filter((j) => savedJobIds.includes(j.id));
@@ -421,22 +607,61 @@ export const App: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-2 flex-wrap text-xs">
+                    {/* Sort Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-brand-elevated border border-brand-border rounded-xl px-2.5 py-1 text-brand-text">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-brand-secondary" />
+                      <label htmlFor="sort-select" className="sr-only">Sort jobs by</label>
+                      <select
+                        id="sort-select"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-transparent border-none text-brand-text font-medium text-xs focus:outline-none cursor-pointer pr-1"
+                      >
+                        <option value="newest" className="bg-brand-surface text-brand-text">Newest Verified</option>
+                        <option value="relevance" className="bg-brand-surface text-brand-text">Most Relevant</option>
+                        <option value="experience_asc" className="bg-brand-surface text-brand-text">Experience (Low → High)</option>
+                        <option value="experience_desc" className="bg-brand-surface text-brand-text">Experience (High → Low)</option>
+                        <option value="company_asc" className="bg-brand-surface text-brand-text">Company (A → Z)</option>
+                      </select>
+                    </div>
+
+                    {/* Freshness Toggle */}
                     <button
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
-                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[38px] ${
+                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[36px] ${
                         filters.freshOnly
                           ? "bg-brand-primary text-white border-brand-hover shadow-sm"
                           : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                       }`}
                     >
-                      ⚡ Last 24 Hours ({freshCount})
+                      ⚡ 24h ({freshCount})
+                    </button>
+
+                    {/* Density Toggle */}
+                    <button
+                      onClick={() => setDensity((d) => (d === "comfortable" ? "compact" : "comfortable"))}
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      title={density === "comfortable" ? "Switch to Compact Density (D)" : "Switch to Comfortable Density (D)"}
+                      aria-label={density === "comfortable" ? "Switch to Compact Density" : "Switch to Comfortable Density"}
+                    >
+                      {density === "comfortable" ? <Rows3 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+                    </button>
+
+                    {/* Shortcuts Modal Trigger */}
+                    <button
+                      onClick={() => setIsShortcutsModalOpen(true)}
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text transition-colors min-h-[36px] min-w-[36px] hidden sm:flex items-center justify-center"
+                      title="Keyboard Shortcuts (?)"
+                      aria-label="Keyboard Shortcuts"
+                    >
+                      <HelpCircle className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
                 {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 ${density === "compact" ? "md:grid-cols-2 lg:grid-cols-3 gap-3" : "md:grid-cols-2 gap-4"}`}>
                     {[...Array(6)].map((_, i) => (
                       <div key={i} className="bg-brand-surface p-6 rounded-2xl border border-brand-border animate-pulse h-48" />
                     ))}
@@ -459,7 +684,7 @@ export const App: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className={`grid grid-cols-1 ${density === "compact" ? "md:grid-cols-2 lg:grid-cols-3 gap-3" : "md:grid-cols-2 gap-4"}`}>
                       {paginatedJobs.map((job) => (
                         <JobCard
                           key={job.id}
@@ -470,6 +695,7 @@ export const App: React.FC = () => {
                           searchQuery={filters.searchQuery}
                           selectedSkills={filters.selectedSkills}
                           selectedRole={filters.roleCategory}
+                          density={density}
                         />
                       ))}
                     </div>
@@ -524,8 +750,40 @@ export const App: React.FC = () => {
         isOpen={isSavedModalOpen}
         onClose={() => setIsSavedModalOpen(false)}
         savedJobs={savedJobs}
-        onRemove={(id) => setSavedJobIds((prev) => prev.filter((item) => item !== id))}
+        onRemove={(id) => {
+          const removedJob = jobs.find((j) => j.id === id);
+          setSavedJobIds((prev) => {
+            const next = prev.filter((item) => item !== id);
+            try {
+              localStorage.setItem("jobops_saved_ids", JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+          if (removedJob) {
+            addToast("info", `Removed "${cleanJobText(removedJob.title)}" from pipeline.`, undefined, {
+              label: "Undo",
+              onClick: () => {
+                setSavedJobIds((current) => {
+                  const restored = [...current, id];
+                  try {
+                    localStorage.setItem("jobops_saved_ids", JSON.stringify(restored));
+                  } catch {}
+                  return restored;
+                });
+                addToast("success", `Restored "${cleanJobText(removedJob.title)}".`);
+              },
+            });
+          }
+        }}
+        onImportBackup={handleImportBackup}
       />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

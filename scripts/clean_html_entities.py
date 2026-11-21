@@ -15,9 +15,14 @@ def sanitize_text(text: str) -> str:
         curr = html.unescape(curr)
         if curr == prev:
             break
-    # Strip any HTML tags completely
+    # Strip any complete HTML tags
     curr = re.sub(r"<[^>]+>", " ", curr)
-    curr = re.sub(r"&[a-zA-Z0-9#]+;", " ", curr)
+    # Strip any broken or unclosed HTML tag (e.g. <span data-..., <div style=...)
+    curr = re.sub(r"<[a-zA-Z/][^>]*", " ", curr)
+    # Strip any remaining HTML entities
+    curr = re.sub(r"&[a-zA-Z0-9#]+;?", " ", curr)
+    # Strip any remaining angle brackets
+    curr = re.sub(r"[<>]", " ", curr)
     # Strip common boilerplate
     curr = re.sub(
         r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*",

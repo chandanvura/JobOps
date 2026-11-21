@@ -154,9 +154,39 @@ JobOps includes an offline-first, private candidate application tracker supporti
   8. `Withdrawn` (Gray)
   9. `Follow-up` (Amber)
 - **Executive Metrics:** Instant counts for Total Saved, Submitted Applications, Active Interviews, and Received Offers.
-- **Private Candidate Notes:** Persistent notes with auto-saving for recruiter contacts, compensation expectations, and round prep.
-- **Data Portability:** 1-click export to **CSV spreadsheet** or **JSON** with zero server lock-in.
+- **Private Candidate Notes & Dates:** Persistent notes with auto-saving for recruiter contacts, compensation expectations, interview schedules, and follow-up deadlines.
+- **Accidental Deletion Guard & Undo:** Two-tier protection against data loss with an inline confirmation dialog (`Remove? [Yes] [Cancel]`) and an immediate "Undo" notification toast.
+- **Data Portability (Import & Export):** 1-click export to **CSV spreadsheet** or **JSON backup**, plus a full **JSON Backup Import** with schema validation to restore or sync your pipeline across devices with zero server lock-in.
 - **100% Client-Side Privacy:** All records reside strictly in your browser's `localStorage` — no telemetry, no tracking, zero third-party leakage.
+
+---
+
+## ⚡ Productivity, Keyboard Navigation & Display Density
+
+- **Multi-Dimensional Sorting:**
+  - `Newest Verified` (Default: prioritizing 24h ultra-fresh roles and low age in hours)
+  - `Most Relevant` (Dynamic scoring breakdown: title, skills, role category, freshness)
+  - `Experience (Low → High)` (Fresher/0-1y → 1-3y → 3-5y → 5+y)
+  - `Experience (High → Low)` (Staff/5+y → 3-5y → 1-3y → Fresher)
+  - `Company (A → Z)` (Alphabetical company directory sorting)
+- **Information Density Modes:**
+  - `Comfortable` (Default spacious view with full role summaries and tag spacing)
+  - `Compact` (High-density view with streamlined padding, clamped typography, and 3-column desktop layout)
+  - Instant toggle via UI button or keyboard shortcut (`D`).
+- **Global Keyboard Shortcuts (Press `?` for Cheat Sheet):**
+  - `/` — Focus global job search bar
+  - `Esc` — Close active modals or clear search focus
+  - `?` — Toggle keyboard shortcuts cheat sheet
+  - `T` — Cycle theme mode (Light ☀ / Dark ☾ / System ◐)
+  - `P` — Open Personal Pipeline & Saved Jobs tracker
+  - `D` — Toggle display density (Comfortable / Compact)
+  - `F` — Open Add Company / Fetch Jobs modal
+- **Accessible Toast Notifications:**
+  - Auto-dismissing status updates with manual dismiss and contextual action buttons (such as "Undo" job removal).
+  - Built with `role="status"` and `aria-live="polite"` for full screen-reader compliance.
+- **PWA & Mobile Metadata:**
+  - Web App Manifest (`manifest.json`) supporting standalone mobile display.
+  - OpenGraph and Twitter card metadata for rich previews when shared.
 
 ---
 

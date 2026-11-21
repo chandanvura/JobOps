@@ -93,11 +93,16 @@ class JobCollector:
             # Clean snippet for fast UI display without raw entities, tags, or boilerplate
             import html as html_lib
             cleaned_desc = desc_text or ""
-            for _ in range(3):
+            for _ in range(5):
+                prev_text = cleaned_desc
                 cleaned_desc = html_lib.unescape(cleaned_desc)
+                if cleaned_desc == prev_text:
+                    break
             cleaned_desc = re.sub(r"<[^>]+>", " ", cleaned_desc)
+            cleaned_desc = re.sub(r"<[a-zA-Z/][^>]*", " ", cleaned_desc)
+            cleaned_desc = re.sub(r"&[a-zA-Z0-9#]+;?", " ", cleaned_desc)
+            cleaned_desc = re.sub(r"[<>]", " ", cleaned_desc)
             cleaned_desc = re.sub(r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*", "", cleaned_desc, flags=re.I)
-            cleaned_desc = re.sub(r"<[^>]*$", "", cleaned_desc)
             cleaned_desc = re.sub(r"\s+", " ", cleaned_desc).strip()
             summary = cleaned_desc[:320].strip() if cleaned_desc else f"{raw.title} at {company.name}"
 
