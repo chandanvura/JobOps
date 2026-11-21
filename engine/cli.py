@@ -30,6 +30,21 @@ def main():
     export_parser = subparsers.add_parser("export", help="Export active jobs to JSON file for frontend/API")
     export_parser.add_argument("--output", default="data/jobs.json", help="Output file path")
 
+    # Command: playbook
+    playbook_parser = subparsers.add_parser("playbook", help="Manage and run autonomous zero-cost operational playbooks")
+    playbook_sub = playbook_parser.add_subparsers(dest="action", required=True)
+
+    # playbook list
+    playbook_sub.add_parser("list", help="List all registered operational playbooks")
+
+    # playbook diagnose
+    playbook_sub.add_parser("diagnose", help="Diagnose current system and data health against known issues")
+
+    # playbook resolve
+    resolve_parser = playbook_sub.add_parser("resolve", help="Auto-resolve identified issues using playbooks")
+    resolve_parser.add_argument("--id", help="Specific playbook ID to resolve (e.g. PB-001)")
+    resolve_parser.add_argument("--auto", action="store_true", help="Auto-resolve all diagnosed issues")
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -76,6 +91,59 @@ def main():
             # Compact JSON representation for faster edge loading over CDN
             json.dump(jobs, f, separators=(",", ":"))
         print(f"Exported {len(jobs)} active jobs to {out_path.resolve()}")
+
+    elif args.command == "playbook":
+        from engine.playbooks.resolver import PlaybookResolver
+        resolver = PlaybookResolver()
+
+        if args.action == "list":
+            playbooks = resolver.list_playbooks()
+            print("\n=== JOBOPS OPERATIONAL PLAYBOOKS (100% FREE & AUTONOMOUS) ===")
+            for pb in playbooks:
+                print(f"[{pb['id']}] {pb['name']} ({pb['severity'].upper()}) - Auto-Resolvable: {pb['auto_resolvable']}")
+                print(f"   Category: {pb['category']}")
+                print(f"   Description: {pb['description']}")
+                print(f"   Symptoms:")
+                for sym in pb['trigger_symptoms']:
+                    print(f"     * {sym}")
+                print()
+
+        elif args.action == "diagnose":
+            issues = resolver.diagnose()
+            print("\n=== PLAYBOOK SYSTEM HEALTH DIAGNOSIS ===")
+            if not issues:
+                print("All systems healthy. No known playbook symptoms detected! (100% HEALTHY)")
+            else:
+                print(f"Detected {len(issues)} actionable issue(s):")
+                for iss in issues:
+                    d = iss.to_dict()
+                    print(f"- [{d['playbook_id']}] {d['playbook_name']}: {d['symptom']}")
+                    print(f"  Details: {d['details']}")
+                print("\nRun 'python -m engine.cli playbook resolve --auto' to execute zero-cost auto-remediation.")
+
+        elif args.action == "resolve":
+            print("\n=== EXECUTING AUTONOMOUS PLAYBOOK RESOLUTION ===")
+            if args.id:
+                pb_id = args.id.upper()
+                if pb_id == "PB-001":
+                    res = resolver.resolve_pb001()
+                elif pb_id == "PB-002":
+                    res = resolver.resolve_pb002()
+                elif pb_id == "PB-003":
+                    res = resolver.resolve_pb003()
+                elif pb_id == "PB-004":
+                    res = resolver.resolve_pb004()
+                elif pb_id == "PB-006":
+                    res = resolver.resolve_pb006()
+                else:
+                    print(f"Unknown or manual playbook ID: {pb_id}")
+                    return
+                print(json.dumps(res, indent=2))
+            else:
+                summary = resolver.resolve_all()
+                print(json.dumps(summary, indent=2))
+                if summary.get("system_health") == "100% HEALTHY":
+                    print("\nAll diagnosed issues successfully healed! Zero operational downtime, $0.00 spent.")
 
 
 if __name__ == "__main__":

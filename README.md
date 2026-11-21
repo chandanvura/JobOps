@@ -194,6 +194,52 @@ JobOps includes an offline-first, private candidate application tracker supporti
 
 ---
 
+## 🛠️ Autonomous Self-Healing Playbooks (100% Free & Zero-Cost)
+
+JobOps includes a built-in, zero-cost operational playbook engine (`engine/playbooks/`) that detects known defects, system drift, and pipeline failure modes, and automatically heals them with **$0.00 / ₹0.00** recurring cost forever.
+
+No expensive enterprise observability SaaS, pager subscriptions, or runbook management tools (Datadog, PagerDuty, Rundeck) are required. All self-healing recipes are executed autonomously via deterministic Python logic locally or inside free GitHub Actions runners.
+
+### Registered Operational Playbooks
+
+| Playbook ID | Name | Category | Severity | Automated Remediation Recipe |
+|---|---|---|---|---|
+| **PB-001** | Raw HTML Entities & Unclosed Tag Sanitizer | Data Quality | High | Recursively unescapes double-encoded HTML (`&amp;lt;`), strips truncated markup (`<span data-...`), cleans catalog JSON and SQLite DB. |
+| **PB-002** | Indian Location & Tech Hub Normalizer | Data Quality | Medium | Maps un-normalized tokens (`Other-India`, `null`, `unknown`) to standard Indian tech hubs (Bengaluru, Hyderabad, Pune, etc.) and infers work arrangement. |
+| **PB-003** | Python Runtime Dependency Synchronizer | Runtime | Critical | Audits virtual environment imports (`bs4`, `httpx`, `selectolax`, `pytest`) against `requirements.txt` to prevent runtime `ModuleNotFoundError`. |
+| **PB-004** | Static Edge Cache & DB Desync | Caching | High | Compares active jobs in SQLite (`data/jobops.db`) against edge cache (`web/public/jobs.json`) and triggers atomic cache regeneration upon divergence. |
+| **PB-005** | Dead / Rate-Limited ATS Endpoint Breaker | Reliability | Medium | Detects consecutive HTTP 404/410/429 errors or timeouts exceeding 20s and isolates broken endpoints to maintain ingestion throughput. |
+| **PB-006** | Web Application Build & Type Safety Verifier | Build | High | Verifies TypeScript compilation, runs Vite asset bundling, and validates output integrity of `web/dist/index.html`. |
+
+### CLI Usage for Playbooks
+
+```bash
+# 1. Inspect all registered playbooks and their trigger symptoms
+python -m engine.cli playbook list
+
+# 2. Run proactive health diagnostics against catalog & infrastructure
+python -m engine.cli playbook diagnose
+
+# 3. Auto-resolve all detected issues autonomously (0 manual steps)
+python -m engine.cli playbook resolve --auto
+
+# 4. Resolve a specific known defect by ID
+python -m engine.cli playbook resolve --id PB-001
+```
+
+### Free CI/CD Automated Self-Healing Pipeline
+
+In `.github/workflows/ingest.yml`, JobOps runs playbook self-healing automatically on every ingestion run:
+```yaml
+- name: Auto-Heal & Validate Catalog Quality via Playbooks
+  run: |
+    export PYTHONPATH=$PWD
+    python -m engine.cli playbook resolve --auto
+    python -m pytest -o pythonpath=. tests
+```
+
+---
+
 ## 🔒 Security & Data Integrity Invariants
 
 - **Zero `dangerouslySetInnerHTML`:** 100% ban on raw HTML injection across all React components. External ATS feeds are treated as untrusted inputs.

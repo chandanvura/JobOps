@@ -57,6 +57,12 @@ jobs:
           export PYTHONPATH=$PWD
           python -m engine.cli export --output web/public/jobs.json
 
+      - name: Auto-Heal & Validate Catalog Quality via Playbooks
+        run: |
+          export PYTHONPATH=$PWD
+          python -m engine.cli playbook resolve --auto
+          python -m pytest -o pythonpath=. tests
+
       - name: Commit and Push Updated Jobs
         run: |
           git config --global user.name "github-actions[bot]"
