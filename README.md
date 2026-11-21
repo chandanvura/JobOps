@@ -8,30 +8,31 @@
 
 ## 💎 Design Identity & Token Architecture
 
-JobOps implements a bespoke, high-density Precision Blue design system engineered specifically for software engineers and engineering leaders. It pairs an authoritative deep navy/slate canvas with vibrant `#2563EB` primary blue accents and `#38BDF8` cyan highlights.
+JobOps implements an elite, high-density design system refined according to the **`redesign-skill`** diagnostic principles. It pairs a pure `#000000` dark canvas and `#181818` card surfaces with precision blue accents (`#2563EB` / `#3B82F6`) and refined `#313131` borders.
 
 ### Full 3-Mode Theme System
 - **☀ Light Mode:** Crisp white surfaces (`#FFFFFF`), light slate canvas (`#F8FAFC`), accessible dark text (`#0F172A`), and subtle border delineation (`#E2E8F0`).
-- **☾ Dark Mode:** Slate/charcoal canvas (`#0B1120`), elevated primary surfaces (`#111827`), rich contrast typography (`#F1F5F9`), and muted slate borders (`#334155`).
+- **☾ Dark Mode:** Approved neutral dark canvas (`#000000`), primary card surfaces (`#181818`), elevated modals & dropdowns (`#272727`), rich contrast typography (`#F1F5F9`), and hairline borders (`#313131`).
 - **◐ System Mode:** Dynamically tracks the user's OS `prefers-color-scheme` via live media query listeners with zero page flicker and persistent `localStorage` synchronization.
 
 | Semantic Token | Light Mode | Dark Mode | Purpose & Role | WCAG 2.2 Contrast |
 |---|---|---|---|---|
-| `--bg-main` | `#F8FAFC` | `#0B1120` | Base background canvas | Base Canvas |
-| `--surface-primary` | `#FFFFFF` | `#111827` | Primary card & sidebar surface | 15.8:1 (Exceeds AAA) |
-| `--surface-elevated` | `#F1F5F9` | `#1F2937` | Elevated pills, modals, dropdowns | Structural Elevation |
+| `--bg-main` | `#F8FAFC` | `#000000` | Base background canvas | Base Canvas |
+| `--surface-primary` | `#FFFFFF` | `#181818` | Primary card & sidebar surface | 16.2:1 (Exceeds AAA) |
+| `--surface-elevated` | `#FFFFFF` | `#272727` | Elevated pills, modals, dropdowns | Structural Elevation |
 | `--text-primary` | `#0F172A` | `#F1F5F9` | High-contrast job titles & headers | 16.5:1 (Exceeds AAA) |
 | `--text-secondary` | `#475569` | `#CBD5E1` | Subheadings, company names, labels | 8.2:1 (Exceeds AAA) |
 | `--text-muted` | `#64748B` | `#94A3B8` | Timestamps, telemetry, metadata | 4.8:1 (Passes AA) |
-| `--border-color` | `#E2E8F0` | `#334155` | Hairline grid borders | Structural Grid |
-| `--action-primary` | `#2563EB` | `#3B82F6` | Precision blue primary actions & CTAs | 4.6:1 (Passes AA) |
-| `--action-hover` | `#1D4ED8` | `#2563EB` | High-affordance hover states | Interactive State |
-| `--accent-soft` | `#E0F2FE` | `#082F49` | Container for 24h ultra-fresh badges | Freshness Pill |
+| `--border-color` | `#E2E8F0` | `#313131` | Hairline grid borders | Structural Grid |
+| `--action-primary` | `#2563EB` | `#3B82F6` | Primary action buttons & active indicators | 4.6:1 (Passes AA) |
+| `--action-hover` | `#1D4ED8` | `#60A5FA` | High-affordance hover states | Interactive State |
 
 ### Typography System
-- **UI & Headings:** `Inter` — High x-height, neutral apertures, and legible letterforms optimized for scanning complex technical listings.
-- **Telemetry & Numerals:** `JetBrains Mono` (`tabular-nums`) — Fixed-width figures for job counts, salary ranges, YoE, timestamps, and ATS slugs.
-- **Brand Geometry:** Custom SVG mark combining radar reticle, concentric orbit, and precision target crosshair.
+- **UI & Headings:** `Geist` — Clean, high-legibility sans-serif with neutral apertures, tight tracking (`-0.011em`), and balanced line-wrapping (`text-wrap: balance`).
+- **Telemetry & Numerals:** `Geist Mono` (`tabular-nums`) — Fixed-width figures for job counts, salary ranges, YoE, timestamps, and ATS slugs.
+- **Hero Heading Gradient:** Text-only gradient (Dark: `#FFFFFF` $\rightarrow$ `#9B9B9B`; Light: `#000000` $\rightarrow$ `#666666`) capped at `max-w-[680px]`.
+- **Floating Navigation Bar:** Floating slightly off the top edge (`sticky top-2 sm:top-3`) on a translucent blurred surface (`backdrop-blur-md`).
+- **Tactile Micro-Interactions:** `active:scale-[0.98]` on buttons and cards with respect for `prefers-reduced-motion`.
 
 ---
 

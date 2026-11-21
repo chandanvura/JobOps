@@ -270,21 +270,21 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
       aria-label="Personal Pipeline & Application Workspace"
       className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
     >
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150 transition-colors">
+      <div className="bg-brand-surface rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-brand-border animate-in fade-in zoom-in-95 duration-150 transition-colors">
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div className="p-5 sm:p-6 border-b border-brand-border flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center">
-              <Bookmark className="w-5 h-5 fill-blue-600 dark:fill-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-brand-elevated text-brand-primary border border-brand-border flex items-center justify-center">
+              <Bookmark className="w-5 h-5 fill-brand-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>Personal Pipeline & Workspace</span>
-                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              <h2 className="text-lg font-bold text-brand-text flex items-center gap-2">
+                <span>Personal pipeline & workspace</span>
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-brand-elevated text-brand-secondary border border-brand-border tabular-nums">
                   {savedJobs.length} active
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-brand-secondary">
                 Track interview stages, private candidate notes, and export your application history.
               </p>
             </div>
@@ -301,17 +301,17 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
             <div className="hidden sm:flex items-center gap-1.5">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-colors shadow-sm"
                 title="Restore applications from a previously exported JSON backup"
               >
-                <Upload className="w-3.5 h-3.5 text-blue-500" />
+                <Upload className="w-3.5 h-3.5 text-brand-primary" />
                 <span>Import JSON</span>
               </button>
               {savedJobs.length > 0 && (
                 <>
                   <button
                     onClick={exportToCSV}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-colors shadow-sm"
                     title="Export pipeline to CSV spreadsheet"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -319,7 +319,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
                   </button>
                   <button
                     onClick={exportToJSON}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-colors shadow-sm"
                     title="Export pipeline as JSON backup"
                   >
                     <FileText className="w-3.5 h-3.5" />
@@ -330,7 +330,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-brand-muted hover:text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors"
               aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
@@ -340,37 +340,37 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
         {/* Import Notification Banner */}
         {importStatus && (
-          <div className="px-5 py-2.5 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-200 dark:border-blue-900/60 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <div className="px-5 py-2.5 bg-blue-500/10 border-b border-blue-500/20 text-xs text-brand-primary flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-brand-primary flex-shrink-0" />
             <span>{importStatus}</span>
           </div>
         )}
 
         {/* Compact Pipeline Metrics Cards */}
         {savedJobs.length > 0 && (
-          <div className="px-5 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Saved</span>
-              <span className="text-base font-bold text-slate-900 dark:text-slate-100 font-mono">{metrics.total}</span>
+          <div className="px-5 sm:px-6 py-3 border-b border-brand-border bg-brand-elevated/40 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
+              <span className="text-xs text-brand-secondary font-medium">Saved</span>
+              <span className="text-base font-bold text-brand-text font-mono tabular-nums">{metrics.total}</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Applied</span>
-              <span className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono">{metrics.applied}</span>
+            <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
+              <span className="text-xs text-brand-primary font-medium">Applied</span>
+              <span className="text-base font-bold text-brand-primary font-mono tabular-nums">{metrics.applied}</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-violet-600 dark:text-violet-400 font-medium">Interviewing</span>
-              <span className="text-base font-bold text-violet-600 dark:text-violet-400 font-mono">{metrics.inProgress}</span>
+            <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
+              <span className="text-xs text-violet-500 font-medium">Interviewing</span>
+              <span className="text-base font-bold text-violet-500 font-mono tabular-nums">{metrics.inProgress}</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Offers</span>
-              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">{metrics.offers}</span>
+            <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
+              <span className="text-xs text-emerald-500 font-medium">Offers</span>
+              <span className="text-base font-bold text-emerald-500 font-mono tabular-nums">{metrics.offers}</span>
             </div>
           </div>
         )}
 
         {/* Stage Filter Tabs */}
         {savedJobs.length > 0 && (
-          <div className="px-5 sm:px-6 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-1.5 overflow-x-auto text-xs">
+          <div className="px-5 sm:px-6 py-2.5 border-b border-brand-border bg-brand-surface flex items-center gap-1.5 overflow-x-auto text-xs">
             <button
               onClick={() => setActiveStageFilter("All")}
               className={`px-3 py-1 rounded-full border transition-all ${

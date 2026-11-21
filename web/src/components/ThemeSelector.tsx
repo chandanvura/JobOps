@@ -51,7 +51,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         aria-label={`Current theme: ${currentOption.label}. Click to change theme.`}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="flex items-center gap-1.5 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        className="flex items-center gap-1.5 p-2 rounded-xl border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
       >
         {currentOption.icon}
         <span className="text-xs font-medium hidden md:inline">{currentOption.label}</span>
@@ -61,7 +61,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         <div
           role="listbox"
           aria-label="Theme options"
-          className="absolute right-0 mt-2 w-36 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute right-0 mt-2 w-36 rounded-xl border border-brand-border bg-brand-surface shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           {options.map((opt) => {
             const isSelected = themeMode === opt.id;
@@ -74,16 +74,16 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                   setThemeMode(opt.id);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors text-left ${
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors text-left active:scale-[0.98] ${
                   isSelected
-                    ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "bg-brand-elevated text-brand-primary font-semibold"
+                    : "text-brand-secondary hover:bg-brand-elevated hover:text-brand-text"
                 }`}
               >
                 {opt.icon}
                 <span>{opt.label}</span>
                 {isSelected && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-primary" />
                 )}
               </button>
             );

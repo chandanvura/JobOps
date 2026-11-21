@@ -554,6 +554,16 @@ export const App: React.FC = () => {
           />
         ) : (
           <>
+            {/* Hero Heading Banner (Capped at 680px, Left-to-Right Hero Text Gradient) */}
+            <div className="mb-6 max-w-[680px]">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-black to-[#666666] dark:from-white dark:to-[#9B9B9B] bg-clip-text text-transparent leading-[1.18] mb-2">
+                Direct ATS engineering intelligence radar
+              </h1>
+              <p className="text-xs sm:text-sm text-brand-secondary leading-relaxed">
+                Ingests verified engineering positions directly from employer career portals with a strict 24-hour freshness cycle. Zero third-party recruiter spam.
+              </p>
+            </div>
+
             {/* Mobile Search & Filter Action Bar */}
             <div className="mb-4 lg:hidden flex items-center gap-2">
               <div className="relative flex-1">
@@ -568,7 +578,7 @@ export const App: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-brand-surface border border-brand-border text-brand-text hover:bg-brand-elevated transition-colors text-xs font-semibold shadow-sm min-h-[44px] min-w-[44px] justify-center"
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-brand-surface border border-brand-border text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors text-xs font-semibold shadow-sm min-h-[44px] min-w-[44px] justify-center"
                 aria-label="Open filter drawer"
               >
                 <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
@@ -592,16 +602,16 @@ export const App: React.FC = () => {
                 <div className="bg-brand-surface p-4 rounded-2xl border border-brand-border mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm sm:text-base font-bold text-brand-text tabular-nums">
-                      {filteredJobs.length.toLocaleString()} Openings Verified
+                      {filteredJobs.length.toLocaleString()} openings verified
                     </span>
                     {filters.freshOnly && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                        <Zap className="w-3 h-3 text-blue-500 fill-blue-500" />
-                        <span>24h Ultra-Fresh</span>
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-brand-primary border border-blue-500/20">
+                        <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
+                        <span>24h fresh</span>
                       </span>
                     )}
                     {filters.searchQuery && (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-brand-elevated text-brand-text border border-brand-border">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-brand-elevated text-brand-text border border-brand-border">
                         &ldquo;{filters.searchQuery}&rdquo;
                       </span>
                     )}
@@ -618,18 +628,18 @@ export const App: React.FC = () => {
                         onChange={(e) => setSortBy(e.target.value)}
                         className="bg-transparent border-none text-brand-text font-medium text-xs focus:outline-none cursor-pointer pr-1"
                       >
-                        <option value="newest" className="bg-brand-surface text-brand-text">Newest Verified</option>
-                        <option value="relevance" className="bg-brand-surface text-brand-text">Most Relevant</option>
-                        <option value="experience_asc" className="bg-brand-surface text-brand-text">Experience (Low → High)</option>
-                        <option value="experience_desc" className="bg-brand-surface text-brand-text">Experience (High → Low)</option>
-                        <option value="company_asc" className="bg-brand-surface text-brand-text">Company (A → Z)</option>
+                        <option value="newest" className="bg-brand-surface text-brand-text">Newest verified</option>
+                        <option value="relevance" className="bg-brand-surface text-brand-text">Most relevant</option>
+                        <option value="experience_asc" className="bg-brand-surface text-brand-text">Experience (low to high)</option>
+                        <option value="experience_desc" className="bg-brand-surface text-brand-text">Experience (high to low)</option>
+                        <option value="company_asc" className="bg-brand-surface text-brand-text">Company (A to Z)</option>
                       </select>
                     </div>
 
                     {/* Freshness Toggle */}
                     <button
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
-                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[36px] ${
+                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[36px] active:scale-[0.98] ${
                         filters.freshOnly
                           ? "bg-brand-primary text-white border-brand-hover shadow-sm"
                           : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
@@ -641,9 +651,9 @@ export const App: React.FC = () => {
                     {/* Density Toggle */}
                     <button
                       onClick={() => setDensity((d) => (d === "comfortable" ? "compact" : "comfortable"))}
-                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
-                      title={density === "comfortable" ? "Switch to Compact Density (D)" : "Switch to Comfortable Density (D)"}
-                      aria-label={density === "comfortable" ? "Switch to Compact Density" : "Switch to Comfortable Density"}
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text active:scale-[0.98] transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      title={density === "comfortable" ? "Switch to compact density (D)" : "Switch to comfortable density (D)"}
+                      aria-label={density === "comfortable" ? "Switch to compact density" : "Switch to comfortable density"}
                     >
                       {density === "comfortable" ? <Rows3 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
                     </button>
@@ -651,9 +661,9 @@ export const App: React.FC = () => {
                     {/* Shortcuts Modal Trigger */}
                     <button
                       onClick={() => setIsShortcutsModalOpen(true)}
-                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text transition-colors min-h-[36px] min-w-[36px] hidden sm:flex items-center justify-center"
-                      title="Keyboard Shortcuts (?)"
-                      aria-label="Keyboard Shortcuts"
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text active:scale-[0.98] transition-colors min-h-[36px] min-w-[36px] hidden sm:flex items-center justify-center"
+                      title="Keyboard shortcuts (?)"
+                      aria-label="Keyboard shortcuts"
                     >
                       <HelpCircle className="w-4 h-4" />
                     </button>
@@ -663,23 +673,42 @@ export const App: React.FC = () => {
                 {loading ? (
                   <div className={`grid grid-cols-1 ${density === "compact" ? "md:grid-cols-2 lg:grid-cols-3 gap-3" : "md:grid-cols-2 gap-4"}`}>
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="bg-brand-surface p-6 rounded-2xl border border-brand-border animate-pulse h-48" />
+                      <div key={i} className="bg-brand-surface p-5 rounded-2xl border border-brand-border animate-pulse flex flex-col justify-between h-52">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-brand-elevated" />
+                            <div className="space-y-1.5 flex-1">
+                              <div className="h-3.5 bg-brand-elevated rounded w-1/3" />
+                              <div className="h-2.5 bg-brand-elevated rounded w-1/4" />
+                            </div>
+                          </div>
+                          <div className="h-4 bg-brand-elevated rounded w-3/4" />
+                          <div className="flex gap-2">
+                            <div className="h-5 bg-brand-elevated rounded-md w-16" />
+                            <div className="h-5 bg-brand-elevated rounded-md w-20" />
+                          </div>
+                        </div>
+                        <div className="pt-3 border-t border-brand-border flex justify-between items-center">
+                          <div className="h-3 bg-brand-elevated rounded w-16" />
+                          <div className="h-7 bg-brand-elevated rounded-xl w-24" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : filteredJobs.length === 0 ? (
-                  <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center shadow-sm">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-elevated mx-auto flex items-center justify-center text-brand-muted mb-3">
-                      <Filter className="w-6 h-6" />
+                  <div className="bg-brand-surface rounded-2xl border border-brand-border p-12 text-center shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-brand-elevated mx-auto flex items-center justify-center text-brand-muted mb-3">
+                      <Filter className="w-5 h-5 text-brand-primary" />
                     </div>
-                    <h3 className="text-lg font-bold text-brand-text">No matching positions found</h3>
-                    <p className="text-xs text-brand-secondary mt-1.5 max-w-sm mx-auto">
-                      Try clearing some filters or searching for broader skills like &ldquo;Python&rdquo;, &ldquo;Go&rdquo;, &ldquo;React&rdquo;, or &ldquo;Kubernetes&rdquo;.
+                    <h3 className="text-base font-semibold text-brand-text">No matching positions found</h3>
+                    <p className="text-xs text-brand-secondary mt-1.5 max-w-sm mx-auto leading-relaxed">
+                      Try clearing some filters or searching for broader skills like Python, Go, React, or Kubernetes.
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-colors shadow-sm"
                     >
-                      Reset All Filters
+                      Reset all filters
                     </button>
                   </div>
                 ) : (

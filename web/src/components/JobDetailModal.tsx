@@ -142,10 +142,10 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
           )}
 
           {/* Verification Evidence */}
-          <div className="bg-brand-elevated/70 border border-brand-border rounded-2xl p-4">
+          <div className="bg-brand-elevated/70 border border-brand-border rounded-xl p-4">
             <h4 className="text-xs font-semibold text-brand-text mb-1 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-brand-primary" />
-              <span>Direct ATS Ingestion Telemetry</span>
+              <span>Direct ATS ingestion telemetry</span>
             </h4>
             <p className="text-xs text-brand-secondary leading-relaxed">
               This opportunity was ingested directly from {job.company_name}&apos;s official {job.ats_provider} board. 
@@ -156,9 +156,9 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
           {/* Job Overview / Clean Snippet */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-2">
-              Role Summary & Requirements
+              Role summary & requirements
             </h3>
-            <div className="bg-brand-elevated/50 p-4 rounded-2xl border border-brand-border text-xs text-brand-secondary leading-relaxed whitespace-pre-line font-sans">
+            <div className="bg-brand-elevated/50 p-4 rounded-xl border border-brand-border text-xs text-brand-secondary leading-relaxed whitespace-pre-line font-sans">
               {cleanSummary}
             </div>
           </div>
@@ -169,23 +169,23 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onToggleSave(job)}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold rounded-xl border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold rounded-xl border active:scale-[0.98] transition-colors ${
                 isSaved
                   ? "bg-brand-primary/10 border-brand-primary text-brand-primary"
                   : "bg-brand-surface border-brand-border text-brand-secondary hover:text-brand-text hover:bg-brand-elevated"
               }`}
             >
               <Bookmark className={`w-4 h-4 ${isSaved ? "fill-brand-primary text-brand-primary" : ""}`} />
-              <span>{isSaved ? "Saved" : "Save Job"}</span>
+              <span>{isSaved ? "Saved" : "Save job"}</span>
             </button>
 
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-brand-border bg-brand-surface text-brand-secondary hover:text-brand-text transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-brand-border bg-brand-surface text-brand-secondary hover:text-brand-text active:scale-[0.98] transition-colors"
               title="Copy direct application URL"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{copied ? "Copied!" : "Copy Link"}</span>
+              <span className="hidden sm:inline">{copied ? "Copied" : "Copy link"}</span>
             </button>
           </div>
 
@@ -193,9 +193,9 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
             href={safeApplyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md shadow-blue-600/25 hover:shadow-lg transition-all duration-200"
+            className="flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs active:scale-[0.98] transition-all"
           >
-            <span>Apply Directly</span>
+            <span>Apply direct</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>

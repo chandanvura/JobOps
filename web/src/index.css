@@ -24,19 +24,19 @@
   }
 
   .dark {
-    --bg-main: #0B1120;
-    --surface-primary: #111827;
-    --surface-secondary: #172033;
-    --surface-elevated: #1F2937;
+    --bg-main: #000000;
+    --surface-primary: #181818;
+    --surface-secondary: #1F1F1F;
+    --surface-elevated: #272727;
     --text-primary: #F1F5F9;
     --text-secondary: #CBD5E1;
     --text-muted: #94A3B8;
-    --border-color: #334155;
-    --border-subtle: #1E293B;
+    --border-color: #313131;
+    --border-subtle: #272727;
     --action-primary: #3B82F6;
     --action-hover: #60A5FA;
     --accent-color: #38BDF8;
-    --accent-soft: #1E293B;
+    --accent-soft: #1F1F1F;
     --success-color: #4ADE80;
     --warning-color: #FBBF24;
     --danger-color: #F87171;
@@ -44,16 +44,35 @@
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
-    min-height: 100vh;
+    min-height: 100dvh;
+    letter-spacing: -0.011em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+
+  p, span, label {
+    text-wrap: pretty;
   }
 }
 
 /* Tabular numbers for numerical alignment */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion handling */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Custom refined scrollbar matching theme tokens */

@@ -106,19 +106,19 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-brand-border mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <div className="w-9 h-9 rounded-xl bg-brand-elevated border border-brand-border flex items-center justify-center text-brand-primary">
               <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-brand-text">
-                Live Ingestion & ATS Trigger
+                Live ingestion & ATS trigger
               </h2>
-              <p className="text-xs text-brand-secondary">Autonomous Direct ATS Radar Engine</p>
+              <p className="text-xs text-brand-secondary">Autonomous direct ATS radar engine</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-elevated transition-colors"
+            className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -126,11 +126,11 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
         </div>
 
         {/* Action 1: On-Demand Fetch */}
-        <div className="bg-brand-elevated rounded-2xl p-4 border border-brand-border mb-5">
+        <div className="bg-brand-elevated rounded-xl p-4 border border-brand-border mb-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-text">
-                Trigger Real-Time Ingestion
+                Trigger real-time ingestion
               </h3>
               <p className="text-xs text-brand-secondary mt-1">
                 Scans 757 verified employer ATS endpoints for new engineering jobs posted in the strict 24-hour freshness window.
@@ -140,10 +140,10 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
           <button
             onClick={onTriggerRefresh}
             disabled={isFetching}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-white font-semibold text-xs active:scale-[0.98] shadow-sm transition-all"
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
-            <span>{isFetching ? "Scanning ATS Endpoints..." : "Fetch Latest 24h Jobs Now"}</span>
+            <span>{isFetching ? "Scanning ATS endpoints..." : "Fetch latest 24h jobs now"}</span>
           </button>
         </div>
 
@@ -151,7 +151,7 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-text mb-1 flex items-center gap-1.5">
             <PlusCircle className="w-4 h-4 text-brand-primary" />
-            <span>Submit a New Employer ATS Endpoint</span>
+            <span>Submit a new employer ATS endpoint</span>
           </h3>
           <p className="text-xs text-brand-secondary mb-3">
             Know a tech company with a direct ATS board? Add their slug to the radar:
@@ -160,7 +160,7 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
           <form onSubmit={handleAddCompany} className="space-y-3">
             <div>
               <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
-                Company Name
+                Company name
               </label>
               <input
                 type="text"
@@ -175,7 +175,7 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
-                  ATS Platform
+                  ATS platform
                 </label>
                 <select
                   value={atsProvider}
@@ -192,7 +192,7 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
 
               <div>
                 <label className="text-[11px] font-mono font-medium text-brand-secondary block mb-1">
-                  ATS Slug / Identifier
+                  ATS slug / identifier
                 </label>
                 <input
                   type="text"
@@ -214,9 +214,9 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-xl bg-brand-elevated hover:bg-brand-surface text-brand-text border border-brand-border font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2.5 px-4 rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border font-semibold text-xs active:scale-[0.98] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <span>Add to Ingestion Queue</span>
+              <span>Add to ingestion queue</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>

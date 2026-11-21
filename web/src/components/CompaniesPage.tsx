@@ -97,30 +97,30 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
-              Direct Employers
+              Direct employers
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-brand-text">
+            <span className="text-2xl sm:text-3xl font-bold text-brand-text tabular-nums">
               {companies.length.toLocaleString()}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
-              100% Native ATS Endpoints
+              100% native ATS endpoints
             </span>
           </div>
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-brand-primary flex-shrink-0">
             <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
-              Enterprise & Global Tech
+              Enterprise & tech leaders
             </span>
-            <span className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+            <span className="text-2xl sm:text-3xl font-bold text-brand-primary tabular-nums">
               {stats.f500 + stats.globalTech}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
-              {stats.f500} F500 • {stats.globalTech} Global Leaders
+            <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5 tabular-nums">
+              {stats.f500} F500 • {stats.globalTech} global leaders
             </span>
           </div>
         </div>
@@ -131,13 +131,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
-              Portal Health Rate
+              Portal health rate
             </span>
             <span className="text-2xl sm:text-3xl font-bold text-emerald-500 tabular-nums">
               {companies.length > 0 ? `${Math.round((stats.healthy / companies.length) * 100)}%` : "100%"}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
-              Active HTTP 200 Handshakes
+              Active HTTP 200 handshakes
             </span>
           </div>
         </div>
@@ -148,13 +148,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
-              Active Postings
+              Active postings
             </span>
             <span className="text-2xl sm:text-3xl font-bold text-brand-text tabular-nums">
               {stats.totalJobs.toLocaleString()}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
-              Strict 24h & Active Openings
+              Strict 24h & active openings
             </span>
           </div>
         </div>
@@ -180,10 +180,10 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
           <button
             onClick={onOpenAddModal}
-            className="w-full md:w-auto px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full md:w-auto px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white text-xs font-semibold active:scale-[0.98] transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span>Register New Company ATS</span>
+            <span>Register new company ATS</span>
           </button>
         </div>
 
@@ -198,13 +198,13 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
                   setSelectedTier(tier);
                   setCurrentPage(1);
                 }}
-                className={`px-2.5 py-1 rounded-lg border transition-all ${
+                className={`px-2.5 py-1 rounded-full border active:scale-[0.98] transition-colors ${
                   selectedTier === tier
                     ? "bg-brand-primary text-white border-brand-primary font-semibold"
-                    : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text"
+                    : "bg-brand-surface text-brand-secondary border-brand-border hover:bg-brand-elevated hover:text-brand-text"
                 }`}
               >
-                {tier === "all" ? "All Tiers" : tier}
+                {tier === "all" ? "All tiers" : tier}
               </button>
             ))}
           </div>

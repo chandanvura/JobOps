@@ -45,8 +45,11 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        sans: ["'Geist'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["'Geist Mono'", "monospace"],
+      },
+      transitionTimingFunction: {
+        base: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },

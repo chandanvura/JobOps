@@ -58,16 +58,16 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
   return (
     <div
       role="status"
-      className="pointer-events-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xl flex items-start gap-3 animate-in slide-in-from-bottom-3 duration-200 text-xs"
+      className="pointer-events-auto bg-brand-surface border border-brand-border rounded-xl p-3.5 shadow-xl flex items-start gap-3 animate-in slide-in-from-bottom-3 duration-200 text-xs transition-colors"
     >
       <div className="mt-0.5">{getIcon()}</div>
       <div className="flex-1 min-w-0">
         {toast.title && (
-          <p className="font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+          <p className="font-semibold text-brand-text leading-snug">
             {toast.title}
           </p>
         )}
-        <p className="text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5">
+        <p className="text-brand-secondary leading-relaxed mt-0.5">
           {toast.message}
         </p>
         {toast.action && (
@@ -76,7 +76,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
               toast.action?.onClick();
               onDismiss(toast.id);
             }}
-            className="mt-2 text-blue-600 dark:text-blue-400 font-bold hover:underline inline-block text-xs"
+            className="mt-2 text-brand-primary font-bold hover:underline inline-block text-xs active:scale-[0.98]"
           >
             {toast.action.label}
           </button>
@@ -84,7 +84,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
       </div>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+        className="p-1 rounded-lg text-brand-muted hover:text-brand-text active:scale-[0.98] transition-colors"
         aria-label="Dismiss notification"
       >
         <X className="w-3.5 h-3.5" />

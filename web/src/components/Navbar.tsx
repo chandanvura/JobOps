@@ -56,45 +56,45 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-150">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2.5 sm:gap-4">
+    <header className="sticky top-2 sm:top-3 z-30 max-w-7xl mx-auto px-3 sm:px-6 w-full transition-all duration-300">
+      <div className="backdrop-blur-md bg-brand-surface/90 border border-brand-border rounded-2xl h-16 px-3 sm:px-5 flex items-center justify-between gap-2.5 sm:gap-4 shadow-sm transition-colors duration-300">
         {/* Brand & Tabs */}
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <Logo onClick={() => setCurrentTab("jobs")} />
 
           {/* Navigation Tabs */}
           <nav
-            className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700/60 flex-shrink-0"
+            className="flex items-center gap-1 bg-brand-elevated p-1 rounded-xl text-xs font-semibold border border-brand-border flex-shrink-0"
             role="tablist"
           >
             <button
               role="tab"
               aria-selected={currentTab === "jobs"}
               onClick={() => setCurrentTab("jobs")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.98] ${
                 currentTab === "jobs"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm font-semibold border border-slate-200/80 dark:border-slate-700"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-brand-surface text-brand-primary font-semibold border border-brand-border shadow-sm"
+                  : "text-brand-secondary hover:text-brand-text"
               }`}
             >
               <Radar className="w-3.5 h-3.5" />
-              <span>Jobs Radar</span>
+              <span>Jobs radar</span>
             </button>
 
             <button
               role="tab"
               aria-selected={currentTab === "companies"}
               onClick={() => setCurrentTab("companies")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-[0.98] ${
                 currentTab === "companies"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm font-semibold border border-slate-200/80 dark:border-slate-700"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-brand-surface text-brand-primary font-semibold border border-brand-border shadow-sm"
+                  : "text-brand-secondary hover:text-brand-text"
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Companies & Health</span>
+              <span className="hidden sm:inline">Companies & health</span>
               <span className="sm:hidden">Portals</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 ml-0.5">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-brand-elevated text-brand-secondary border border-brand-border ml-0.5 tabular-nums">
                 {companiesCount}
               </span>
             </button>
@@ -105,16 +105,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         {currentTab === "jobs" && (
           <div className="flex-1 max-w-md hidden md:block">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="Search engineering positions, skills, or companies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition-all placeholder:text-slate-400 shadow-sm"
+                className="w-full pl-10 pr-10 py-2 text-xs sm:text-sm bg-brand-elevated focus:bg-brand-surface text-brand-text border border-brand-border focus:border-brand-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all placeholder:text-brand-muted shadow-sm"
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hidden sm:inline-block">
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-border bg-brand-surface text-brand-muted hidden sm:inline-block">
                 /
               </span>
             </div>
@@ -127,11 +127,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           {currentTab === "jobs" && onToggleMobileFilter && (
             <button
               onClick={onToggleMobileFilter}
-              className="lg:hidden flex items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+              className="lg:hidden flex items-center gap-1 p-2 rounded-xl border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors shadow-sm"
               title="Filter jobs"
               aria-label="Open filter drawer"
             >
-              <SlidersHorizontal className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
             </button>
           )}
 
@@ -141,32 +141,32 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Fetch Jobs Trigger */}
           <button
             onClick={onOpenFetchModal}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-all shadow-sm"
             title="Trigger real-time ATS refresh"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span className="hidden sm:inline">Fetch Jobs</span>
+            <RefreshCw className="w-3.5 h-3.5 text-brand-primary" />
+            <span className="hidden sm:inline">Fetch jobs</span>
           </button>
 
           {/* Add ATS Button (Desktop) */}
           <button
             onClick={onOpenAddModal}
-            className="hidden xl:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60 transition-colors"
+            className="hidden xl:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl text-brand-secondary hover:text-brand-text hover:bg-brand-elevated border border-brand-border active:scale-[0.98] transition-all"
           >
-            <PlusCircle className="w-3.5 h-3.5 text-slate-400" />
+            <PlusCircle className="w-3.5 h-3.5 text-brand-muted" />
             <span>Add ATS</span>
           </button>
 
           {/* Pipeline Button */}
           <button
             onClick={onOpenSavedModal}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 transition-colors relative shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-primary border border-brand-border active:scale-[0.98] transition-all relative shadow-sm"
             title="Saved applications & personal workspace"
           >
-            <Bookmark className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <Bookmark className="w-3.5 h-3.5 text-brand-primary" />
             <span className="hidden sm:inline">Pipeline</span>
             {savedCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-mono text-[10px] font-bold shadow-sm">
+              <span className="px-1.5 py-0.5 rounded-full bg-brand-primary text-white font-mono text-[10px] font-bold shadow-sm tabular-nums">
                 {savedCount}
               </span>
             )}
