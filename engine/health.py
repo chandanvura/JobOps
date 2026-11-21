@@ -48,19 +48,22 @@ class CompanyHealthChecker:
             status_code = response.status_code
 
             # Classify based on true HTTP status and latency
-            if 200 <= status_code < 300:
+            if 200 <= status_code < 400:
                 if latency_ms >= 5000:
                     health_status = "degraded"
                 else:
                     health_status = "healthy"
                 error = None
+            elif status_code in (401, 403):
+                # Live employer career portal protected by WAF/Bot verification (Cloudflare/Akamai/Imperva)
+                health_status = "degraded"
+                error = f"HTTP {status_code} WAF / Bot Verification Active"
             elif status_code == 429:
                 health_status = "degraded"
                 error = "HTTP 429 Rate Limited"
-            elif status_code == 403:
-                # Often Cloudflare / Akamai bot management on careers portal
-                health_status = "unknown"
-                error = "HTTP 403 Access Restricted / WAF Challenge"
+            elif status_code == 400:
+                health_status = "degraded"
+                error = "HTTP 400 Client Header Filtering"
             elif status_code in (404, 410):
                 health_status = "unreachable"
                 error = f"HTTP {status_code} Not Found"
@@ -68,7 +71,7 @@ class CompanyHealthChecker:
                 health_status = "unreachable"
                 error = f"HTTP {status_code} Server Error"
             else:
-                health_status = "unknown"
+                health_status = "degraded"
                 error = f"HTTP {status_code}"
 
             return {
@@ -100,10 +103,10 @@ class CompanyHealthChecker:
         except Exception as e:
             latency_ms = round((time.perf_counter() - start_time) * 1000)
             return {
-                "health_status": "unknown",
+                "health_status": "unreachable",
                 "status_code": None,
                 "response_time_ms": latency_ms,
-                "error": f"Probe error: {str(e)[:80]}",
+                "error": f"Connection error: {str(e)[:80]}",
                 "last_checked_at": datetime.now(timezone.utc).isoformat(),
             }
 

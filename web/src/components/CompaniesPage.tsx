@@ -22,7 +22,7 @@ export interface CompanyItem {
   ats_identifier: string;
   careers_url: string;
   priority: number;
-  tier: "Fortune 500" | "Global Tech" | "Growth Tech";
+  tier: "Fortune 500" | "Global Tech" | "Growth Tech" | "GCC";
   enabled: boolean;
   health_status: "healthy" | "degraded" | "unreachable" | "unknown";
   response_time_ms: number | null;
@@ -61,6 +61,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
   // Authentic Stats calculation based on verified telemetry
   const stats = useMemo(() => {
+    const gcc = companiesList.filter((c) => c.tier === "GCC").length;
     const f500 = companiesList.filter((c) => c.tier === "Fortune 500").length;
     const globalTech = companiesList.filter((c) => c.tier === "Global Tech").length;
     const healthy = companiesList.filter((c) => c.health_status === "healthy").length;
@@ -71,7 +72,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
     const probedTotal = healthy + degraded + unreachable;
     const healthPercent = probedTotal > 0 ? Math.round((healthy / probedTotal) * 100) : 100;
 
-    return { f500, globalTech, healthy, degraded, unreachable, unprobed, probedTotal, healthPercent, totalJobs };
+    return { gcc, f500, globalTech, healthy, degraded, unreachable, unprobed, probedTotal, healthPercent, totalJobs };
   }, [companiesList]);
 
   // Filtering
@@ -163,10 +164,12 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
   const getTierBadge = (tier: string) => {
     switch (tier) {
+      case "GCC":
+        return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30 font-semibold font-mono";
       case "Fortune 500":
         return "bg-amber-500/10 text-amber-500 border-amber-500/30 font-semibold font-mono";
       case "Global Tech":
-        return "bg-purple-500/10 text-purple-500 border-purple-500/30 font-semibold font-mono";
+        return "bg-blue-500/10 text-blue-500 border-blue-500/30 font-semibold font-mono";
       default:
         return "bg-brand-elevated text-brand-secondary border-brand-border font-medium font-mono";
     }
@@ -194,18 +197,18 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-brand-primary flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
             <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-brand-secondary block">
-              Enterprise & Tech Leaders
+              GCC & Enterprise Leaders
             </span>
             <span className="text-2xl sm:text-3xl font-bold text-brand-primary tabular-nums">
-              {stats.f500 + stats.globalTech}
+              {stats.gcc + stats.f500 + stats.globalTech}
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5 tabular-nums">
-              {stats.f500} F500 • {stats.globalTech} Global Leaders
+              {stats.gcc} GCC Centers • {stats.f500} F500 • {stats.globalTech} Global
             </span>
           </div>
         </div>
@@ -222,7 +225,8 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
               {stats.healthPercent}%
             </span>
             <span className="text-[10px] sm:text-[11px] font-mono text-brand-muted block mt-0.5">
-              {stats.healthy} healthy • {stats.unreachable} unreachable ({stats.unprobed} unprobed)
+              {stats.healthy} healthy • {stats.degraded} degraded • {stats.unreachable} unreachable
+              {stats.unprobed > 0 ? ` (${stats.unprobed} unprobed)` : " (100% Probed)"}
             </span>
           </div>
         </div>
@@ -276,7 +280,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pt-2 border-t border-brand-border text-xs">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-medium text-brand-secondary">Tier:</span>
-            {["all", "Fortune 500", "Global Tech", "Growth Tech"].map((tier) => (
+            {["all", "GCC", "Fortune 500", "Global Tech", "Growth Tech"].map((tier) => (
               <button
                 key={tier}
                 onClick={() => {
@@ -289,7 +293,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
                     : "bg-brand-surface text-brand-secondary border-brand-border hover:bg-brand-elevated hover:text-brand-text"
                 }`}
               >
-                {tier === "all" ? "All Tiers" : tier}
+                {tier === "all" ? "All Tiers" : tier === "GCC" ? "GCC Centers" : tier}
               </button>
             ))}
           </div>

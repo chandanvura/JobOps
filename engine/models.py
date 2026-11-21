@@ -33,7 +33,9 @@ class Company(BaseModel):
     ats_identifier: str
     careers_url: Optional[str] = None
     priority: int = 1
+    tier: Optional[str] = "Growth Tech"
     enabled: bool = True
+    health_status: Optional[str] = "healthy"
     tags: List[str] = Field(default_factory=list)
 
 

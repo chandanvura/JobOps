@@ -126,7 +126,7 @@ class JobCollector:
 
         return processed
 
-    async def run(self, strict_24h: bool = True, concurrency: int = 5) -> Dict[str, Any]:
+    async def run(self, strict_24h: bool = True, concurrency: int = 10) -> Dict[str, Any]:
         companies = self.load_companies()
         logger.info(f"Loaded {len(companies)} active companies from registry.")
 
@@ -134,18 +134,34 @@ class JobCollector:
         all_new_jobs: List[ProcessedJob] = []
 
         semaphore = asyncio.Semaphore(concurrency)
+        limits = httpx.Limits(max_keepalive_connections=25, max_connections=60)
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36 JobOps-Collector/1.0"
+            ),
+            "Accept": "application/json, text/plain, */*",
+        }
 
-        async def worker(comp: Company):
-            async with semaphore:
-                async with httpx.AsyncClient(timeout=25.0) as client:
-                    jobs = await self.collect_from_company(comp, client, strict_24h=strict_24h)
-                    logger.info(f"[{comp.name}] Found {len(jobs)} new engineering jobs.")
-                    return jobs
+        async with httpx.AsyncClient(timeout=12.0, limits=limits, headers=headers) as client:
+            async def worker(comp: Company):
+                if comp.health_status == "unreachable":
+                    return []
+                async with semaphore:
+                    try:
+                        jobs = await self.collect_from_company(comp, client, strict_24h=strict_24h)
+                        if jobs:
+                            logger.info(f"[{comp.name}] Found {len(jobs)} new engineering jobs.")
+                        return jobs
+                    except Exception as e:
+                        logger.debug(f"[{comp.name}] Collection exception: {e}")
+                        return []
 
-        tasks = [worker(c) for c in companies]
-        results = await asyncio.gather(*tasks)
-        for res in results:
-            all_new_jobs.extend(res)
+            tasks = [worker(c) for c in companies]
+            results = await asyncio.gather(*tasks)
+            for res in results:
+                all_new_jobs.extend(res)
 
         saved_count = self.db.save_processed_jobs(all_new_jobs)
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
