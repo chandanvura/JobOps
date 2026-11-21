@@ -1,4 +1,4 @@
-import { Job } from "../types/job";
+import type { Job } from "../types/job.ts";
 
 /**
  * Safely decodes HTML entities and strips all HTML tags to produce clean readable text.
@@ -314,4 +314,178 @@ export function matchJobCity(job: Job, selectedCity: string): boolean {
     city.includes(sel) ||
     rawLoc.includes(sel)
   );
+}
+
+/**
+ * Valid pipeline application lifecycle stages.
+ */
+export const ALLOWED_PIPELINE_STAGES = [
+  "Saved",
+  "Interested",
+  "Applied",
+  "Assessment",
+  "Interview",
+  "Offer",
+  "Rejected",
+  "Withdrawn",
+  "Follow-up",
+] as const;
+
+export type PipelineStage = (typeof ALLOWED_PIPELINE_STAGES)[number];
+
+export interface ValidatedJobImport {
+  valid: boolean;
+  validJobs: Job[];
+  trackingMap: Record<string, { stage: PipelineStage; notes: string; savedAt: string; appliedAt?: string }>;
+  duplicateCount: number;
+  errors: string[];
+}
+
+/**
+ * Validates untrusted imported JSON data against the JobOps application schema.
+ * Rejects corrupt structures, validates fields, and sanitizes tracking metadata.
+ */
+export function validateJobImportData(data: unknown): ValidatedJobImport {
+  const errors: string[] = [];
+  if (!Array.isArray(data)) {
+    return {
+      valid: false,
+      validJobs: [],
+      trackingMap: {},
+      duplicateCount: 0,
+      errors: ["Import payload is not a valid JSON array."],
+    };
+  }
+
+  if (data.length === 0) {
+    return {
+      valid: false,
+      validJobs: [],
+      trackingMap: {},
+      duplicateCount: 0,
+      errors: ["Import array is empty."],
+    };
+  }
+
+  const validJobs: Job[] = [];
+  const trackingMap: Record<string, { stage: PipelineStage; notes: string; savedAt: string; appliedAt?: string }> = {};
+  const seenIds = new Set<string>();
+  let duplicateCount = 0;
+
+  for (let idx = 0; idx < data.length; idx++) {
+    const item = data[idx];
+    if (!item || typeof item !== "object") {
+      errors.push(`Record #${idx + 1} is not a valid object.`);
+      continue;
+    }
+
+    const rec = item as Record<string, any>;
+    const id = typeof rec.id === "string" ? rec.id.trim() : "";
+    const title = typeof rec.title === "string" ? cleanJobText(rec.title).slice(0, 150) : "";
+    const company = typeof rec.company_name === "string" ? cleanJobText(rec.company_name).slice(0, 100) : "";
+    const url = sanitizeExternalUrl(rec.job_url);
+
+    if (!id) {
+      errors.push(`Record #${idx + 1} is missing a unique 'id'.`);
+      continue;
+    }
+    if (!title) {
+      errors.push(`Record #${idx + 1} (id: ${id}) is missing a 'title'.`);
+      continue;
+    }
+    if (!company) {
+      errors.push(`Record #${idx + 1} (id: ${id}) is missing 'company_name'.`);
+      continue;
+    }
+
+    if (seenIds.has(id)) {
+      duplicateCount++;
+      continue;
+    }
+    seenIds.add(id);
+
+    // Normalize pipeline stage
+    let stage: PipelineStage = "Saved";
+    let notes = "";
+    let appliedAt: string | undefined = undefined;
+    const savedAt = typeof rec.pipelineTracking?.savedAt === "string" ? rec.pipelineTracking.savedAt : new Date().toISOString();
+
+    if (rec.pipelineTracking && typeof rec.pipelineTracking === "object") {
+      const pStage = rec.pipelineTracking.stage;
+      if (ALLOWED_PIPELINE_STAGES.includes(pStage)) {
+        stage = pStage;
+      }
+      if (typeof rec.pipelineTracking.notes === "string") {
+        notes = cleanJobText(rec.pipelineTracking.notes).slice(0, 2000);
+      }
+      if (typeof rec.pipelineTracking.appliedAt === "string") {
+        appliedAt = rec.pipelineTracking.appliedAt.slice(0, 30);
+      }
+    }
+
+    trackingMap[id] = { stage, notes, savedAt, appliedAt };
+
+    let validMode: "remote" | "hybrid" | "onsite" | "unknown" = "unknown";
+    if (rec.work_mode === "remote" || rec.work_mode === "hybrid" || rec.work_mode === "onsite") {
+      validMode = rec.work_mode;
+    }
+
+    const job: Job = {
+      id,
+      external_id: typeof rec.external_id === "string" ? rec.external_id : id,
+      company_name: company,
+      company_id: typeof rec.company_id === "string" ? rec.company_id : id,
+      title,
+      job_url: url,
+      ats_provider: typeof rec.ats_provider === "string" ? rec.ats_provider : "direct",
+      is_engineering: true,
+      role_category: typeof rec.role_category === "string" ? rec.role_category : "fullstack",
+      role_label: typeof rec.role_label === "string" ? rec.role_label : "Full Stack",
+      city: typeof rec.city === "string" ? rec.city : "India",
+      location_raw: typeof rec.location_raw === "string" ? rec.location_raw : "",
+      work_mode: validMode,
+      is_india: true,
+      min_years: typeof rec.min_years === "number" ? rec.min_years : null,
+      max_years: typeof rec.max_years === "number" ? rec.max_years : null,
+      experience_level: typeof rec.experience_level === "string" ? rec.experience_level : "1-3 yrs",
+      skills: Array.isArray(rec.skills) ? rec.skills.filter((s: any) => typeof s === "string") : [],
+      posted_at: typeof rec.posted_at === "string" ? rec.posted_at : new Date().toISOString(),
+      age_hours: typeof rec.age_hours === "number" ? rec.age_hours : 1,
+      is_fresh_24h: Boolean(rec.is_fresh_24h),
+      first_seen_at: typeof rec.first_seen_at === "string" ? rec.first_seen_at : new Date().toISOString(),
+      last_seen_at: typeof rec.last_seen_at === "string" ? rec.last_seen_at : new Date().toISOString(),
+      is_active: typeof rec.is_active === "boolean" ? rec.is_active : true,
+      summary: typeof rec.summary === "string" ? cleanJobText(rec.summary).slice(0, 400) : `${title} at ${company}`,
+    };
+
+    validJobs.push(job);
+  }
+
+  return {
+    valid: validJobs.length > 0,
+    validJobs,
+    trackingMap,
+    duplicateCount,
+    errors,
+  };
+}
+
+/**
+ * Escapes CSV values and neutralizes spreadsheet formula injection (CWE-1236).
+ * Values starting with =, +, -, @, \t, or \r are prefixed with a single quote.
+ */
+export function sanitizeCsvField(rawVal: unknown): string {
+  if (rawVal === null || rawVal === undefined) return '""';
+  let str = String(rawVal);
+
+  // Strip carriage returns and normalize newlines
+  str = str.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+  // Prevent Spreadsheet Formula Injection (CWE-1236)
+  if (/^[\=\+\-\@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+
+  // Escape double quotes
+  return `"${str.replace(/"/g, '""')}"`;
 }

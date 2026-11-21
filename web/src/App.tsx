@@ -76,7 +76,14 @@ export const App: React.FC = () => {
       const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
       const jobId = sp.get("job") || null;
       const sort = ALLOWED_SORTS.includes(sp.get("sort") || "") ? sp.get("sort")! : "newest";
-      return { q, role, exp, city, mode, fresh, tab, page, jobId, sort };
+      const skillsParam = sp.get("skills");
+      const skills = skillsParam
+        ? skillsParam
+            .split(",")
+            .map((s) => s.trim().slice(0, 40).replace(/[<>]/g, ""))
+            .filter(Boolean)
+        : [];
+      return { q, role, exp, city, mode, fresh, tab, page, jobId, sort, skills };
     } catch {
       return {
         q: "",
@@ -89,6 +96,7 @@ export const App: React.FC = () => {
         page: 1,
         jobId: null,
         sort: "newest",
+        skills: [],
       };
     }
   }, []);
@@ -106,7 +114,7 @@ export const App: React.FC = () => {
     city: initialUrlParams.city,
     workMode: initialUrlParams.mode,
     freshOnly: initialUrlParams.fresh,
-    selectedSkills: [],
+    selectedSkills: initialUrlParams.skills,
   });
 
   const [sortBy, setSortBy] = useState<string>(initialUrlParams.sort);
@@ -165,6 +173,7 @@ export const App: React.FC = () => {
       const isEditing =
         tag === "INPUT" ||
         tag === "TEXTAREA" ||
+        tag === "SELECT" ||
         (document.activeElement as HTMLElement)?.isContentEditable;
 
       if (e.key === "Escape") {
@@ -178,7 +187,15 @@ export const App: React.FC = () => {
 
       if (isEditing) return;
 
-      if (e.key === "?") {
+      if (e.key === "/") {
+        e.preventDefault();
+        if (currentTab !== "jobs") {
+          setCurrentTab("jobs");
+        }
+        setTimeout(() => {
+          document.getElementById("global-search-input")?.focus();
+        }, 50);
+      } else if (e.key === "?") {
         e.preventDefault();
         setIsShortcutsModalOpen((prev) => !prev);
       } else if (e.key === "t" || e.key === "T") {
@@ -203,14 +220,17 @@ export const App: React.FC = () => {
           addToast("info", next ? "Filtered to Last 24 Hours only" : "All active positions displayed");
           return { ...prev, freshOnly: next };
         });
+      } else if (e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        setIsFetchModalOpen(true);
       }
     };
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [themeMode, setThemeMode, addToast]);
+  }, [themeMode, setThemeMode, addToast, currentTab]);
 
-  // Sync state back to URL parameters safely
+  // Sync state back to URL parameters safely with complete dependency array
   const updateUrlState = useCallback(() => {
     try {
       const params = new URLSearchParams();
@@ -235,6 +255,9 @@ export const App: React.FC = () => {
       if (filters.freshOnly) {
         params.set("fresh", "true");
       }
+      if (filters.selectedSkills && filters.selectedSkills.length > 0) {
+        params.set("skills", filters.selectedSkills.join(","));
+      }
       if (sortBy !== "newest") {
         params.set("sort", sortBy);
       }
@@ -249,11 +272,59 @@ export const App: React.FC = () => {
       const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     } catch {}
-  }, [currentTab, filters, currentPage, selectedJob]);
+  }, [currentTab, filters, sortBy, currentPage, selectedJob]);
 
   useEffect(() => {
     updateUrlState();
   }, [updateUrlState]);
+
+  // Handle Browser Back & Forward Popstate Navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        const q = (sp.get("q") || "").slice(0, 100).replace(/[<>]/g, "");
+        const role = ALLOWED_ROLES.includes(sp.get("role") || "") ? sp.get("role")! : "all";
+        const exp = ALLOWED_EXPERIENCES.includes(sp.get("exp") || "") ? sp.get("exp")! : "All";
+        const city = (sp.get("city") || "All").slice(0, 40).replace(/[<>]/g, "");
+        const mode = ALLOWED_MODES.includes(sp.get("mode") || "") ? sp.get("mode")! : "all";
+        const fresh = sp.get("fresh") === "true" || sp.get("fresh") === "1";
+        const tab: "jobs" | "companies" = sp.get("tab") === "companies" ? "companies" : "jobs";
+        const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
+        const jobId = sp.get("job") || null;
+        const sort = ALLOWED_SORTS.includes(sp.get("sort") || "") ? sp.get("sort")! : "newest";
+        const skillsParam = sp.get("skills");
+        const skills = skillsParam
+          ? skillsParam
+              .split(",")
+              .map((s) => s.trim().slice(0, 40).replace(/[<>]/g, ""))
+              .filter(Boolean)
+          : [];
+
+        setCurrentTab(tab);
+        setFilters({
+          searchQuery: q,
+          roleCategory: role,
+          experienceLevel: exp,
+          city,
+          workMode: mode,
+          freshOnly: fresh,
+          selectedSkills: skills,
+        });
+        setSortBy(sort);
+        setCurrentPage(page);
+        if (jobId) {
+          const matched = jobs.find((j) => j.id === jobId);
+          if (matched) setSelectedJob(matched);
+        } else {
+          setSelectedJob(null);
+        }
+      } catch {}
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [jobs]);
 
   // Fast Stale-While-Revalidate data loader with zero-latency hydration
   useEffect(() => {
@@ -508,12 +579,34 @@ export const App: React.FC = () => {
     return jobs.filter((j) => savedJobIds.includes(j.id));
   }, [jobs, savedJobIds]);
 
-  const triggerLiveRefresh = () => {
+  // Genuine network refresh of the active jobs dataset from GitHub Pages edge cache
+  const triggerLiveRefresh = async () => {
     setIsFetching(true);
-    setTimeout(() => {
+    try {
+      const cleanBase = window.location.pathname.endsWith("/")
+        ? window.location.pathname
+        : window.location.pathname + "/";
+
+      // Cache-busting parameter guarantees fresh response from CDN
+      const res = await fetch(`${cleanBase}jobs.json?t=${Date.now()}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setJobs(data);
+          try {
+            sessionStorage.setItem("jobops_cached_jobs", JSON.stringify(data));
+          } catch {}
+          addToast("success", `Catalog synchronized! Loaded ${data.length.toLocaleString()} active positions.`);
+        }
+      } else {
+        addToast("error", `Network sync returned HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      addToast("error", "Failed to fetch updated catalog from edge cache.");
+    } finally {
       setIsFetching(false);
       setIsFetchModalOpen(false);
-    }, 1800);
+    }
   };
 
   return (

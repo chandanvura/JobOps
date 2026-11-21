@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Job } from "../types/job";
-import { X, Bookmark, ExternalLink, Trash2, Download, Upload, FileText, Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react";
-import { sanitizeExternalUrl, formatLocation, cleanJobText } from "../utils/jobUtils";
+import { X, Bookmark, ExternalLink, Trash2, Download, Upload, FileText, Calendar, Clock, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+import { sanitizeExternalUrl, formatLocation, cleanJobText, sanitizeCsvField, validateJobImportData, ValidatedJobImport } from "../utils/jobUtils";
 
 export type PipelineStage =
   | "Saved"
@@ -87,6 +87,8 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<ValidatedJobImport | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync to localStorage
@@ -109,42 +111,64 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImportStatus(null);
+    setImportError(null);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result as string);
-        if (Array.isArray(data) && data.length > 0) {
-          const newTracking: Record<string, JobTrackingInfo> = { ...trackingData };
-          const importedJobIds: string[] = [];
-          for (const item of data) {
-            if (item && item.id) {
-              importedJobIds.push(item.id);
-              if (item.pipelineTracking) {
-                newTracking[item.id] = item.pipelineTracking;
-              }
-            }
-          }
-          setTrackingData(newTracking);
-          try {
-            const currentSaved = JSON.parse(localStorage.getItem("jobops_saved_ids") || "[]");
-            const merged = Array.from(new Set([...currentSaved, ...importedJobIds]));
-            localStorage.setItem("jobops_saved_ids", JSON.stringify(merged));
-          } catch {}
+        const rawJson = JSON.parse(event.target?.result as string);
+        const validation = validateJobImportData(rawJson);
 
-          if (onImportBackup) {
-            onImportBackup(data);
-          }
-          setImportStatus(`Successfully restored ${importedJobIds.length} application records.`);
-          setTimeout(() => setImportStatus(null), 4000);
-        } else {
-          setImportStatus("Import failed: JSON file does not contain a valid JobOps application array.");
+        if (!validation.valid) {
+          setImportError(
+            `Import failed: ${validation.errors.join("; ") || "No valid job records found in JSON."}`
+          );
+          setPendingImport(null);
+          return;
         }
-      } catch {
-        setImportStatus("Import failed: Invalid JSON file format.");
+
+        // Show preview dialog for user confirmation before overwriting or merging
+        setPendingImport(validation);
+      } catch (err) {
+        setImportError("Import failed: File is not a valid JSON document.");
+        setPendingImport(null);
       }
     };
     reader.readAsText(file);
     if (e.target) e.target.value = "";
+  };
+
+  const handleConfirmImport = () => {
+    if (!pendingImport) return;
+
+    try {
+      const newTracking: Record<string, JobTrackingInfo> = { ...trackingData, ...pendingImport.trackingMap };
+      setTrackingData(newTracking);
+
+      const importedJobIds = pendingImport.validJobs.map((j) => j.id);
+      const currentSaved = JSON.parse(localStorage.getItem("jobops_saved_ids") || "[]");
+      const merged = Array.from(new Set([...currentSaved, ...importedJobIds]));
+      localStorage.setItem("jobops_saved_ids", JSON.stringify(merged));
+
+      if (onImportBackup) {
+        onImportBackup(pendingImport.validJobs);
+      }
+
+      setImportStatus(
+        `Successfully imported ${pendingImport.validJobs.length} application records (${pendingImport.duplicateCount} duplicate records skipped).`
+      );
+      setPendingImport(null);
+      setImportError(null);
+      setTimeout(() => setImportStatus(null), 5000);
+    } catch (e) {
+      setImportError("Failed to persist imported applications into storage.");
+    }
+  };
+
+  const handleCancelImport = () => {
+    setPendingImport(null);
+    setImportError(null);
   };
 
   if (!isOpen) return null;
@@ -219,32 +243,34 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
     offers: savedJobs.filter((j) => (trackingData[j.id]?.stage || "Saved") === "Offer").length,
   };
 
-  // Export Pipeline as CSV
+  // Export Pipeline as CSV with formula injection protection (CWE-1236)
   const exportToCSV = () => {
     if (savedJobs.length === 0) return;
     const headers = ["Company", "Title", "Location", "ATS Provider", "Stage", "Applied Date", "Notes", "Job URL"];
     const rows = savedJobs.map((job) => {
       const tracking = trackingData[job.id] || { stage: "Saved", notes: "", appliedAt: "" };
       return [
-        `"${job.company_name.replace(/"/g, '""')}"`,
-        `"${job.title.replace(/"/g, '""')}"`,
-        `"${formatLocation(job.city, job.location_raw)}"`,
-        `"${job.ats_provider}"`,
-        `"${tracking.stage}"`,
-        `"${tracking.appliedAt || ""}"`,
-        `"${(tracking.notes || "").replace(/"/g, '""')}"`,
-        `"${job.job_url}"`,
+        sanitizeCsvField(job.company_name),
+        sanitizeCsvField(job.title),
+        sanitizeCsvField(formatLocation(job.city, job.location_raw)),
+        sanitizeCsvField(job.ats_provider),
+        sanitizeCsvField(tracking.stage),
+        sanitizeCsvField(tracking.appliedAt || ""),
+        sanitizeCsvField(tracking.notes || ""),
+        sanitizeCsvField(job.job_url),
       ];
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `jobops-pipeline-${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Export Pipeline as JSON
@@ -343,6 +369,57 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
           <div className="px-5 py-2.5 bg-blue-500/10 border-b border-blue-500/20 text-xs text-brand-primary flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-brand-primary flex-shrink-0" />
             <span>{importStatus}</span>
+          </div>
+        )}
+
+        {importError && (
+          <div className="px-5 py-2.5 bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-500 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0" />
+              <span>{importError}</span>
+            </div>
+            <button
+              onClick={() => setImportError(null)}
+              className="text-xs underline hover:no-underline font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Pending Import Preview & Confirmation */}
+        {pendingImport && (
+          <div className="px-5 py-3 bg-amber-500/10 border-b border-amber-500/20 text-xs text-brand-text">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <span className="font-semibold text-brand-text">
+                  Confirm Application Import Preview:
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCancelImport}
+                  className="px-2.5 py-1 rounded-lg border border-brand-border bg-brand-surface hover:bg-brand-elevated text-brand-secondary text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmImport}
+                  className="px-3 py-1 rounded-lg bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs transition-colors shadow-sm"
+                >
+                  Import {pendingImport.validJobs.length} Records
+                </button>
+              </div>
+            </div>
+            <p className="text-brand-secondary text-[11px]">
+              Found <strong>{pendingImport.validJobs.length} valid jobs</strong> ready to restore.{" "}
+              {pendingImport.duplicateCount > 0 && (
+                <span className="text-amber-500">
+                  ({pendingImport.duplicateCount} duplicate entries will be skipped).
+                </span>
+              )}
+            </p>
           </div>
         )}
 

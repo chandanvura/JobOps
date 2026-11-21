@@ -103,7 +103,7 @@ JobOps eliminates recurring cloud infrastructure costs completely through a 3-ti
    - Ingestion pipeline exports active jobs and company telemetry into optimized static JSON caches.
    - Served globally via GitHub Pages with free SSL certificates, DDoS mitigation, and global CDN caching.
 3. **Automated Scheduled Scraping (GitHub Actions):**
-   - Cron workflows run every 2 hours on free GitHub Actions runners (`.github/workflows/scrape_jobs.yml`).
+   - Cron workflows run every 2 hours on free GitHub Actions runners (`.github/workflows/ingest.yml`).
    - Automatically ingests new jobs, normalizes data, commits new snapshots, and deploys updates to GitHub Pages.
 
 ---
@@ -181,7 +181,8 @@ JobOps includes an offline-first, private candidate application tracker supporti
   - `T` — Cycle theme mode (Light ☀ / Dark ☾ / System ◐)
   - `P` — Open Personal Pipeline & Saved Jobs tracker
   - `D` — Toggle display density (Comfortable / Compact)
-  - `F` — Open Add Company / Fetch Jobs modal
+  - `F` — Toggle Last 24 Hours freshness filter
+  - `A` — Open Ingestion Telemetry & Add ATS submission modal
 - **Accessible Skip to Content Link:** Immediate `#main-content` keyboard bypass link appearing on Tab focus for screen readers and power keyboard users.
 - **Precision Engineered Footer:** Features version telemetry (`v1.4.0`), live ATS ingestion stats, an interactive shortcut cheat sheet trigger, and smooth back-to-top scroll navigation.
 - **100% Token Unification:** Total elimination of ad-hoc font sizes (`text-[10px]`, `text-[11px]`) and un-themed color classes, consolidating the complete interface into semantic tokens with an optimized 32kB CSS bundle.
@@ -244,9 +245,11 @@ In `.github/workflows/ingest.yml`, JobOps runs playbook self-healing automatical
 
 - **Zero `dangerouslySetInnerHTML`:** 100% ban on raw HTML injection across all React components. External ATS feeds are treated as untrusted inputs.
 - **Recursive Entity Sanitization:** Multi-pass unescaping decodes double-encoded HTML (`&amp;lt;div...`) and strips truncated tags before storage.
+- **CSV Formula Injection Defense (CWE-1236):** All exported candidate spreadsheet cells are sanitized (`sanitizeCsvField`). Cells beginning with `=`, `+`, `-`, `@`, `\t`, or `\r` are automatically prefixed with a single quote `'` to neutralize formula execution in Microsoft Excel and LibreOffice.
+- **JSON Import Schema & Pipeline Stage Validation:** Imported application backups are strictly validated (`validateJobImportData`) for required types, stage allowlists (`Saved`, `Applied`, `Interview`, etc.), duplicate IDs, and length bounds before updating client storage.
 - **Protocol Whitelisting:** External application URLs are validated via `sanitizeExternalUrl()`; non-HTTP protocols (`javascript:`, `data:`, `file:`) are strictly blocked.
 - **SSRF & Path Traversal Prevention:** The "Add ATS" submission form validates company slugs against `^[a-zA-Z0-9_-]{1,64}$`, forbidding slashes, dots, and query parameters.
-- **URL Query Sanitization:** Deep-linked URL query parameters (`q`, `role`, `exp`, `city`, `mode`, `fresh`, `page`, `job`) are strictly validated against allowlists.
+- **URL Query Sanitization:** Deep-linked URL query parameters (`q`, `role`, `exp`, `city`, `mode`, `fresh`, `page`, `job`, `skills`) are strictly validated against allowlists with full browser history `popstate` bidirectional synchronization.
 
 ---
 
@@ -264,6 +267,10 @@ pip install -r requirements.txt
 
 # Run the full ingestion collector across all 757 companies
 python -m engine.cli run
+
+# Run real HTTP health checks on employer career portals
+python -m engine.cli health --validate-only
+python -m engine.cli health --limit 50 --concurrency 10
 
 # Run automated test suite
 python -m pytest tests/

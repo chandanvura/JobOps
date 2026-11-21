@@ -1,0 +1,73 @@
+name: "Submit Employer ATS Endpoint"
+description: "Submit a new tech employer or direct ATS careers board to JobOps ingestion queue."
+title: "[ATS Ingestion]: "
+labels: ["ats-submission", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for contributing to the JobOps Direct ATS Radar!
+        Please provide the verified direct ATS endpoint details below so it can be added to `registry/companies.json`.
+
+  - type: input
+    id: company_name
+    attributes:
+      label: "Company Name"
+      description: "Legal or common brand name of the employer."
+      placeholder: "e.g. Swiggy, Cred, Zerodha"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ats_provider
+    attributes:
+      label: "ATS Provider"
+      description: "Direct careers portal backend platform."
+      options:
+        - "greenhouse"
+        - "lever"
+        - "ashby"
+        - "smartrecruiters"
+        - "workday"
+        - "eightfold"
+        - "darwinbox"
+        - "phenom"
+        - "amazon"
+        - "jobvite"
+        - "recruitee"
+        - "workable"
+        - "custom"
+    validations:
+      required: true
+
+  - type: input
+    id: ats_identifier
+    attributes:
+      label: "ATS Identifier / Slug"
+      description: "Unique board identifier or company slug (e.g. 'razorpay' on Greenhouse, 'uber' on Lever)."
+      placeholder: "e.g. razorpay, linear, cred"
+    validations:
+      required: true
+
+  - type: input
+    id: careers_url
+    attributes:
+      label: "Careers Portal URL"
+      description: "Public career page or job board URL."
+      placeholder: "https://boards.greenhouse.io/..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: hubs
+    attributes:
+      label: "Indian Engineering Hubs"
+      description: "Locations where this employer has verified tech offices."
+      options:
+        - label: "Bengaluru"
+        - label: "Hyderabad"
+        - label: "Pune"
+        - label: "Delhi NCR (Gurgaon / Noida)"
+        - label: "Mumbai"
+        - label: "Chennai"
+        - label: "Remote (India-eligible)"

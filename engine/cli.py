@@ -45,6 +45,13 @@ def main():
     resolve_parser.add_argument("--id", help="Specific playbook ID to resolve (e.g. PB-001)")
     resolve_parser.add_argument("--auto", action="store_true", help="Auto-resolve all diagnosed issues")
 
+    # Command: health
+    health_parser = subparsers.add_parser("health", help="Execute real HTTP health checks on employer career portals")
+    health_parser.add_argument("--concurrency", type=int, default=10, help="Concurrent HTTP workers")
+    health_parser.add_argument("--limit", type=int, default=None, help="Limit number of companies to probe")
+    health_parser.add_argument("--output", default="web/public/companies.json", help="Path to write updated companies JSON")
+    health_parser.add_argument("--validate-only", action="store_true", help="Only validate dataset schema and exit")
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -144,6 +151,32 @@ def main():
                 print(json.dumps(summary, indent=2))
                 if summary.get("system_health") == "100% HEALTHY":
                     print("\nAll diagnosed issues successfully healed! Zero operational downtime, $0.00 spent.")
+
+    elif args.command == "health":
+        from engine.health import CompanyHealthChecker, validate_companies_dataset
+        with open("registry/companies.json", "r", encoding="utf-8") as f:
+            companies = json.load(f)
+
+        validation = validate_companies_dataset(companies)
+        print("\n=== COMPANY DATASET VALIDATION REPORT ===")
+        print(json.dumps(validation, indent=2))
+
+        if args.validate_only:
+            return
+
+        target_count = args.limit if args.limit else len(companies)
+        print(f"\nProbing real HTTP health for {target_count} company portals (concurrency={args.concurrency})...")
+        checker = CompanyHealthChecker()
+        updated = asyncio.run(checker.run_checks(companies, concurrency=args.concurrency, limit=args.limit))
+
+        out_path = Path(args.output)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(updated, f, indent=2)
+
+        post_val = validate_companies_dataset(updated)
+        print(f"\nSaved updated health telemetry to {out_path.resolve()}")
+        print("Updated health status distribution:", post_val["status_distribution"])
 
 
 if __name__ == "__main__":

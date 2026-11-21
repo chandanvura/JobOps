@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -92,6 +93,21 @@ class JobCollector:
 
             # Clean snippet for fast UI display without raw entities, tags, or boilerplate
             import html as html_lib
+
+            # Sanitize title
+            cleaned_title = raw.title or ""
+            for _ in range(5):
+                prev_t = cleaned_title
+                cleaned_title = html_lib.unescape(cleaned_title)
+                if cleaned_title == prev_t:
+                    break
+            cleaned_title = re.sub(r"<[^>]+>", " ", cleaned_title)
+            cleaned_title = re.sub(r"<[a-zA-Z/][^>]*", " ", cleaned_title)
+            cleaned_title = re.sub(r"&[a-zA-Z0-9#]+;?", " ", cleaned_title)
+            cleaned_title = re.sub(r"[<>]", " ", cleaned_title)
+            cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
+            final_title = cleaned_title if cleaned_title else raw.title
+
             cleaned_desc = desc_text or ""
             for _ in range(5):
                 prev_text = cleaned_desc
@@ -104,7 +120,7 @@ class JobCollector:
             cleaned_desc = re.sub(r"[<>]", " ", cleaned_desc)
             cleaned_desc = re.sub(r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*", "", cleaned_desc, flags=re.I)
             cleaned_desc = re.sub(r"\s+", " ", cleaned_desc).strip()
-            summary = cleaned_desc[:320].strip() if cleaned_desc else f"{raw.title} at {company.name}"
+            summary = cleaned_desc[:320].strip() if cleaned_desc else f"{final_title} at {company.name}"
 
             job = ProcessedJob(
                 id=job_id,
@@ -112,7 +128,7 @@ class JobCollector:
                 company_id=company.id,
                 company_name=company.name,
                 ats_provider=company.ats_provider,
-                title=raw.title,
+                title=final_title,
                 job_url=raw.job_url,
                 is_engineering=True,
                 role_category=role_cat,
