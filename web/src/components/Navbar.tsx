@@ -57,14 +57,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-2 sm:top-3 z-30 max-w-7xl mx-auto px-3 sm:px-6 w-full transition-all duration-300">
-      <div className="backdrop-blur-md bg-brand-surface/90 border border-brand-border rounded-2xl h-16 px-3 sm:px-5 flex items-center justify-between gap-2.5 sm:gap-4 shadow-sm transition-colors duration-300">
-        {/* Brand & Tabs */}
+      <div className="backdrop-blur-md bg-brand-surface/90 border border-brand-border rounded-2xl h-14 sm:h-16 px-3 sm:px-5 flex items-center justify-between gap-2.5 sm:gap-4 shadow-sm transition-colors duration-300">
+        {/* Brand & Desktop Navigation Tabs */}
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <Logo onClick={() => setCurrentTab("jobs")} />
 
-          {/* Navigation Tabs */}
+          {/* Desktop Navigation Tabs (Hidden on mobile to eliminate header overlap) */}
           <nav
-            className="flex items-center gap-1 bg-brand-elevated p-1 rounded-xl text-xs font-semibold border border-brand-border flex-shrink-0"
+            className="hidden md:flex items-center gap-1 bg-brand-elevated p-1 rounded-xl text-xs font-semibold border border-brand-border flex-shrink-0"
             role="tablist"
           >
             <button
@@ -124,26 +124,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Controls & Theme Selector */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          {/* Mobile Filter Toggle Button (Shown on mobile when on jobs tab) */}
-          {currentTab === "jobs" && onToggleMobileFilter && (
-            <button
-              onClick={onToggleMobileFilter}
-              className="lg:hidden flex items-center gap-1 p-2 rounded-xl border border-brand-border bg-brand-surface text-brand-text hover:bg-brand-elevated active:scale-[0.98] transition-colors shadow-sm"
-              title="Filter jobs"
-              aria-label="Open filter drawer"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
-            </button>
-          )}
-
           {/* Theme Selector (Light / Dark / System) */}
           <ThemeSelector themeMode={themeMode} setThemeMode={setThemeMode} />
 
           {/* Fetch Jobs Trigger */}
           <button
             onClick={onOpenFetchModal}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-text border border-brand-border active:scale-[0.98] transition-all shadow-sm"
             title="Trigger real-time ATS refresh"
+            aria-label="Refresh job catalog"
           >
             <RefreshCw className="w-3.5 h-3.5 text-brand-primary" />
             <span className="hidden sm:inline">Fetch jobs</span>
@@ -161,8 +150,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Pipeline Button */}
           <button
             onClick={onOpenSavedModal}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-primary border border-brand-border active:scale-[0.98] transition-all relative shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl bg-brand-surface hover:bg-brand-elevated text-brand-primary border border-brand-border active:scale-[0.98] transition-all relative shadow-sm"
             title="Saved applications & personal workspace"
+            aria-label="Open saved applications pipeline"
           >
             <Bookmark className="w-3.5 h-3.5 text-brand-primary" />
             <span className="hidden sm:inline">Pipeline</span>
@@ -173,6 +163,60 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
         </div>
+      </div>
+
+      {/* Dedicated Mobile Navigation Segmented Control (Zero overlap, clean 40px touch targets) */}
+      <div className="md:hidden mt-2">
+        <nav
+          className="flex items-center bg-brand-surface/95 backdrop-blur-md p-1 rounded-2xl text-xs font-semibold border border-brand-border shadow-sm gap-1"
+          role="tablist"
+        >
+          <button
+            role="tab"
+            aria-selected={currentTab === "jobs"}
+            onClick={() => setCurrentTab("jobs")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all min-h-[40px] text-xs font-semibold ${
+              currentTab === "jobs"
+                ? "bg-brand-primary text-white shadow-sm"
+                : "text-brand-secondary hover:text-brand-text active:bg-brand-elevated"
+            }`}
+          >
+            <Radar className="w-3.5 h-3.5" />
+            <span>Jobs Radar</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums font-bold ${
+                currentTab === "jobs"
+                  ? "bg-white/20 text-white"
+                  : "bg-brand-elevated text-brand-secondary border border-brand-border"
+              }`}
+            >
+              {totalCount.toLocaleString()}
+            </span>
+          </button>
+
+          <button
+            role="tab"
+            aria-selected={currentTab === "companies"}
+            onClick={() => setCurrentTab("companies")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all min-h-[40px] text-xs font-semibold ${
+              currentTab === "companies"
+                ? "bg-brand-primary text-white shadow-sm"
+                : "text-brand-secondary hover:text-brand-text active:bg-brand-elevated"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Companies</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums font-bold ${
+                currentTab === "companies"
+                  ? "bg-white/20 text-white"
+                  : "bg-brand-elevated text-brand-secondary border border-brand-border"
+              }`}
+            >
+              {companiesCount}
+            </span>
+          </button>
+        </nav>
       </div>
     </header>
   );
