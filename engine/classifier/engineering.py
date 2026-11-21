@@ -38,7 +38,7 @@ def is_engineering_job(title: str, description: str = "") -> bool:
     for pattern in NON_TECH_PATTERNS:
         if re.search(pattern, clean_title, re.IGNORECASE):
             # Check for rare cases like "Software Engineer - Sales Tech"
-            if not any(re.search(r"\b(engineer|developer|architect|sde)\b", clean_title) for _ in [0]):
+            if not re.search(r"\b(engineer|developer|architect|sde)\b", clean_title):
                 return False
 
     # Check positive tech indicators

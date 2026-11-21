@@ -52,11 +52,3 @@ def evaluate_freshness(posted_at: Optional[datetime], max_hours: float = 24.0) -
 
     is_fresh = diff <= max_hours
     return is_fresh, round(diff, 1)
-
-
-class FreshnessGate:
-    def __init__(self, max_age_hours: float = 24.0):
-        self.max_age_hours = max_age_hours
-
-    def is_fresh(self, posted_at: Optional[datetime]) -> Tuple[bool, Optional[float]]:
-        return evaluate_freshness(posted_at, self.max_age_hours)

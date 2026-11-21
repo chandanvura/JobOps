@@ -68,3 +68,23 @@ def test_location_and_mode_normalization():
     city, is_in, mode = norm.normalize("Remote - India", "Full Stack Developer", "Work from home anywhere")
     assert is_in is True
     assert mode == WorkMode.REMOTE
+
+    # Null raw_location edge case resilience
+    city, is_in, mode = norm.normalize(None, "Software Engineer", "Located in Delhi NCR")
+    assert city == "Delhi NCR"
+    assert is_in is True
+
+    city, is_in, mode = norm.normalize(None, "Software Engineer", "")
+    assert city is None
+    assert is_in is False
+
+
+def test_sanitize_text_helper():
+    from engine.adapters.base import sanitize_text
+    dirty = "&amp;lt;div&amp;gt;&lt;p&gt;About the Role: We need a Python &amp;amp; Go dev&lt;/p&gt;&lt;/div&gt;"
+    cleaned = sanitize_text(dirty, strip_boilerplate=True)
+    assert "&amp;" not in cleaned
+    assert "&lt;" not in cleaned
+    assert "<div" not in cleaned
+    assert "<p" not in cleaned
+    assert "We need a Python & Go dev" in cleaned

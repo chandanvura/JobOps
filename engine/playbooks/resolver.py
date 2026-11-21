@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from engine.adapters.base import sanitize_text
 from engine.models import Company
 from engine.storage.db import JobDatabase, DEFAULT_DB_PATH
 from .definitions import PLAYBOOKS, Playbook
@@ -154,27 +155,7 @@ class PlaybookResolver:
     def resolve_pb001(self) -> Dict[str, Any]:
         """Auto-Resolve PB-001: Sanitize HTML tags & entities."""
         cleaned_count = 0
-
-        def sanitize_str(text: str) -> str:
-            if not text:
-                return ""
-            curr = text
-            for _ in range(5):
-                prev = curr
-                curr = html.unescape(curr)
-                if curr == prev:
-                    break
-            curr = re.sub(r"<[^>]+>", " ", curr)
-            curr = re.sub(r"<[a-zA-Z/][^>]*", " ", curr)
-            curr = re.sub(r"&[a-zA-Z0-9#]+;?", " ", curr)
-            curr = re.sub(r"[<>]", " ", curr)
-            curr = re.sub(
-                r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*",
-                "",
-                curr,
-                flags=re.I,
-            )
-            return re.sub(r"\s+", " ", curr).strip()
+        sanitize_str = lambda text: sanitize_text(text, strip_boilerplate=True)
 
         # Clean jobs.json
         if self.jobs_json_path.exists():

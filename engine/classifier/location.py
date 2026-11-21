@@ -19,11 +19,12 @@ class LocationNormalizer:
                 self.cities = data.get("cities", {})
                 self.country_tokens = data.get("country_tokens", self.country_tokens)
 
-    def normalize(self, raw_location: str, title: str = "", description: str = "") -> Tuple[Optional[str], bool, WorkMode]:
+    def normalize(self, raw_location: Optional[str], title: str = "", description: str = "") -> Tuple[Optional[str], bool, WorkMode]:
         """
         Returns (city_name, is_india, work_mode).
         """
-        combined = f"{raw_location} {title} {description[:500]}".lower()
+        safe_raw = (raw_location or "").strip()
+        combined = f"{safe_raw} {title} {description[:500]}".lower()
 
         # 1. Determine Work Mode
         mode = WorkMode.ONSITE
@@ -49,7 +50,7 @@ class LocationNormalizer:
             is_india = True
         else:
             for token in self.country_tokens:
-                if re.search(rf"\b{re.escape(token)}\b", raw_location.lower()):
+                if re.search(rf"\b{re.escape(token)}\b", safe_raw.lower()):
                     is_india = True
                     break
 

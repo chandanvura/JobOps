@@ -5,6 +5,31 @@ import re
 from engine.models import Company, RawJob
 
 
+def sanitize_text(text: str, strip_boilerplate: bool = False) -> str:
+    """Recursively decodes HTML entities, strips tags/brackets, and normalizes spaces."""
+    if not text:
+        return ""
+    import html as html_lib
+    curr = text
+    for _ in range(5):
+        prev = curr
+        curr = html_lib.unescape(curr)
+        if curr == prev:
+            break
+    curr = re.sub(r"<[^>]+>", " ", curr)
+    curr = re.sub(r"<[a-zA-Z/][^>]*", " ", curr)
+    curr = re.sub(r"&[a-zA-Z0-9#]+;?", " ", curr)
+    curr = re.sub(r"[<>]", " ", curr)
+    if strip_boilerplate:
+        curr = re.sub(
+            r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*",
+            "",
+            curr,
+            flags=re.I,
+        )
+    return re.sub(r"\s+", " ", curr).strip()
+
+
 class BaseATS(ABC):
     """Abstract Base Class for all ATS Adapters."""
 
@@ -18,20 +43,4 @@ class BaseATS(ABC):
     @staticmethod
     def clean_html(html_text: str) -> str:
         """Strips HTML tags and normalizes whitespace, properly decoding entities."""
-        if not html_text:
-            return ""
-        import html as html_lib
-        # Recursively unescape to handle double-encoded entities like &amp;lt;div...
-        text = html_lib.unescape(html_text)
-        if "&amp;" in text or "&lt;" in text or "&gt;" in text or "&quot;" in text:
-            text = html_lib.unescape(text)
-
-        try:
-            from selectolax.parser import HTMLParser
-            tree = HTMLParser(text)
-            clean = tree.text(separator=" ", strip=True)
-            return re.sub(r"\s+", " ", clean).strip()
-        except Exception:
-            # Fallback regex
-            clean = re.sub(r"<[^>]+>", " ", text)
-            return re.sub(r"\s+", " ", clean).strip()
+        return sanitize_text(html_text)
