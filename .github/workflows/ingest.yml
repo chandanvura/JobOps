@@ -59,9 +59,8 @@ jobs:
 
       - name: Auto-Heal & Validate Catalog Quality via Playbooks
         run: |
-          export PYTHONPATH=$PWD
           python -m engine.cli playbook resolve --auto
-          python -m pytest -o pythonpath=. tests
+          python -m pytest
 
       - name: Commit and Push Updated Jobs
         run: |
@@ -70,10 +69,10 @@ jobs:
           git add web/public/jobs.json web/public/companies.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore(catalog): auto-sync latest 24h engineering jobs [skip ci]" && git push)
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
           cache-dependency-path: web/package.json
 
