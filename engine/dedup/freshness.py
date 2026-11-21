@@ -50,5 +50,6 @@ def evaluate_freshness(posted_at: Optional[datetime], max_hours: float = 24.0) -
     if diff < 0:
         return True, 0.0
 
-    is_fresh = diff <= max_hours
-    return is_fresh, round(diff, 1)
+    rounded_diff = round(diff, 1)
+    is_fresh = rounded_diff <= max_hours
+    return is_fresh, rounded_diff
