@@ -361,7 +361,7 @@ export const App: React.FC = () => {
         const cleanBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
         try {
           if (!loadedJobs) {
-            const res = await fetch(`${cleanBase}jobs.json`);
+            const res = await fetch(`${cleanBase}jobs.json?v=${Date.now()}`, { cache: "no-cache" });
             if (res.ok) {
               const data = await res.json();
               if (Array.isArray(data) && data.length > 0) {
@@ -371,7 +371,7 @@ export const App: React.FC = () => {
           }
 
           if (!loadedCompanies) {
-            const res = await fetch(`${cleanBase}companies.json`);
+            const res = await fetch(`${cleanBase}companies.json?v=${Date.now()}`, { cache: "no-cache" });
             if (res.ok) {
               const data = await res.json();
               if (Array.isArray(data) && data.length > 0) {
@@ -583,23 +583,38 @@ export const App: React.FC = () => {
   const triggerLiveRefresh = async () => {
     setIsFetching(true);
     try {
-      const cleanBase = window.location.pathname.endsWith("/")
-        ? window.location.pathname
-        : window.location.pathname + "/";
-
-      // Cache-busting parameter guarantees fresh response from CDN
-      const res = await fetch(`${cleanBase}jobs.json?t=${Date.now()}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setJobs(data);
-          try {
-            sessionStorage.setItem("jobops_cached_jobs", JSON.stringify(data));
-          } catch {}
-          addToast("success", `Catalog synchronized! Loaded ${data.length.toLocaleString()} active positions.`);
+      const candidatePaths = [
+        import.meta.env.BASE_URL || "./",
+        "./",
+        "/JobOps/",
+        "/",
+      ];
+      let refreshed = false;
+      for (const basePath of candidatePaths) {
+        const cleanBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
+        try {
+          const res = await fetch(`${cleanBase}jobs.json?t=${Date.now()}`, {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              setJobs(data);
+              try {
+                sessionStorage.setItem("jobops_cached_jobs", JSON.stringify(data));
+              } catch {}
+              addToast("success", `Catalog synchronized! Loaded ${data.length.toLocaleString()} active positions.`);
+              refreshed = true;
+              break;
+            }
+          }
+        } catch {
+          continue;
         }
-      } else {
-        addToast("error", `Network sync returned HTTP ${res.status}`);
+      }
+      if (!refreshed) {
+        addToast("error", "Could not synchronize catalog from edge cache. Please reload the page.");
       }
     } catch (err: any) {
       addToast("error", "Failed to fetch updated catalog from edge cache.");

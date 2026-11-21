@@ -2,8 +2,8 @@ name: Ingest 24h Engineering Jobs & Deploy
 
 on:
   schedule:
-    # Run every 2 hours automatically
-    - cron: "0 */2 * * *"
+    # Run every 2 hours at minute 23 (offset from top of hour to avoid runner congestion)
+    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       all_time:
@@ -11,6 +11,8 @@ on:
         required: false
         default: false
         type: boolean
+  repository_dispatch:
+    types: [trigger-ingest]
 
 permissions:
   contents: write
@@ -18,7 +20,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "jobops-ingestion"
   cancel-in-progress: false
 
 jobs:
@@ -31,6 +33,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -47,15 +52,15 @@ jobs:
         run: |
           export PYTHONPATH=$PWD
           if [ "${{ inputs.all_time }}" = "true" ]; then
-            python -m engine.cli run --all-time
+            python -m engine.cli run --all-time --concurrency 15
           else
-            python -m engine.cli run
+            python -m engine.cli run --concurrency 15
           fi
 
       - name: Export Active Catalogue
         run: |
           export PYTHONPATH=$PWD
-          python -m engine.cli export --output web/public/jobs.json
+          python -m engine.cli export --output web/public/jobs.json --limit 5000
 
       - name: Auto-Heal & Validate Catalog Quality via Playbooks
         run: |
