@@ -3,6 +3,9 @@ name: Deploy JobOps to GitHub Pages
 on:
   push:
     branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -11,10 +14,10 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
+# Allow one concurrent deployment and cancel in-progress older builds
 concurrency:
   group: "pages-deploy"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -32,7 +35,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: web
-        run: npm ci
+        run: npm ci --prefer-offline
 
       - name: Build Web Dashboard
         working-directory: web

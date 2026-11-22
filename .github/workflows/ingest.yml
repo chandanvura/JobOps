@@ -41,17 +41,15 @@ jobs:
           cache: "pip"
 
       - name: Install Python Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run JobOps Ingestion Pipeline
         run: |
           export PYTHONPATH=$PWD
           if [ "${{ inputs.all_time }}" = "true" ]; then
-            python -m engine.cli run --all-time --concurrency 15
+            python -m engine.cli run --all-time --concurrency 25
           else
-            python -m engine.cli run --concurrency 15
+            python -m engine.cli run --concurrency 25
           fi
 
       - name: Export Active Catalogue
@@ -84,7 +82,7 @@ jobs:
 
       - name: Install Node Dependencies
         working-directory: web
-        run: npm ci
+        run: npm ci --prefer-offline
 
       - name: Build Web Dashboard
         working-directory: web
