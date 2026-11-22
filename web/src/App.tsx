@@ -118,6 +118,19 @@ export const App: React.FC = () => {
   });
 
   const [sortBy, setSortBy] = useState<string>(initialUrlParams.sort);
+  const [searchInput, setSearchInput] = useState<string>(initialUrlParams.q);
+
+  // Debounce search input to filter state and URL synchronization (150ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFilters((prev) => {
+        if (prev.searchQuery === searchInput) return prev;
+        return { ...prev, searchQuery: searchInput };
+      });
+    }, 150);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
   const [density, setDensity] = useState<"comfortable" | "compact">(() => {
     try {
       return (localStorage.getItem("jobops_density") as "comfortable" | "compact") || "comfortable";
@@ -302,6 +315,7 @@ export const App: React.FC = () => {
           : [];
 
         setCurrentTab(tab);
+        setSearchInput(q);
         setFilters({
           searchQuery: q,
           roleCategory: role,
@@ -465,6 +479,7 @@ export const App: React.FC = () => {
   };
 
   const resetFilters = () => {
+    setSearchInput("");
     setFilters({
       searchQuery: "",
       roleCategory: "all",
@@ -478,6 +493,7 @@ export const App: React.FC = () => {
   };
 
   const handleSelectCompanyFromDirectory = (companyName: string) => {
+    setSearchInput(companyName);
     setFilters((prev) => ({
       ...prev,
       searchQuery: companyName,
@@ -518,10 +534,10 @@ export const App: React.FC = () => {
       if (filters.workMode !== "all" && job.work_mode !== filters.workMode) return false;
 
       if (filters.selectedSkills.length > 0) {
-        const hasAll = filters.selectedSkills.every((sk) =>
+        const hasAny = filters.selectedSkills.some((sk) =>
           job.skills?.some((js) => js.toLowerCase() === sk.toLowerCase())
         );
-        if (!hasAll) return false;
+        if (!hasAny) return false;
       }
 
       if (!matchJobSearch(job, filters.searchQuery)) return false;
@@ -637,8 +653,8 @@ export const App: React.FC = () => {
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        searchQuery={filters.searchQuery}
-        setSearchQuery={(q) => setFilters((prev) => ({ ...prev, searchQuery: q }))}
+        searchQuery={searchInput}
+        setSearchQuery={setSearchInput}
         freshCount={freshCount}
         totalCount={jobs.length}
         savedCount={savedJobIds.length}
@@ -687,8 +703,8 @@ export const App: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search title, company, skills..."
-                  value={filters.searchQuery}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, searchQuery: e.target.value }))}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-brand-surface border border-brand-border rounded-xl focus:outline-none focus:border-brand-primary shadow-sm text-brand-text placeholder:text-brand-muted min-h-[44px]"
                 />
               </div>

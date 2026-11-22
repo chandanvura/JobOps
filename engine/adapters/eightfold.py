@@ -49,7 +49,7 @@ class EightfoldAdapter(BaseATS):
                     if res.status_code == 200:
                         data = res.json().get("data", {})
                         positions = data.get("positions", [])
-                        return self._parse_positions(positions, company, base_url)
+                        return self._parse_positions(positions, company, base_url, domain)
             except Exception as e:
                 logger.warning(f"Eightfold curl_cffi failed for {company.name}: {e}")
 
@@ -67,13 +67,13 @@ class EightfoldAdapter(BaseATS):
             if res.status_code == 200:
                 data = res.json().get("data", {})
                 positions = data.get("positions", [])
-                return self._parse_positions(positions, company, base_url)
+                return self._parse_positions(positions, company, base_url, domain)
         except Exception as e:
             logger.error(f"Error fetching Eightfold jobs for {company.name}: {e}")
 
         return []
 
-    def _parse_positions(self, positions: list, company: Company, base_url: str) -> List[RawJob]:
+    def _parse_positions(self, positions: list, company: Company, base_url: str, domain: str = "") -> List[RawJob]:
         raw_jobs = []
         for pos in positions:
             if not isinstance(pos, dict):
@@ -86,7 +86,17 @@ class EightfoldAdapter(BaseATS):
             locations = pos.get("locations") or pos.get("standardizedLocations") or []
             loc_str = ", ".join(locations) if isinstance(locations, list) else str(locations)
 
-            job_url = pos.get("canonicalUrl") or pos.get("job_url") or f"{base_url}/careers?pid={job_id}"
+            pos_url = pos.get("positionUrl")
+            if pos_url:
+                job_url = f"{base_url}{pos_url}" if pos_url.startswith("/") else pos_url
+                if domain and "domain=" not in job_url:
+                    sep = "&" if "?" in job_url else "?"
+                    job_url += f"{sep}domain={domain}"
+            else:
+                job_url = pos.get("canonicalUrl") or pos.get("job_url") or f"{base_url}/careers/job/{job_id}"
+                if domain and "domain=" not in job_url:
+                    sep = "&" if "?" in job_url else "?"
+                    job_url += f"{sep}domain={domain}"
             posted_ts = pos.get("postedTs")
             posted_at = None
             if posted_ts:

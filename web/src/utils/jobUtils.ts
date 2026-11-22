@@ -123,6 +123,39 @@ export function sanitizeExternalUrl(rawUrl: string | null | undefined): string {
 }
 
 /**
+ * Safely sanitizes and normalizes application URLs.
+ * Corrects broken Workday routes (stripping redundant tenant segments that cause "Page Not Found")
+ * and Eightfold portal routes (converting generic search query parameters to direct job application pages).
+ */
+export function normalizeJobUrl(rawUrl: string | null | undefined): string {
+  const sanitized = sanitizeExternalUrl(rawUrl);
+  if (sanitized === "#") return "#";
+
+  try {
+    let url = sanitized;
+
+    // Fix Workday URLs: https://<host>/en-US/<tenant>/<site>/job/<path> -> https://<host>/en-US/<site>/job/<path>
+    if (url.includes(".myworkdayjobs.com/en-US/")) {
+      url = url.replace(
+        /^(https?:\/\/[^\/]+\.myworkdayjobs\.com\/en-US\/)[^\/]+\/([^\/]+\/job\/.*)$/i,
+        "$1$2"
+      );
+    }
+
+    // Fix Eightfold URLs: .../careers?pid=12345 -> .../careers/job/12345
+    if (url.includes("/careers?pid=") || url.includes("/careers/?pid=")) {
+      url = url.replace(/\/careers\/?\?pid=([a-zA-Z0-9_-]+)(?:&(.*))?$/i, (_, pid, rest) => {
+        return rest ? `/careers/job/${pid}?${rest}` : `/careers/job/${pid}`;
+      });
+    }
+
+    return url;
+  } catch {
+    return sanitized;
+  }
+}
+
+/**
  * Computes a transparent, deterministic 0-100 relevance score for a job.
  */
 export function calculateRelevanceScore(
@@ -180,13 +213,14 @@ export function calculateRelevanceScore(
 }
 
 const STOPWORDS = new Set([
-  "and", "or", "roles", "role", "jobs", "job", "in", "at", "for", "with", "a", "an", "the", "to", "of"
+  "and", "or", "roles", "role", "jobs", "job", "in", "at", "for", "with", "a", "an", "the", "to", "of", "near"
 ]);
+
+const SENIORITY_REGEX = /\b(senior|sr\.?|lead|staff|principal|director|head|vp|architect|manager)\b/i;
 
 /**
  * Intelligent engineering search matching with stopword stripping, tokenization,
- * and tech synonym expansion (e.g. "Java Developer" -> matches Java engineers/SDEs,
- * "DevOps and SRE roles" -> matches DevOps or SRE).
+ * tech synonym expansion, and multi-field location/city indexing.
  */
 export function matchJobSearch(job: Job, searchQuery: string): boolean {
   const q = searchQuery.toLowerCase().trim();
@@ -197,9 +231,20 @@ export function matchJobSearch(job: Job, searchQuery: string): boolean {
   const skills = (job.skills || []).map((s) => s.toLowerCase());
   const summary = (job.summary || "").toLowerCase();
   const roleLabel = (job.role_label || "").toLowerCase();
+  const city = (job.city || "").toLowerCase();
+  const rawLoc = (job.location_raw || "").toLowerCase();
+  const workMode = (job.work_mode || "").toLowerCase();
 
-  // 1. Exact phrase match anywhere
-  if (title.includes(q) || co.includes(q) || skills.some((s) => s.includes(q)) || summary.includes(q)) {
+  // 1. Exact phrase match anywhere across all relevant job fields
+  if (
+    title.includes(q) ||
+    co.includes(q) ||
+    skills.some((s) => s.includes(q)) ||
+    summary.includes(q) ||
+    roleLabel.includes(q) ||
+    city.includes(q) ||
+    rawLoc.includes(q)
+  ) {
     return true;
   }
 
@@ -220,6 +265,36 @@ export function matchJobSearch(job: Job, searchQuery: string): boolean {
       synonyms.push("engineer", "engineering", "programmer", "sde");
     } else if (token === "engineer" || token === "engineering") {
       synonyms.push("developer", "dev", "sde");
+    } else if (token === "sre") {
+      synonyms.push("site reliability", "devops", "platform", "infrastructure", "cloud");
+    } else if (token === "devops") {
+      synonyms.push("sre", "cloud", "platform", "infrastructure", "ci/cd");
+    } else if (token === "backend" || token === "back-end") {
+      synonyms.push("server", "systems", "platform");
+    } else if (token === "frontend" || token === "front-end") {
+      synonyms.push("ui", "web", "react", "client");
+    } else if (token === "fullstack" || token === "full-stack") {
+      synonyms.push("full stack");
+    } else if (token === "ai" || token === "ml") {
+      synonyms.push("machine learning", "data science", "deep learning", "artificial intelligence", "llm");
+    } else if (token === "qa" || token === "sdet") {
+      synonyms.push("quality assurance", "test automation", "testing", "automation");
+    } else if (token === "cloud") {
+      synonyms.push("aws", "azure", "gcp");
+    } else if (token === "js") {
+      synonyms.push("javascript");
+    } else if (token === "ts") {
+      synonyms.push("typescript");
+    } else if (token === "py") {
+      synonyms.push("python");
+    } else if (token === "golang") {
+      synonyms.push("go");
+    } else if (token === "k8s") {
+      synonyms.push("kubernetes");
+    } else if (token === "bengaluru" || token === "bangalore") {
+      synonyms.push("bengaluru", "bangalore", "karnataka");
+    } else if (token === "delhi" || token === "ncr" || token === "gurgaon" || token === "gurugram" || token === "noida") {
+      synonyms.push("delhi", "ncr", "gurgaon", "gurugram", "noida");
     }
 
     return synonyms.some(
@@ -228,7 +303,10 @@ export function matchJobSearch(job: Job, searchQuery: string): boolean {
         co.includes(syn) ||
         skills.some((s) => s.includes(syn)) ||
         summary.includes(syn) ||
-        roleLabel.includes(syn)
+        roleLabel.includes(syn) ||
+        city.includes(syn) ||
+        rawLoc.includes(syn) ||
+        (syn === "remote" && workMode === "remote")
     );
   };
 
@@ -241,6 +319,7 @@ export function matchJobSearch(job: Job, searchQuery: string): boolean {
 
 /**
  * Robust experience level matching supporting both structured ranges and numeric year bounds.
+ * Early-career filters ("Fresher", "1-3 yrs") intelligently include non-senior positions with open experience requirements.
  */
 export function matchJobExperience(job: Job, experienceLevel: string): boolean {
   if (experienceLevel === "All") return true;
@@ -248,13 +327,15 @@ export function matchJobExperience(job: Job, experienceLevel: string): boolean {
   const expStr = job.experience_level || "";
   const minY = job.min_years;
   const maxY = job.max_years;
+  const isSeniorTitle = SENIORITY_REGEX.test(job.title || "");
 
   switch (experienceLevel) {
     case "Fresher / 0-1 yr":
       return (
         expStr === "Fresher / 0-1 yr" ||
         expStr === "0-2 yrs" ||
-        (minY !== null && minY !== undefined && minY <= 1.0)
+        (minY !== null && minY !== undefined && minY <= 1.0) ||
+        (expStr === "Any Experience" && minY === null && !isSeniorTitle)
       );
     case "1-3 yrs":
       return (
@@ -262,19 +343,22 @@ export function matchJobExperience(job: Job, experienceLevel: string): boolean {
         expStr === "0-2 yrs" ||
         expStr === "2-4 yrs" ||
         expStr === "2-5 yrs" ||
-        (minY !== null && minY !== undefined && minY <= 3.0 && (maxY === null || maxY === undefined || maxY >= 1.0))
+        (minY !== null && minY !== undefined && minY <= 3.0 && (maxY === null || maxY === undefined || maxY >= 1.0)) ||
+        (expStr === "Any Experience" && minY === null && !isSeniorTitle)
       );
     case "3-5 yrs":
       return (
         expStr === "3-5 yrs" ||
         expStr === "2-5 yrs" ||
         expStr === "2-4 yrs" ||
-        (minY !== null && minY !== undefined && minY <= 5.0 && (maxY === null || maxY === undefined || maxY >= 3.0))
+        (minY !== null && minY !== undefined && minY <= 5.0 && (maxY === null || maxY === undefined || maxY >= 3.0)) ||
+        (expStr === "Any Experience" && minY === null)
       );
     case "5+ yrs":
       return (
         expStr === "5+ yrs" ||
-        (minY !== null && minY !== undefined && minY >= 5.0)
+        (minY !== null && minY !== undefined && minY >= 5.0) ||
+        isSeniorTitle
       );
     default:
       return expStr === experienceLevel;

@@ -17,11 +17,15 @@ class AmazonAdapter(BaseATS):
 
     async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
         api_url = "https://www.amazon.jobs/en/search.json"
-        params = {
-            "country": "IND",
-            "result_limit": 100,
-            "sort": "recent",
-        }
+        params = [
+            ("country", "IND"),
+            ("category[]", "software-development"),
+            ("category[]", "systems-quality-engineering"),
+            ("category[]", "operations-it-support-engineering"),
+            ("category[]", "data-science"),
+            ("result_limit", "100"),
+            ("sort", "recent"),
+        ]
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "application/json",

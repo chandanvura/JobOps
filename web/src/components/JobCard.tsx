@@ -8,6 +8,7 @@ import {
   formatWorkMode,
   calculateRelevanceScore,
   sanitizeExternalUrl,
+  normalizeJobUrl,
 } from "../utils/jobUtils";
 
 interface JobCardProps {
@@ -77,7 +78,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const locationDisplay = formatLocation(job.city, job.location_raw);
   const workModeDisplay = formatWorkMode(job.work_mode);
   const timeDisplay = formatPostingTime(job.posted_at, job.age_hours);
-  const safeApplyUrl = sanitizeExternalUrl(job.job_url);
+  const safeApplyUrl = normalizeJobUrl(job.job_url);
 
   const isCompact = density === "compact";
 

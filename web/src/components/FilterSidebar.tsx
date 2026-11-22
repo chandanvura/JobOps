@@ -66,6 +66,28 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile,
 }) => {
+  // Lock background body scrolling when mobile filter drawer is open
+  React.useEffect(() => {
+    if (!isMobileOpen) return;
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, [isMobileOpen]);
+
+  // Handle Escape key to dismiss mobile drawer
+  React.useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onCloseMobile) {
+        onCloseMobile();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen, onCloseMobile]);
+
   const toggleSkill = (skill: string) => {
     setFilters((prev) => {
       const exists = prev.selectedSkills.includes(skill);
@@ -294,9 +316,17 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label="Filter jobs"
-          className="fixed inset-0 z-50 lg:hidden flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && onCloseMobile) {
+              onCloseMobile();
+            }
+          }}
+          className="fixed inset-0 z-50 lg:hidden flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
         >
-          <div className="w-full max-w-xs sm:max-w-sm bg-brand-surface min-h-[100dvh] h-full p-5 overflow-y-auto shadow-2xl border-l border-brand-border animate-in slide-in-from-right duration-200">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xs sm:max-w-sm bg-brand-surface min-h-[100dvh] h-full p-5 overflow-y-auto shadow-2xl border-l border-brand-border animate-in slide-in-from-right duration-200 cursor-default"
+          >
             {filterContent}
             <div className="mt-6 pt-4 border-t border-brand-border">
               <button

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Job } from "../types/job";
 import { X, Bookmark, ExternalLink, Trash2, Download, Upload, FileText, Calendar, Clock, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
-import { sanitizeExternalUrl, formatLocation, cleanJobText, sanitizeCsvField, validateJobImportData, ValidatedJobImport } from "../utils/jobUtils";
+import { sanitizeExternalUrl, normalizeJobUrl, formatLocation, cleanJobText, sanitizeCsvField, validateJobImportData, ValidatedJobImport } from "../utils/jobUtils";
 
 export type PipelineStage =
   | "Saved"
@@ -581,7 +581,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
                       {/* Direct Apply Button */}
                       <a
-                        href={sanitizeExternalUrl(job.job_url)}
+                        href={normalizeJobUrl(job.job_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white active:scale-[0.98] transition-colors"

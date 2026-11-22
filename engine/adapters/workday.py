@@ -81,7 +81,8 @@ class WorkdayAdapter(BaseATS):
                 posted_str = item.get("postedOn", "")
                 posted_at = parse_datetime(posted_str)
 
-                job_url = f"https://{host}/en-US/{tenant}/{site}{external_path}" if external_path else company.careers_url or ""
+                clean_path = external_path if external_path.startswith("/") else f"/{external_path}"
+                job_url = f"https://{host}/en-US/{site}{clean_path}" if external_path else company.careers_url or ""
 
                 results.append(
                     RawJob(

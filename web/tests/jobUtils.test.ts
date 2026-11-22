@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   cleanJobText,
   sanitizeExternalUrl,
+  normalizeJobUrl,
   formatPostingTime,
   formatLocation,
   formatWorkMode,
@@ -172,5 +173,78 @@ test("URL Query Parameter Sanitization - prevents injection and respects allowli
   const parseRole = (role: string) => (ALLOWED_ROLES.includes(role) ? role : "all");
   assert.strictEqual(parseRole("backend"), "backend");
   assert.strictEqual(parseRole("malicious_role"), "all");
+});
+
+test("normalizeJobUrl - fixes Workday redundant tenant and Eightfold search parameters", () => {
+  // 1. Workday redundant tenant path stripping
+  const brokenWorkday = "https://kyndryl.wd5.myworkdayjobs.com/en-US/kyndryl/KyndrylProfessionalCareers/job/Tokyo-Japan/Mod-AI-Engineer_R-71941-1";
+  const fixedWorkday = normalizeJobUrl(brokenWorkday);
+  assert.strictEqual(fixedWorkday, "https://kyndryl.wd5.myworkdayjobs.com/en-US/KyndrylProfessionalCareers/job/Tokyo-Japan/Mod-AI-Engineer_R-71941-1");
+
+  // Already correct Workday URL remains intact
+  const validWorkday = "https://cisco.wd5.myworkdayjobs.com/en-US/Cisco_Careers/job/San-Jose/Engineer_123";
+  assert.strictEqual(normalizeJobUrl(validWorkday), validWorkday);
+
+  // 2. Eightfold /careers?pid= -> /careers/job/ normalization
+  const morganStanley = "https://morganstanley.eightfold.ai/careers?pid=549798643496";
+  assert.strictEqual(normalizeJobUrl(morganStanley), "https://morganstanley.eightfold.ai/careers/job/549798643496");
+
+  const qualcomm = "https://careers.qualcomm.com/careers?pid=446721561657&domain=qualcomm.com";
+  assert.strictEqual(normalizeJobUrl(qualcomm), "https://careers.qualcomm.com/careers/job/446721561657?domain=qualcomm.com");
+
+  // Invalid or unsafe protocols blocked
+  assert.strictEqual(normalizeJobUrl("javascript:evil()"), "#");
+  assert.strictEqual(normalizeJobUrl(null), "#");
+});
+
+test("matchJobSearch - multi-field location and tech synonym expansion", () => {
+  const jobInPune: Job = {
+    ...dummyJob,
+    title: "Java Full Stack Developer",
+    location_raw: "Pune, Maharashtra, India",
+    city: "Pune",
+    skills: ["Java", "Spring Boot", "React"],
+  };
+
+  // City token matching in search
+  assert.strictEqual(matchJobSearch(jobInPune, "Pune"), true);
+  assert.strictEqual(matchJobSearch(jobInPune, "Java Developer in Pune"), true);
+  assert.strictEqual(matchJobSearch(jobInPune, "React Developer Pune"), true);
+
+  // Synonym expansion: SRE matches DevOps / SRE role
+  const sreJob: Job = {
+    ...dummyJob,
+    title: "Site Reliability Engineer II",
+    role_label: "DevOps / SRE / Cloud",
+    role_category: "devops_sre",
+  };
+  assert.strictEqual(matchJobSearch(sreJob, "DevOps"), true);
+  assert.strictEqual(matchJobSearch(sreJob, "SRE"), true);
+  assert.strictEqual(matchJobSearch(sreJob, "Cloud Engineer"), true);
+});
+
+test("matchJobExperience - matches entry-level and early career opportunities", () => {
+  const fresherJob: Job = {
+    ...dummyJob,
+    title: "Software Engineer",
+    experience_level: "Any Experience",
+    min_years: null,
+    max_years: null,
+  };
+
+  // Open / unconstrained experience positions match early career
+  assert.strictEqual(matchJobExperience(fresherJob, "Fresher / 0-1 yr"), true);
+  assert.strictEqual(matchJobExperience(fresherJob, "1-3 yrs"), true);
+
+  // Senior positions do NOT match Fresher even if exp is open
+  const seniorRole: Job = {
+    ...dummyJob,
+    title: "Staff Software Architect",
+    experience_level: "Any Experience",
+    min_years: null,
+  };
+  assert.strictEqual(matchJobExperience(seniorRole, "Fresher / 0-1 yr"), false);
+  assert.strictEqual(matchJobExperience(seniorRole, "1-3 yrs"), false);
+  assert.strictEqual(matchJobExperience(seniorRole, "5+ yrs"), true);
 });
 

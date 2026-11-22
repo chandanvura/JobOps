@@ -10,14 +10,24 @@ class OracleAdapter(BaseATS):
     provider_name = "oracle"
 
     async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+        parts = [p.strip() for p in (company.ats_identifier or "").split("|") if p.strip()]
         parsed = urlparse(company.careers_url or "")
-        origin = f"{parsed.scheme}://{parsed.hostname}" if parsed.hostname else "https://oracle.com"
-        site = company.ats_identifier or "CX_1"
+
+        if parts and "." in parts[0]:
+            host = parts[0]
+            site = parts[1] if len(parts) > 1 else "CX_1"
+        else:
+            host = parsed.hostname or "oracle.com"
+            site = parts[-1] if parts else "CX_1"
+
+        scheme = parsed.scheme or "https"
+        origin = f"{scheme}://{host}"
         base_api = f"{origin}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
 
         params = {
             "onlyData": "true",
             "finder": f"findReqs;siteNumber={site},limit=50,sortBy=POSTING_DATES_DESC",
+            "expand": "requisitionList",
         }
 
         try:
@@ -26,7 +36,13 @@ class OracleAdapter(BaseATS):
                 return []
 
             data = response.json()
-            items = data.get("items", [])
+            items_arr = data.get("items", [])
+            if not items_arr:
+                return []
+
+            # Requisitions are in the expanded requisitionList of the search response
+            req_list = items_arr[0].get("requisitionList", [])
+            items = req_list if req_list else items_arr
             results: List[RawJob] = []
 
             for item in items:
@@ -35,8 +51,12 @@ class OracleAdapter(BaseATS):
                 if not title:
                     continue
 
-                loc_str = item.get("PrimaryLocation", "")
-                raw_desc = item.get("ExternalDescriptionStr", "")
+                loc_str = item.get("PrimaryLocation", "") or item.get("PrimaryLocationCountry", "")
+                raw_desc = (
+                    item.get("ExternalResponsibilitiesStr", "")
+                    or item.get("ExternalQualificationsStr", "")
+                    or item.get("ShortDescriptionStr", "")
+                )
                 clean_desc = self.clean_html(raw_desc)
                 posted_at = parse_datetime(item.get("PostedDate"))
                 job_url = f"{origin}/hcmUI/CandidateExperience/en/sites/{site}/job/{job_id}"

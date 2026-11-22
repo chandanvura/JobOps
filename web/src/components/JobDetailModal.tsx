@@ -7,6 +7,7 @@ import {
   formatLocation,
   formatWorkMode,
   sanitizeExternalUrl,
+  normalizeJobUrl,
 } from "../utils/jobUtils";
 
 interface JobDetailModalProps {
@@ -40,7 +41,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
 
   const cleanSummary = cleanJobText(job.summary || `${job.title} at ${job.company_name}`);
   const cleanTitle = cleanJobText(job.title);
-  const safeApplyUrl = sanitizeExternalUrl(job.job_url);
+  const safeApplyUrl = normalizeJobUrl(job.job_url);
   const locationDisplay = formatLocation(job.city, job.location_raw);
   const workModeDisplay = formatWorkMode(job.work_mode);
   const timeDisplay = formatPostingTime(job.posted_at, job.age_hours);
