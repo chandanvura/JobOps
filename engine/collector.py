@@ -75,11 +75,14 @@ class JobCollector:
             # Freshness Evaluation (Strict 24h Window)
             is_fresh, hours_ago = evaluate_freshness(raw.posted_at, max_hours=24.0)
 
+            now_utc = datetime.now(timezone.utc)
+
             # If strict 24h is requested and an explicit date is given that exceeds 24h, skip
             if strict_24h and raw.posted_at is not None and not is_fresh:
                 continue
 
-            # If no date was given by ATS, newly seen job is treated as fresh for current cycle
+            # If no explicit date was provided by ATS API, synthesize posted_at as now_utc
+            effective_posted_at = raw.posted_at or now_utc
             if raw.posted_at is None:
                 is_fresh = True
                 hours_ago = 0.0
@@ -115,7 +118,7 @@ class JobCollector:
                 max_years=float(exp_max) if exp_max is not None else None,
                 experience_level=exp_level,
                 skills=skills,
-                posted_at=raw.posted_at,
+                posted_at=effective_posted_at,
                 age_hours=hours_ago or 0.0,
                 is_fresh_24h=is_fresh,
                 summary=summary,
