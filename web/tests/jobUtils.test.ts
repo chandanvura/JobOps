@@ -248,3 +248,103 @@ test("matchJobExperience - matches entry-level and early career opportunities", 
   assert.strictEqual(matchJobExperience(seniorRole, "5+ yrs"), true);
 });
 
+test("Multi-filter combination and toggle logic", () => {
+  const sampleJobs: Job[] = [
+    {
+      ...dummyJob,
+      id: "j1",
+      title: "Backend Engineer (Go)",
+      role_category: "backend",
+      city: "Bengaluru",
+      experience_level: "1-3 yrs",
+      min_years: 1,
+      max_years: 3,
+      work_mode: "hybrid",
+      skills: ["Go", "Kafka"],
+    },
+    {
+      ...dummyJob,
+      id: "j2",
+      title: "Frontend Engineer (React)",
+      role_category: "frontend",
+      location_raw: "Hyderabad, Telangana, India",
+      city: "Hyderabad",
+      experience_level: "Fresher / 0-1 yr",
+      min_years: 0,
+      max_years: 0.5,
+      work_mode: "remote",
+      skills: ["React", "TypeScript"],
+    },
+    {
+      ...dummyJob,
+      id: "j3",
+      title: "DevOps Engineer (AWS)",
+      role_category: "devops_sre",
+      location_raw: "Pune, Maharashtra, India",
+      city: "Pune",
+      experience_level: "3-5 yrs",
+      min_years: 3,
+      max_years: 5,
+      work_mode: "onsite",
+      skills: ["AWS", "Docker", "Kubernetes"],
+    },
+    {
+      ...dummyJob,
+      id: "j4",
+      title: "Full Stack Engineer",
+      role_category: "fullstack",
+      city: "Bengaluru",
+      experience_level: "1-3 yrs",
+      min_years: 1,
+      max_years: 3,
+      work_mode: "remote",
+      skills: ["Java", "React"],
+    },
+  ];
+
+  // Helper evaluating multi-category AND, intra-category OR
+  const filterDataset = (
+    items: Job[],
+    roles: string[],
+    experienceLevels: string[],
+    cities: string[],
+    workModes: string[],
+    skills: string[]
+  ) => {
+    return items.filter((j) => {
+      if (roles.length > 0 && !roles.includes(j.role_category)) return false;
+      if (experienceLevels.length > 0 && !experienceLevels.some((lvl) => matchJobExperience(j, lvl))) return false;
+      if (cities.length > 0 && !cities.some((c) => matchJobCity(j, c))) return false;
+      if (workModes.length > 0 && !workModes.includes(j.work_mode)) return false;
+      if (skills.length > 0 && !skills.some((sk) => j.skills.some((js) => js.toLowerCase() === sk.toLowerCase()))) return false;
+      return true;
+    });
+  };
+
+  // 1. Multiple cities (Bengaluru OR Hyderabad)
+  const resCities = filterDataset(sampleJobs, [], [], ["Bengaluru", "Hyderabad"], [], []);
+  assert.strictEqual(resCities.length, 3); // j1, j2, j4
+
+  // 2. Multi-category combination: (Bengaluru OR Hyderabad) AND (1-3 yrs)
+  const resCombo1 = filterDataset(sampleJobs, [], ["1-3 yrs"], ["Bengaluru", "Hyderabad"], [], []);
+  assert.strictEqual(resCombo1.length, 2); // j1 and j4
+
+  // 3. Multi-skill combination: (Go OR React)
+  const resSkills = filterDataset(sampleJobs, [], [], [], [], ["Go", "React"]);
+  assert.strictEqual(resSkills.length, 3); // j1 (Go), j2 (React), j4 (React)
+
+  // 4. Toggle behavior test:
+  // Selecting "Bengaluru" then toggling it adds/removes it
+  let activeCities = ["Bengaluru"];
+  assert.strictEqual(filterDataset(sampleJobs, [], [], activeCities, [], []).length, 2); // j1, j4
+  // Toggle on Hyderabad
+  activeCities = [...activeCities, "Hyderabad"];
+  assert.strictEqual(filterDataset(sampleJobs, [], [], activeCities, [], []).length, 3); // j1, j2, j4
+  // Toggle OFF Bengaluru
+  activeCities = activeCities.filter((c) => c !== "Bengaluru");
+  assert.strictEqual(filterDataset(sampleJobs, [], [], activeCities, [], []).length, 1); // j2 (Hyderabad)
+  // Toggle OFF Hyderabad -> empty (all return)
+  activeCities = activeCities.filter((c) => c !== "Hyderabad");
+  assert.strictEqual(filterDataset(sampleJobs, [], [], activeCities, [], []).length, 4); // All 4 jobs
+});
+

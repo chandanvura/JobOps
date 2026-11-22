@@ -88,14 +88,95 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileOpen, onCloseMobile]);
 
+  const toggleRole = (roleId: string) => {
+    setFilters((prev) => {
+      const currentRoles = prev.roles || (prev.roleCategory && prev.roleCategory !== "all" ? [prev.roleCategory] : []);
+      if (roleId === "all") {
+        return {
+          ...prev,
+          roles: [],
+          roleCategory: "all",
+        };
+      }
+      const exists = currentRoles.includes(roleId);
+      const nextRoles = exists ? currentRoles.filter((r) => r !== roleId) : [...currentRoles, roleId];
+      return {
+        ...prev,
+        roles: nextRoles,
+        roleCategory: nextRoles.length === 1 ? nextRoles[0] : nextRoles.length === 0 ? "all" : nextRoles[0],
+      };
+    });
+  };
+
+  const toggleExperience = (level: string) => {
+    setFilters((prev) => {
+      const currentLevels = prev.experienceLevels || (prev.experienceLevel && prev.experienceLevel !== "All" ? [prev.experienceLevel] : []);
+      if (level === "All") {
+        return {
+          ...prev,
+          experienceLevels: [],
+          experienceLevel: "All",
+        };
+      }
+      const exists = currentLevels.includes(level);
+      const nextLevels = exists ? currentLevels.filter((l) => l !== level) : [...currentLevels, level];
+      return {
+        ...prev,
+        experienceLevels: nextLevels,
+        experienceLevel: nextLevels.length === 1 ? nextLevels[0] : nextLevels.length === 0 ? "All" : nextLevels[0],
+      };
+    });
+  };
+
+  const toggleCity = (city: string) => {
+    setFilters((prev) => {
+      const currentCities = prev.cities || (prev.city && prev.city !== "All" ? [prev.city] : []);
+      if (city === "All") {
+        return {
+          ...prev,
+          cities: [],
+          city: "All",
+        };
+      }
+      const exists = currentCities.includes(city);
+      const nextCities = exists ? currentCities.filter((c) => c !== city) : [...currentCities, city];
+      return {
+        ...prev,
+        cities: nextCities,
+        city: nextCities.length === 1 ? nextCities[0] : nextCities.length === 0 ? "All" : nextCities[0],
+      };
+    });
+  };
+
+  const toggleWorkMode = (modeId: string) => {
+    setFilters((prev) => {
+      const currentModes = prev.workModes || (prev.workMode && prev.workMode !== "all" ? [prev.workMode] : []);
+      if (modeId === "all") {
+        return {
+          ...prev,
+          workModes: [],
+          workMode: "all",
+        };
+      }
+      const exists = currentModes.includes(modeId);
+      const nextModes = exists ? currentModes.filter((m) => m !== modeId) : [...currentModes, modeId];
+      return {
+        ...prev,
+        workModes: nextModes,
+        workMode: nextModes.length === 1 ? nextModes[0] : nextModes.length === 0 ? "all" : nextModes[0],
+      };
+    });
+  };
+
   const toggleSkill = (skill: string) => {
     setFilters((prev) => {
-      const exists = prev.selectedSkills.includes(skill);
+      const currentSkills = prev.selectedSkills || [];
+      const exists = currentSkills.includes(skill);
       return {
         ...prev,
         selectedSkills: exists
-          ? prev.selectedSkills.filter((s) => s !== skill)
-          : [...prev.selectedSkills, skill],
+          ? currentSkills.filter((s) => s !== skill)
+          : [...currentSkills, skill],
       };
     });
   };
@@ -162,11 +243,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
           {ROLES.map((role) => {
             const count = role.id === "all" ? undefined : roleCounts[role.id];
-            const isSelected = filters.roleCategory === role.id;
+            const isSelected =
+              role.id === "all"
+                ? !filters.roles || filters.roles.length === 0 || (filters.roles.length === 1 && filters.roles[0] === "all")
+                : (filters.roles && filters.roles.includes(role.id)) || filters.roleCategory === role.id;
             return (
               <button
                 key={role.id}
-                onClick={() => setFilters((prev) => ({ ...prev, roleCategory: role.id }))}
+                onClick={() => toggleRole(role.id)}
                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between active:scale-[0.98] transition-colors ${
                   isSelected
                     ? "bg-brand-elevated text-brand-primary font-semibold border border-brand-primary/40 shadow-sm"
@@ -199,11 +283,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </label>
         <div className="flex flex-wrap gap-1.5">
           {EXPERIENCE_LEVELS.map((level) => {
-            const isSelected = filters.experienceLevel === level;
+            const isSelected =
+              level === "All"
+                ? !filters.experienceLevels || filters.experienceLevels.length === 0 || (filters.experienceLevels.length === 1 && filters.experienceLevels[0] === "All")
+                : (filters.experienceLevels && filters.experienceLevels.includes(level)) || filters.experienceLevel === level;
             return (
               <button
                 key={level}
-                onClick={() => setFilters((prev) => ({ ...prev, experienceLevel: level }))}
+                onClick={() => toggleExperience(level)}
                 className={`px-2.5 py-1 text-xs rounded-full border active:scale-[0.98] transition-all ${
                   isSelected
                     ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
@@ -225,12 +312,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </label>
         <div className="grid grid-cols-2 gap-1.5">
           {TECH_HUBS.map((city) => {
-            const isSelected = filters.city === city;
+            const isSelected =
+              city === "All"
+                ? !filters.cities || filters.cities.length === 0 || (filters.cities.length === 1 && filters.cities[0] === "All")
+                : (filters.cities && filters.cities.includes(city)) || filters.city === city;
             const count = city === "All" ? undefined : cityCounts[city];
             return (
               <button
                 key={city}
-                onClick={() => setFilters((prev) => ({ ...prev, city }))}
+                onClick={() => toggleCity(city)}
                 className={`px-2 py-1.5 text-xs text-left truncate rounded-lg border active:scale-[0.98] transition-all flex items-center justify-between ${
                   isSelected
                     ? "bg-brand-primary border-brand-primary text-white font-semibold shadow-sm"
@@ -257,11 +347,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </label>
         <div className="flex flex-wrap gap-1.5">
           {WORK_MODES.map((mode) => {
-            const isSelected = filters.workMode === mode.id;
+            const isSelected =
+              mode.id === "all"
+                ? !filters.workModes || filters.workModes.length === 0 || (filters.workModes.length === 1 && filters.workModes[0] === "all")
+                : (filters.workModes && filters.workModes.includes(mode.id)) || filters.workMode === mode.id;
             return (
               <button
                 key={mode.id}
-                onClick={() => setFilters((prev) => ({ ...prev, workMode: mode.id }))}
+                onClick={() => toggleWorkMode(mode.id)}
                 className={`px-2.5 py-1 text-xs rounded-full border active:scale-[0.98] transition-all ${
                   isSelected
                     ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"

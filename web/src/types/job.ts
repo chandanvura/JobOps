@@ -28,10 +28,15 @@ export interface Job {
 
 export interface FilterState {
   searchQuery: string;
-  roleCategory: string;
-  experienceLevel: string;
-  city: string;
-  workMode: string;
+  roles: string[];
+  experienceLevels: string[];
+  cities: string[];
+  workModes: string[];
   freshOnly: boolean;
   selectedSkills: string[];
+  // Backwards compatibility accessors for scalar reads
+  roleCategory?: string;
+  experienceLevel?: string;
+  city?: string;
+  workMode?: string;
 }

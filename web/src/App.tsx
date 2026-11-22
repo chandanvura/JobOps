@@ -62,15 +62,40 @@ export const App: React.FC = () => {
   const { themeMode, setThemeMode, isDark } = useTheme();
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Parse Initial URL State
+  // Parse Initial URL State supporting multi-select and legacy params
   const initialUrlParams = useMemo(() => {
     try {
       const sp = new URLSearchParams(window.location.search);
       const q = (sp.get("q") || "").slice(0, 100).replace(/[<>]/g, "");
-      const role = ALLOWED_ROLES.includes(sp.get("role") || "") ? sp.get("role")! : "all";
-      const exp = ALLOWED_EXPERIENCES.includes(sp.get("exp") || "") ? sp.get("exp")! : "All";
-      const city = (sp.get("city") || "All").slice(0, 40).replace(/[<>]/g, "");
-      const mode = ALLOWED_MODES.includes(sp.get("mode") || "") ? sp.get("mode")! : "all";
+
+      // Multi-roles or legacy singular role
+      const rawRoles = sp.get("roles") || sp.get("role") || "";
+      const roles = rawRoles
+        .split(",")
+        .map((r) => r.trim())
+        .filter((r) => ALLOWED_ROLES.includes(r) && r !== "all");
+
+      // Multi-experience or legacy singular exp
+      const rawExp = sp.get("exp") || sp.get("experience") || "";
+      const expList = rawExp
+        .split(",")
+        .map((e) => e.trim())
+        .filter((e) => ALLOWED_EXPERIENCES.includes(e) && e !== "All");
+
+      // Multi-cities or legacy singular city
+      const rawCities = sp.get("cities") || sp.get("city") || "";
+      const cities = rawCities
+        .split(",")
+        .map((c) => c.trim().slice(0, 40).replace(/[<>]/g, ""))
+        .filter((c) => c && c !== "All");
+
+      // Multi-modes or legacy singular mode
+      const rawModes = sp.get("modes") || sp.get("mode") || "";
+      const modes = rawModes
+        .split(",")
+        .map((m) => m.trim().toLowerCase())
+        .filter((m) => ALLOWED_MODES.includes(m) && m !== "all");
+
       const fresh = sp.get("fresh") === "true" || sp.get("fresh") === "1";
       const tab: "jobs" | "companies" = sp.get("tab") === "companies" ? "companies" : "jobs";
       const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
@@ -83,14 +108,14 @@ export const App: React.FC = () => {
             .map((s) => s.trim().slice(0, 40).replace(/[<>]/g, ""))
             .filter(Boolean)
         : [];
-      return { q, role, exp, city, mode, fresh, tab, page, jobId, sort, skills };
+      return { q, roles, expList, cities, modes, fresh, tab, page, jobId, sort, skills };
     } catch {
       return {
         q: "",
-        role: "all",
-        exp: "All",
-        city: "All",
-        mode: "all",
+        roles: [],
+        expList: [],
+        cities: [],
+        modes: [],
         fresh: false,
         tab: "jobs" as const,
         page: 1,
@@ -109,12 +134,17 @@ export const App: React.FC = () => {
 
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: initialUrlParams.q,
-    roleCategory: initialUrlParams.role,
-    experienceLevel: initialUrlParams.exp,
-    city: initialUrlParams.city,
-    workMode: initialUrlParams.mode,
+    roles: initialUrlParams.roles,
+    experienceLevels: initialUrlParams.expList,
+    cities: initialUrlParams.cities,
+    workModes: initialUrlParams.modes,
     freshOnly: initialUrlParams.fresh,
     selectedSkills: initialUrlParams.skills,
+    // backwards-compatibility scalar fallbacks
+    roleCategory: initialUrlParams.roles.length === 1 ? initialUrlParams.roles[0] : "all",
+    experienceLevel: initialUrlParams.expList.length === 1 ? initialUrlParams.expList[0] : "All",
+    city: initialUrlParams.cities.length === 1 ? initialUrlParams.cities[0] : "All",
+    workMode: initialUrlParams.modes.length === 1 ? initialUrlParams.modes[0] : "all",
   });
 
   const [sortBy, setSortBy] = useState<string>(initialUrlParams.sort);
@@ -253,18 +283,30 @@ export const App: React.FC = () => {
       if (filters.searchQuery.trim()) {
         params.set("q", filters.searchQuery.trim());
       }
-      if (filters.roleCategory !== "all") {
-        params.set("role", filters.roleCategory);
+      if (filters.roles && filters.roles.length > 0) {
+        params.set("roles", filters.roles.join(","));
+      } else if (filters.roleCategory && filters.roleCategory !== "all") {
+        params.set("roles", filters.roleCategory);
       }
-      if (filters.experienceLevel !== "All") {
+
+      if (filters.experienceLevels && filters.experienceLevels.length > 0) {
+        params.set("exp", filters.experienceLevels.join(","));
+      } else if (filters.experienceLevel && filters.experienceLevel !== "All") {
         params.set("exp", filters.experienceLevel);
       }
-      if (filters.city !== "All") {
-        params.set("city", filters.city);
+
+      if (filters.cities && filters.cities.length > 0) {
+        params.set("cities", filters.cities.join(","));
+      } else if (filters.city && filters.city !== "All") {
+        params.set("cities", filters.city);
       }
-      if (filters.workMode !== "all") {
-        params.set("mode", filters.workMode);
+
+      if (filters.workModes && filters.workModes.length > 0) {
+        params.set("modes", filters.workModes.join(","));
+      } else if (filters.workMode && filters.workMode !== "all") {
+        params.set("modes", filters.workMode);
       }
+
       if (filters.freshOnly) {
         params.set("fresh", "true");
       }
@@ -297,10 +339,31 @@ export const App: React.FC = () => {
       try {
         const sp = new URLSearchParams(window.location.search);
         const q = (sp.get("q") || "").slice(0, 100).replace(/[<>]/g, "");
-        const role = ALLOWED_ROLES.includes(sp.get("role") || "") ? sp.get("role")! : "all";
-        const exp = ALLOWED_EXPERIENCES.includes(sp.get("exp") || "") ? sp.get("exp")! : "All";
-        const city = (sp.get("city") || "All").slice(0, 40).replace(/[<>]/g, "");
-        const mode = ALLOWED_MODES.includes(sp.get("mode") || "") ? sp.get("mode")! : "all";
+
+        const rawRoles = sp.get("roles") || sp.get("role") || "";
+        const roles = rawRoles
+          .split(",")
+          .map((r) => r.trim())
+          .filter((r) => ALLOWED_ROLES.includes(r) && r !== "all");
+
+        const rawExp = sp.get("exp") || sp.get("experience") || "";
+        const expList = rawExp
+          .split(",")
+          .map((e) => e.trim())
+          .filter((e) => ALLOWED_EXPERIENCES.includes(e) && e !== "All");
+
+        const rawCities = sp.get("cities") || sp.get("city") || "";
+        const cities = rawCities
+          .split(",")
+          .map((c) => c.trim().slice(0, 40).replace(/[<>]/g, ""))
+          .filter((c) => c && c !== "All");
+
+        const rawModes = sp.get("modes") || sp.get("mode") || "";
+        const modes = rawModes
+          .split(",")
+          .map((m) => m.trim().toLowerCase())
+          .filter((m) => ALLOWED_MODES.includes(m) && m !== "all");
+
         const fresh = sp.get("fresh") === "true" || sp.get("fresh") === "1";
         const tab: "jobs" | "companies" = sp.get("tab") === "companies" ? "companies" : "jobs";
         const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
@@ -318,12 +381,16 @@ export const App: React.FC = () => {
         setSearchInput(q);
         setFilters({
           searchQuery: q,
-          roleCategory: role,
-          experienceLevel: exp,
-          city,
-          workMode: mode,
+          roles,
+          experienceLevels: expList,
+          cities,
+          workModes: modes,
           freshOnly: fresh,
           selectedSkills: skills,
+          roleCategory: roles.length === 1 ? roles[0] : "all",
+          experienceLevel: expList.length === 1 ? expList[0] : "All",
+          city: cities.length === 1 ? cities[0] : "All",
+          workMode: modes.length === 1 ? modes[0] : "all",
         });
         setSortBy(sort);
         setCurrentPage(page);
@@ -482,33 +549,41 @@ export const App: React.FC = () => {
     setSearchInput("");
     setFilters({
       searchQuery: "",
+      roles: [],
+      experienceLevels: [],
+      cities: [],
+      workModes: [],
+      freshOnly: false,
+      selectedSkills: [],
       roleCategory: "all",
       experienceLevel: "All",
       city: "All",
       workMode: "all",
-      freshOnly: false,
-      selectedSkills: [],
     });
     setCurrentPage(1);
   };
 
   const handleSelectCompanyFromDirectory = (companyName: string) => {
     setSearchInput(companyName);
-    setFilters((prev) => ({
-      ...prev,
+    setFilters({
       searchQuery: companyName,
-      roleCategory: "all",
-      city: "All",
-      experienceLevel: "All",
-      workMode: "all",
+      roles: [],
+      experienceLevels: [],
+      cities: [],
+      workModes: [],
       freshOnly: false,
       selectedSkills: [],
-    }));
+      roleCategory: "all",
+      experienceLevel: "All",
+      city: "All",
+      workMode: "all",
+    });
     setCurrentTab("jobs");
     setCurrentPage(1);
   };
 
-  // Role Counts & City Counts Aggregations
+  // Dynamic Category & Option Counts Aggregations
+  // Dynamically computes available active jobs per category based on active jobs in the dataset
   const { roleCounts, cityCounts, freshCount } = useMemo(() => {
     const roles: Record<string, number> = {};
     const cities: Record<string, number> = {};
@@ -525,21 +600,63 @@ export const App: React.FC = () => {
   }, [jobs]);
 
   // Main Filtering Logic
+  // Combines intra-category multi-selections with OR, and inter-category filters with AND
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
+      // 1. Freshness filter
       if (filters.freshOnly && !job.is_fresh_24h) return false;
-      if (filters.roleCategory !== "all" && job.role_category !== filters.roleCategory) return false;
-      if (!matchJobExperience(job, filters.experienceLevel)) return false;
-      if (!matchJobCity(job, filters.city)) return false;
-      if (filters.workMode !== "all" && job.work_mode !== filters.workMode) return false;
 
-      if (filters.selectedSkills.length > 0) {
-        const hasAny = filters.selectedSkills.some((sk) =>
-          job.skills?.some((js) => js.toLowerCase() === sk.toLowerCase())
-        );
-        if (!hasAny) return false;
+      // 2. Roles / Disciplines (OR within category)
+      const activeRoles = filters.roles && filters.roles.length > 0
+        ? filters.roles
+        : filters.roleCategory && filters.roleCategory !== "all"
+        ? [filters.roleCategory]
+        : [];
+      if (activeRoles.length > 0 && !activeRoles.includes(job.role_category)) {
+        return false;
       }
 
+      // 3. Experience Levels (OR within category)
+      const activeExp = filters.experienceLevels && filters.experienceLevels.length > 0
+        ? filters.experienceLevels
+        : filters.experienceLevel && filters.experienceLevel !== "All"
+        ? [filters.experienceLevel]
+        : [];
+      if (activeExp.length > 0) {
+        const matchesAnyExp = activeExp.some((lvl) => matchJobExperience(job, lvl));
+        if (!matchesAnyExp) return false;
+      }
+
+      // 4. Cities / Hubs (OR within category)
+      const activeCities = filters.cities && filters.cities.length > 0
+        ? filters.cities
+        : filters.city && filters.city !== "All"
+        ? [filters.city]
+        : [];
+      if (activeCities.length > 0) {
+        const matchesAnyCity = activeCities.some((c) => matchJobCity(job, c));
+        if (!matchesAnyCity) return false;
+      }
+
+      // 5. Work Modes (OR within category)
+      const activeModes = filters.workModes && filters.workModes.length > 0
+        ? filters.workModes
+        : filters.workMode && filters.workMode !== "all"
+        ? [filters.workMode]
+        : [];
+      if (activeModes.length > 0 && !activeModes.includes(job.work_mode)) {
+        return false;
+      }
+
+      // 6. Skills (OR within category: matches any of selected skills)
+      if (filters.selectedSkills && filters.selectedSkills.length > 0) {
+        const hasAnySkill = filters.selectedSkills.some((sk) =>
+          job.skills?.some((js) => js.toLowerCase() === sk.toLowerCase())
+        );
+        if (!hasAnySkill) return false;
+      }
+
+      // 7. Search query matching across title, company, skills, summary, city
       if (!matchJobSearch(job, filters.searchQuery)) return false;
 
       return true;
@@ -801,6 +918,125 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Active Filter Chips / Clear Bar */}
+                {((filters.roles && filters.roles.length > 0) ||
+                  (filters.experienceLevels && filters.experienceLevels.length > 0) ||
+                  (filters.cities && filters.cities.length > 0) ||
+                  (filters.workModes && filters.workModes.length > 0) ||
+                  (filters.selectedSkills && filters.selectedSkills.length > 0) ||
+                  filters.freshOnly ||
+                  filters.searchQuery) && (
+                  <div className="flex items-center gap-1.5 flex-wrap mb-4 px-1">
+                    <span className="text-[11px] font-medium text-brand-muted mr-1">Active filters:</span>
+                    {filters.roles?.map((r) => (
+                      <span
+                        key={r}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-brand-elevated text-brand-text border border-brand-border"
+                      >
+                        <span className="capitalize">{r.replace("_", " ")}</span>
+                        <button
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              roles: prev.roles?.filter((item) => item !== r) || [],
+                            }))
+                          }
+                          className="hover:text-brand-primary p-0.5 rounded-full ml-0.5"
+                          aria-label={`Remove filter ${r}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {filters.experienceLevels?.map((exp) => (
+                      <span
+                        key={exp}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-brand-elevated text-brand-text border border-brand-border"
+                      >
+                        <span>{exp}</span>
+                        <button
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              experienceLevels: prev.experienceLevels?.filter((item) => item !== exp) || [],
+                            }))
+                          }
+                          className="hover:text-brand-primary p-0.5 rounded-full ml-0.5"
+                          aria-label={`Remove filter ${exp}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {filters.cities?.map((city) => (
+                      <span
+                        key={city}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-brand-elevated text-brand-text border border-brand-border"
+                      >
+                        <span>{city}</span>
+                        <button
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              cities: prev.cities?.filter((item) => item !== city) || [],
+                            }))
+                          }
+                          className="hover:text-brand-primary p-0.5 rounded-full ml-0.5"
+                          aria-label={`Remove filter ${city}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {filters.workModes?.map((mode) => (
+                      <span
+                        key={mode}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-brand-elevated text-brand-text border border-brand-border"
+                      >
+                        <span className="capitalize">{mode}</span>
+                        <button
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              workModes: prev.workModes?.filter((item) => item !== mode) || [],
+                            }))
+                          }
+                          className="hover:text-brand-primary p-0.5 rounded-full ml-0.5"
+                          aria-label={`Remove filter ${mode}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {filters.selectedSkills?.map((skill) => (
+                      <span
+                        key={skill}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-brand-elevated text-brand-primary font-mono border border-brand-primary/30"
+                      >
+                        <span>{skill}</span>
+                        <button
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              selectedSkills: prev.selectedSkills?.filter((item) => item !== skill) || [],
+                            }))
+                          }
+                          className="hover:text-red-400 p-0.5 rounded-full ml-0.5"
+                          aria-label={`Remove filter ${skill}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      onClick={resetFilters}
+                      className="text-xs text-brand-primary hover:text-brand-hover font-medium underline underline-offset-2 ml-1"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
 
                 {loading ? (
                   <div className={`grid grid-cols-1 ${density === "compact" ? "md:grid-cols-2 lg:grid-cols-3 gap-3" : "md:grid-cols-2 gap-4"}`}>
