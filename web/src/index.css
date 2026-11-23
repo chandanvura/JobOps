@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    color-scheme: light dark;
+    accent-color: var(--action-primary);
+
     --bg-main: #FBFBFA;
     --surface-primary: #FFFFFF;
     --surface-secondary: #F3F4F0;
@@ -24,6 +27,17 @@
     --radar-glow: rgba(217, 119, 6, 0.16);
     --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
     --card-shadow-hover: 0 12px 28px -6px rgba(217, 119, 6, 0.12), 0 8px 12px -6px rgba(0, 0, 0, 0.04);
+
+    /* Standard Scrollbar Properties */
+    scrollbar-color: var(--border-color) var(--bg-main);
+    scrollbar-width: thin;
+  }
+
+  :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  :root:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
   }
 
   .dark {
@@ -187,18 +201,29 @@
   }
 }
 
-/* Custom refined scrollbar matching theme tokens */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Modal dialog & drawer overscroll containment */
+[role="dialog"] {
+  overscroll-behavior: contain;
 }
-::-webkit-scrollbar-track {
-  background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--action-primary);
+
+/* Legacy fallback for WebKit/Blink browsers without standard scrollbar-color */
+@supports not (scrollbar-color: auto) {
+  :root {
+    scrollbar-width: auto;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-main);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--action-primary);
+  }
 }

@@ -47,11 +47,27 @@ export function useTheme() {
       } else {
         root.classList.remove("dark");
       }
+
+      // Synchronize <meta name="color-scheme"> per modern-web-guidance
+      try {
+        let meta = document.querySelector('meta[name="color-scheme"]');
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.setAttribute("name", "color-scheme");
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute(
+          "content",
+          themeMode === "dark" ? "dark" : themeMode === "light" ? "light" : "light dark"
+        );
+      } catch {}
     };
 
     applyTheme();
-    localStorage.setItem("jobops_theme_mode", themeMode);
-    localStorage.setItem("jobops_theme", themeMode === "dark" ? "dark" : (themeMode === "light" ? "light" : (mediaQuery.matches ? "dark" : "light")));
+    try {
+      localStorage.setItem("jobops_theme_mode", themeMode);
+      localStorage.setItem("jobops_theme", themeMode === "dark" ? "dark" : (themeMode === "light" ? "light" : (mediaQuery.matches ? "dark" : "light")));
+    } catch {}
 
     const handleSystemChange = () => {
       if (themeMode === "system") {
@@ -59,8 +75,21 @@ export function useTheme() {
       }
     };
 
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "jobops_theme_mode" && e.newValue) {
+        const val = e.newValue as ThemeMode;
+        if (val === "light" || val === "dark" || val === "system") {
+          setThemeMode(val);
+        }
+      }
+    };
+
     mediaQuery.addEventListener("change", handleSystemChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleSystemChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [themeMode]);
 
   const toggleDarkMode = () => {
