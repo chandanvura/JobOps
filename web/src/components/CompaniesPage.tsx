@@ -28,7 +28,7 @@ export interface CompanyItem {
   response_time_ms: number | null;
   status_code?: number | null;
   health_error?: string | null;
-  indian_hubs: string[];
+  indian_hubs?: string[];
   jobs_found: number;
   last_checked_at: string;
 }
@@ -400,11 +400,14 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
-                          {comp.indian_hubs.map((hub) => (
+                          {(comp.indian_hubs || []).map((hub) => (
                             <span key={hub} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-elevated text-brand-secondary border border-brand-border">
                               {hub}
                             </span>
                           ))}
+                          {(!comp.indian_hubs || comp.indian_hubs.length === 0) && (
+                            <span className="text-[10px] font-mono text-brand-muted">India / Remote</span>
+                          )}
                         </div>
                       </td>
 
