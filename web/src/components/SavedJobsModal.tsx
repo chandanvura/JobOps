@@ -47,13 +47,13 @@ const getStageBadge = (stage: PipelineStage) => {
     case "Saved":
       return "bg-brand-elevated text-brand-secondary border-brand-border";
     case "Interested":
-      return "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800";
+      return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
     case "Applied":
-      return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+      return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
     case "Assessment":
-      return "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
+      return "bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800";
     case "Interview":
-      return "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800";
+      return "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800";
     case "Offer":
       return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
     case "Rejected":
@@ -366,7 +366,7 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
 
         {/* Import Notification Banner */}
         {importStatus && (
-          <div className="px-5 py-2.5 bg-blue-500/10 border-b border-blue-500/20 text-xs text-brand-primary flex items-center gap-2">
+          <div className="px-5 py-2.5 bg-amber-500/10 border-b border-amber-500/20 text-xs text-brand-primary flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-brand-primary flex-shrink-0" />
             <span>{importStatus}</span>
           </div>
@@ -435,8 +435,8 @@ export const SavedJobsModal: React.FC<SavedJobsModalProps> = ({
               <span className="text-base font-bold text-brand-primary font-mono tabular-nums">{metrics.applied}</span>
             </div>
             <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
-              <span className="text-xs text-violet-500 font-medium">Interviewing</span>
-              <span className="text-base font-bold text-violet-500 font-mono tabular-nums">{metrics.inProgress}</span>
+              <span className="text-xs text-orange-500 font-medium">Interviewing</span>
+              <span className="text-base font-bold text-orange-500 font-mono tabular-nums">{metrics.inProgress}</span>
             </div>
             <div className="bg-brand-surface p-2.5 rounded-xl border border-brand-border flex items-center justify-between">
               <span className="text-xs text-emerald-500 font-medium">Offers</span>

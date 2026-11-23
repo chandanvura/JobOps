@@ -37,7 +37,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
 
   const options: { id: ThemeMode; label: string; icon: React.ReactNode }[] = [
     { id: "light", label: "Light", icon: <Sun className="w-4 h-4 text-amber-500" /> },
-    { id: "dark", label: "Dark", icon: <Moon className="w-4 h-4 text-blue-400" /> },
+    { id: "dark", label: "Dark", icon: <Moon className="w-4 h-4 text-amber-400" /> },
     { id: "system", label: "System", icon: <Monitor className="w-4 h-4 text-brand-muted" /> },
   ];
 

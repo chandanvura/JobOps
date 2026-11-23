@@ -758,11 +758,14 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-bg text-brand-text transition-colors">
+    <div className="min-h-screen relative overflow-hidden flex flex-col bg-brand-bg text-brand-text transition-colors">
+      {/* Ambient Radial Spotlight Shader Effect */}
+      <div className="ambient-spotlight" aria-hidden="true" />
+
       {/* Accessible Skip-to-Content Link for Keyboard Users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-brand-primary text-white rounded-xl text-xs font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-brand-primary text-white dark:text-zinc-950 rounded-xl text-xs font-bold shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
       >
         Skip to main content
       </a>
@@ -804,14 +807,14 @@ export const App: React.FC = () => {
         ) : (
           <>
             {/* Hero Heading Banner with Subtle Architectural Grid & Radar Live Beacon */}
-            <div className="relative mb-6 sm:mb-8 rounded-3xl p-6 sm:p-8 border border-brand-border bg-brand-surface/60 backdrop-blur-sm bg-grid-pattern overflow-hidden">
+            <div className="relative mb-6 sm:mb-8 rounded-3xl p-6 sm:p-8 border border-brand-border bg-brand-surface/75 backdrop-blur-md bg-grid-pattern overflow-hidden shadow-sm">
               <div className="relative z-10 max-w-[720px]">
                 {/* Live System Signal Tag */}
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-brand-border bg-brand-elevated text-[11px] font-mono text-brand-secondary mb-3 shadow-sm">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-border bg-brand-elevated text-[11px] font-mono text-brand-secondary mb-3 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 radar-beacon flex-shrink-0" />
                   <span className="font-semibold text-brand-text">Active ATS Ingestion</span>
                   <span className="text-brand-muted">•</span>
-                  <span>Strict 24h cycle</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Strict 24h cycle</span>
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-brand-text leading-[1.18] mb-2.5">
@@ -823,7 +826,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* Decorative radial gradient ambient glow in dark mode */}
-              <div className="absolute right-0 top-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+              <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
             </div>
 
             {/* Mobile Search & Filter Action Bar */}
@@ -867,8 +870,8 @@ export const App: React.FC = () => {
                       {filteredJobs.length.toLocaleString()} openings verified
                     </span>
                     {filters.freshOnly && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-brand-primary border border-blue-500/20">
-                        <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                        <Zap className="w-3 h-3 text-emerald-500 fill-emerald-500" />
                         <span>24h fresh</span>
                       </span>
                     )}
@@ -903,7 +906,7 @@ export const App: React.FC = () => {
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
                       className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[36px] active:scale-[0.98] ${
                         filters.freshOnly
-                          ? "bg-brand-primary text-white border-brand-hover shadow-sm"
+                          ? "bg-brand-primary text-white dark:text-zinc-950 font-bold border-brand-hover shadow-sm"
                           : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                       }`}
                     >
@@ -1087,7 +1090,7 @@ export const App: React.FC = () => {
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-colors shadow-sm"
+                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white dark:text-zinc-950 rounded-xl text-xs font-bold active:scale-[0.98] transition-colors shadow-sm"
                     >
                       Reset all filters
                     </button>

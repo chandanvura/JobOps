@@ -22,14 +22,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: "/", description: "Focus global search bar", icon: <Search className="w-3.5 h-3.5 text-blue-500" /> },
+    { key: "/", description: "Focus global search bar", icon: <Search className="w-3.5 h-3.5 text-amber-500" /> },
     { key: "Esc", description: "Close any modal or active filter drawer", icon: <X className="w-3.5 h-3.5 text-rose-500" /> },
-    { key: "T", description: "Cycle theme (Light ➔ Dark ➔ System)", icon: <Moon className="w-3.5 h-3.5 text-indigo-500" /> },
-    { key: "P", description: "Open Personal Pipeline / Saved Jobs", icon: <Bookmark className="w-3.5 h-3.5 text-sky-500" /> },
+    { key: "T", description: "Cycle theme (Light ➔ Dark ➔ System)", icon: <Moon className="w-3.5 h-3.5 text-amber-400" /> },
+    { key: "P", description: "Open Personal Pipeline / Saved Jobs", icon: <Bookmark className="w-3.5 h-3.5 text-amber-500" /> },
     { key: "D", description: "Toggle card density (Comfortable / Compact)", icon: <LayoutGrid className="w-3.5 h-3.5 text-emerald-500" /> },
     { key: "F", description: "Toggle Last 24 Hours freshness filter", icon: <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" /> },
-    { key: "A", description: "Open Ingestion Telemetry & Add ATS modal", icon: <Command className="w-3.5 h-3.5 text-purple-500" /> },
-    { key: "?", description: "Show keyboard shortcuts cheat sheet", icon: <Command className="w-3.5 h-3.5 text-blue-500" /> },
+    { key: "A", description: "Open Ingestion Telemetry & Add ATS modal", icon: <Command className="w-3.5 h-3.5 text-emerald-500" /> },
+    { key: "?", description: "Show keyboard shortcuts cheat sheet", icon: <Command className="w-3.5 h-3.5 text-amber-500" /> },
   ];
 
   return (

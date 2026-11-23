@@ -33,13 +33,13 @@ export const Logo: React.FC<LogoProps> = ({
     >
       {/* Precision Geometric SVG Brand Mark */}
       <div
-        className={`${iconSizes[size]} rounded-xl bg-blue-600 dark:bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-all duration-200 flex-shrink-0 border border-blue-500/30`}
+        className={`${iconSizes[size]} rounded-xl bg-obsidian-900 dark:bg-obsidian-900 flex items-center justify-center text-amber-500 shadow-sm shadow-amber-500/20 group-hover:scale-105 group-hover:border-amber-400/60 transition-all duration-200 flex-shrink-0 border border-amber-500/30`}
       >
         <svg
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 sm:w-5 sm:h-5 text-white"
+          className="w-5 h-5 sm:w-5 sm:h-5 text-amber-500"
         >
           {/* Outer radar boundary */}
           <circle
@@ -65,8 +65,8 @@ export const Logo: React.FC<LogoProps> = ({
           <line x1="12" y1="19" x2="12" y2="21.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <line x1="2.5" y1="12" x2="5" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <line x1="19" y1="12" x2="21.5" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          {/* Focal core opportunity point */}
-          <circle cx="12" cy="12" r="2" fill="#38BDF8" />
+          {/* Focal core opportunity point - Terminal Emerald */}
+          <circle cx="12" cy="12" r="2" fill="#10B981" />
         </svg>
       </div>
 
@@ -76,9 +76,9 @@ export const Logo: React.FC<LogoProps> = ({
             <span
               className={`${textSizes[size]} font-bold tracking-tight text-brand-text font-sans leading-none`}
             >
-              Job<span className="text-blue-600 dark:text-blue-400">Ops</span>
+              Job<span className="text-amber-600 dark:text-amber-400">Ops</span>
             </span>
-            <span className="hidden xs:inline-flex items-center text-[10px] font-mono font-semibold tracking-wider px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+            <span className="hidden xs:inline-flex items-center text-[10px] font-mono font-semibold tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
               DIRECT ATS
             </span>
           </div>

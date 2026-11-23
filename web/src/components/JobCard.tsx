@@ -7,7 +7,6 @@ import {
   formatLocation,
   formatWorkMode,
   calculateRelevanceScore,
-  sanitizeExternalUrl,
   normalizeJobUrl,
 } from "../utils/jobUtils";
 
@@ -37,15 +36,15 @@ export const JobCard: React.FC<JobCardProps> = ({
   // Compute transparent relevance score
   const relevance = calculateRelevanceScore(job, searchQuery, selectedSkills, selectedRole);
 
-  // Deterministic clean pastel monogram
+  // Deterministic clean monogram with warm/tactical tones (NO blues or purples)
   const getCompanyColor = (name: string) => {
     const tints = [
-      "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-      "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-      "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800",
-      "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-      "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
       "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+      "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+      "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800",
+      "bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+      "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700",
+      "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700",
     ];
     let hash = 0;
     for (let i = 0; i < (name || "").length; i++) {
@@ -60,13 +59,13 @@ export const JobCard: React.FC<JobCardProps> = ({
       case "greenhouse":
         return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60";
       case "lever":
-        return "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/60";
+        return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60";
       case "ashby":
-        return "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60";
+        return "bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60";
       case "workday":
-        return "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60";
+        return "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700";
       case "smartrecruiters":
-        return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60";
+        return "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800/60";
       default:
         return "bg-brand-elevated text-brand-secondary border-brand-border";
     }
@@ -83,16 +82,16 @@ export const JobCard: React.FC<JobCardProps> = ({
   const isCompact = density === "compact";
 
   return (
-    <article className={`bg-brand-surface rounded-2xl border border-brand-border hover:border-brand-primary/50 job-card-interactive flex flex-col justify-between group h-full relative ${
+    <article className={`bg-brand-surface rounded-2xl border border-brand-border hover:border-amber-500/40 job-card-interactive flex flex-col justify-between group h-full relative ${
       isCompact ? "p-3.5 sm:p-4" : "p-4 sm:p-5"
     }`}>
       <div>
         {/* Top Header: Company Identity & Actions */}
         <div className={`flex items-start justify-between gap-3 ${isCompact ? "mb-2" : "mb-3"}`}>
           <div className="flex items-center gap-3 min-w-0">
-            {/* Deterministic monogram fallback */}
+            {/* Deterministic monogram fallback with tactical palette */}
             <div
-              className={`rounded-xl border border-brand-border flex items-center justify-center font-bold text-sm flex-shrink-0 bg-brand-elevated text-brand-text transition-colors ${
+              className={`rounded-xl border flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors ${getCompanyColor(job.company_name || "")} ${
                 isCompact ? "w-8 h-8 text-xs" : "w-10 h-10"
               }`}
               aria-label={`${job.company_name} initial`}
@@ -105,7 +104,7 @@ export const JobCard: React.FC<JobCardProps> = ({
                 {job.company_name}
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-brand-border bg-brand-elevated text-brand-secondary">
+                <span className={`text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${getAtsBadgeColor(job.ats_provider || "")}`}>
                   {job.ats_provider || "DIRECT"}
                 </span>
                 <span className="text-[11px] text-brand-muted">•</span>
@@ -127,7 +126,7 @@ export const JobCard: React.FC<JobCardProps> = ({
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border border-brand-border bg-brand-elevated text-[11px] font-mono font-medium text-brand-text hover:border-brand-primary/40 active:scale-[0.98] transition-colors"
                 title="Job relevance score and breakdown"
               >
-                <span className="font-bold tabular-nums">{relevance.score}%</span>
+                <span className="font-bold tabular-nums text-amber-600 dark:text-amber-400">{relevance.score}%</span>
                 <Info className="w-3 h-3 text-brand-muted" />
               </button>
 
@@ -155,13 +154,13 @@ export const JobCard: React.FC<JobCardProps> = ({
               onClick={() => onToggleSave(job)}
               className={`p-1.5 rounded-xl border active:scale-[0.98] transition-all ${
                 isSaved
-                  ? "border-brand-primary/40 bg-brand-elevated text-brand-primary"
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-500"
                   : "border-transparent text-brand-muted hover:text-brand-text hover:bg-brand-elevated"
               }`}
               title={isSaved ? "Remove from pipeline" : "Save to my pipeline"}
               aria-label={isSaved ? "Unsave job" : "Save job"}
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-brand-primary text-brand-primary" : ""}`} />
+              <Bookmark className={`w-4 h-4 ${isSaved ? "fill-amber-500 text-amber-500" : ""}`} />
             </button>
           </div>
         </div>
@@ -182,8 +181,8 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Standardized Metadata Badges Row */}
         <div className={`flex flex-wrap items-center gap-1.5 ${isCompact ? "mb-2" : "mb-3"}`}>
           {job.is_fresh_24h && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-brand-primary border border-blue-500/20">
-              <Zap className="w-3 h-3 text-brand-primary fill-brand-primary" />
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+              <Zap className="w-3 h-3 text-emerald-500 fill-emerald-500" />
               <span>Fresh 24h</span>
             </span>
           )}
@@ -238,7 +237,7 @@ export const JobCard: React.FC<JobCardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onSelect(job)}
-            className="text-brand-secondary hover:text-brand-text font-medium px-3 py-2 rounded-xl bg-brand-surface hover:bg-brand-elevated transition-colors text-xs border border-brand-border active:scale-[0.98]"
+            className="text-brand-secondary hover:text-brand-text font-medium px-3 py-2 rounded-xl bg-brand-surface hover:bg-brand-elevated transition-colors text-xs border border-brand-border active:scale-[0.98] btn-tactile"
           >
             Details
           </button>
@@ -246,7 +245,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             href={safeApplyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white font-semibold text-xs active:scale-[0.98] transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-white dark:text-zinc-950 font-bold text-xs active:scale-[0.98] transition-all shadow-sm shadow-amber-500/20 btn-tactile"
           >
             <span>Apply</span>
             <ExternalLink className="w-3 h-3" />

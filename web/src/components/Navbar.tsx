@@ -157,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Bookmark className="w-3.5 h-3.5 text-brand-primary" />
             <span className="hidden sm:inline">Pipeline</span>
             {savedCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-brand-primary text-white font-mono text-[10px] font-bold shadow-sm tabular-nums">
+              <span className="px-1.5 py-0.5 rounded-full bg-brand-primary text-white dark:text-zinc-950 font-mono text-[10px] font-bold shadow-sm tabular-nums">
                 {savedCount}
               </span>
             )}
@@ -177,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setCurrentTab("jobs")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all min-h-[40px] text-xs font-semibold ${
               currentTab === "jobs"
-                ? "bg-brand-primary text-white shadow-sm"
+                ? "bg-brand-primary text-white dark:text-zinc-950 font-bold shadow-sm"
                 : "text-brand-secondary hover:text-brand-text active:bg-brand-elevated"
             }`}
           >
@@ -186,7 +186,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span
               className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums font-bold ${
                 currentTab === "jobs"
-                  ? "bg-white/20 text-white"
+                  ? "bg-black/15 text-white dark:text-zinc-950"
                   : "bg-brand-elevated text-brand-secondary border border-brand-border"
               }`}
             >
@@ -200,7 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setCurrentTab("companies")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all min-h-[40px] text-xs font-semibold ${
               currentTab === "companies"
-                ? "bg-brand-primary text-white shadow-sm"
+                ? "bg-brand-primary text-white dark:text-zinc-950 font-bold shadow-sm"
                 : "text-brand-secondary hover:text-brand-text active:bg-brand-elevated"
             }`}
           >
@@ -209,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span
               className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums font-bold ${
                 currentTab === "companies"
-                  ? "bg-white/20 text-white"
+                  ? "bg-black/15 text-white dark:text-zinc-950"
                   : "bg-brand-elevated text-brand-secondary border border-brand-border"
               }`}
             >

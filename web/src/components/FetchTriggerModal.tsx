@@ -317,7 +317,7 @@ export const FetchTriggerModal: React.FC<FetchTriggerModalProps> = ({
                 <span className="text-brand-secondary">Execution State:</span>
                 <span className="inline-flex items-center gap-1.5 font-medium">
                   {workflowRun.status === "in_progress" ? (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[11px] flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[11px] flex items-center gap-1">
                       <RefreshCw className="w-2.5 h-2.5 animate-spin" /> In Progress
                     </span>
                   ) : workflowRun.conclusion === "success" ? (

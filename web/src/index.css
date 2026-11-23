@@ -4,49 +4,49 @@
 
 @layer base {
   :root {
-    --bg-main: #FAFAFB;
+    --bg-main: #FBFBFA;
     --surface-primary: #FFFFFF;
-    --surface-secondary: #F3F4F6;
+    --surface-secondary: #F3F4F0;
     --surface-elevated: #FFFFFF;
-    --text-primary: #090A0F;
-    --text-secondary: #4B5563;
-    --text-muted: #6B7280;
-    --border-color: #E5E7EB;
-    --border-subtle: #F3F4F6;
-    --action-primary: #0F52BA; /* Sapphire Precision Blue */
-    --action-hover: #0A3C89;
-    --accent-color: #0284C7;
-    --accent-soft: #F0F9FF;
-    --success-color: #059669;
-    --warning-color: #D97706;
-    --danger-color: #DC2626;
-    --info-color: #0284C7;
-    --radar-glow: rgba(15, 82, 186, 0.12);
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-    --card-shadow-hover: 0 10px 25px -5px rgba(15, 82, 186, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --text-primary: #121316;
+    --text-secondary: #4A4E57;
+    --text-muted: #717682;
+    --border-color: #E4E5DF;
+    --border-subtle: #ECECE6;
+    --action-primary: #D97706; /* Cyber Amber 600 */
+    --action-hover: #B45309;   /* Amber 700 */
+    --accent-color: #059669;   /* Terminal Emerald 600 */
+    --accent-soft: #FEF3C7;    /* Amber 100 */
+    --success-color: #059669;  /* Emerald 600 */
+    --warning-color: #D97706;  /* Amber 600 */
+    --danger-color: #DC2626;   /* Crimson 600 */
+    --info-color: #D97706;     /* Amber Telemetry */
+    --radar-glow: rgba(217, 119, 6, 0.16);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    --card-shadow-hover: 0 12px 28px -6px rgba(217, 119, 6, 0.12), 0 8px 12px -6px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
-    --bg-main: #060709;
-    --surface-primary: #0F1115;
-    --surface-secondary: #16181F;
-    --surface-elevated: #1C1F28;
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
+    --bg-main: #08090B;
+    --surface-primary: #101216;
+    --surface-secondary: #171A21;
+    --surface-elevated: #1F232D;
+    --text-primary: #F4F4F6;
+    --text-secondary: #9FA6B2;
+    --text-muted: #666E7D;
     --border-color: #232733;
     --border-subtle: #181B24;
-    --action-primary: #3B82F6;
-    --action-hover: #60A5FA;
-    --accent-color: #38BDF8;
-    --accent-soft: rgba(59, 130, 246, 0.1);
-    --success-color: #10B981;
-    --warning-color: #F59E0B;
-    --danger-color: #EF4444;
-    --info-color: #38BDF8;
-    --radar-glow: rgba(59, 130, 246, 0.2);
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-    --card-shadow-hover: 0 12px 30px -8px rgba(0, 0, 0, 0.7), 0 0 15px 1px rgba(59, 130, 246, 0.12);
+    --action-primary: #F59E0B; /* Electric Amber 500 */
+    --action-hover: #FBBF24;   /* Amber 400 */
+    --accent-color: #10B981;   /* Terminal Emerald 500 */
+    --accent-soft: rgba(245, 158, 11, 0.12);
+    --success-color: #10B981;  /* Terminal Emerald 500 */
+    --warning-color: #F59E0B;  /* Amber 500 */
+    --danger-color: #EF4444;   /* Crimson 500 */
+    --info-color: #F59E0B;     /* Amber Telemetry */
+    --radar-glow: rgba(245, 158, 11, 0.25);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --card-shadow-hover: 0 14px 32px -8px rgba(0, 0, 0, 0.8), 0 0 20px 2px rgba(245, 158, 11, 0.14);
   }
 
   html {
@@ -72,24 +72,59 @@
   }
 }
 
-/* Subtle architectural grid pattern for header / hero section */
+/* Ambient Bento Dot Matrix Pattern */
 .bg-grid-pattern {
   background-size: 32px 32px;
   background-image: 
-    linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
 }
 .dark .bg-grid-pattern {
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* Ambient Radial Spotlight Shader Effect */
+.ambient-spotlight {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
+  height: 480px;
+  background: radial-gradient(ellipse 65% 55% at 50% -10%, rgba(245, 158, 11, 0.12), transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+.dark .ambient-spotlight {
+  background: radial-gradient(ellipse 65% 55% at 50% -10%, rgba(245, 158, 11, 0.15), rgba(16, 185, 129, 0.04) 40%, transparent 80%);
+}
+
+/* Subtle Shimmer Animation for Badges and Feature Cards */
+@keyframes border-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.shimmer-badge {
+  background-size: 200% 200%;
+  animation: border-shimmer 4s ease infinite;
 }
 
 /* Radar pulse animation for the live status beacon */
 @keyframes radar-ping {
   0% {
     transform: scale(0.95);
-    opacity: 0.8;
+    opacity: 0.85;
   }
   70% {
     transform: scale(2.2);
@@ -114,7 +149,7 @@
   z-index: 0;
 }
 
-/* Interactive Card Elevation & Glow on Hover */
+/* Interactive Card Elevation & Tactile Motion */
 .job-card-interactive {
   box-shadow: var(--card-shadow);
   transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -124,6 +159,14 @@
 .job-card-interactive:hover {
   transform: translateY(-2px);
   box-shadow: var(--card-shadow-hover);
+}
+
+/* Tactile Button Feedback */
+.btn-tactile {
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s ease;
+}
+.btn-tactile:active {
+  transform: scale(0.98);
 }
 
 /* Tabular numbers for numerical alignment */
