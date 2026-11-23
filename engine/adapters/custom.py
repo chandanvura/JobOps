@@ -26,10 +26,24 @@ class CustomAdapter(BaseATS):
 
         try:
             response = await client.get(company.careers_url, headers=headers, timeout=20.0, follow_redirects=True)
-            if response.status_code != 200:
-                return []
-            html = response.text
+            if response.status_code == 200:
+                html = response.text
+            else:
+                html = ""
         except Exception:
+            html = ""
+
+        if not html:
+            try:
+                from curl_cffi.requests import AsyncSession as CurlAsyncSession
+                async with CurlAsyncSession(impersonate="chrome124", verify=False, timeout=20) as c_session:
+                    c_resp = await c_session.get(company.careers_url, allow_redirects=True)
+                    if c_resp.status_code == 200:
+                        html = c_resp.text
+            except Exception:
+                return []
+
+        if not html:
             return []
 
         # 1. Check for embedded Greenhouse

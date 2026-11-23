@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import httpx
 
+try:
+    from curl_cffi.requests import AsyncSession as CurlAsyncSession
+    HAS_CURL_CFFI = True
+except ImportError:
+    HAS_CURL_CFFI = False
+
 logger = logging.getLogger("jobops.health")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMPANIES_PATH = REPO_ROOT / "registry" / "companies.json"
@@ -47,6 +53,17 @@ class CompanyHealthChecker:
             latency_ms = round((time.perf_counter() - start_time) * 1000)
             status_code = response.status_code
 
+            # If blocked by WAF/Cloudflare (403/401/400/429/503), retry using curl_cffi browser impersonation
+            if HAS_CURL_CFFI and status_code in (400, 401, 403, 429, 502, 503):
+                try:
+                    async with CurlAsyncSession(impersonate="chrome124", verify=False, timeout=self.timeout_seconds) as c_session:
+                        c_resp = await c_session.get(url, allow_redirects=True)
+                        if 200 <= c_resp.status_code < 400:
+                            status_code = c_resp.status_code
+                            latency_ms = round((time.perf_counter() - start_time) * 1000)
+                except Exception:
+                    pass
+
             # Classify based on true HTTP status and latency
             if 200 <= status_code < 400:
                 if latency_ms >= 5000:
@@ -82,31 +99,37 @@ class CompanyHealthChecker:
                 "last_checked_at": datetime.now(timezone.utc).isoformat(),
             }
 
-        except httpx.TimeoutException:
-            latency_ms = round((time.perf_counter() - start_time) * 1000)
-            return {
-                "health_status": "unreachable",
-                "status_code": None,
-                "response_time_ms": latency_ms,
-                "error": f"Connection timed out (> {self.timeout_seconds}s)",
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
-            }
-        except httpx.ConnectError as ce:
-            latency_ms = round((time.perf_counter() - start_time) * 1000)
-            return {
-                "health_status": "unreachable",
-                "status_code": None,
-                "response_time_ms": latency_ms,
-                "error": f"DNS / Connection failed: {str(ce)[:80]}",
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
-            }
         except Exception as e:
+            if HAS_CURL_CFFI:
+                try:
+                    async with CurlAsyncSession(impersonate="chrome124", verify=False, timeout=self.timeout_seconds) as c_session:
+                        c_resp = await c_session.get(url, allow_redirects=True)
+                        if 200 <= c_resp.status_code < 400:
+                            latency_ms = round((time.perf_counter() - start_time) * 1000)
+                            return {
+                                "health_status": "healthy" if latency_ms < 5000 else "degraded",
+                                "status_code": c_resp.status_code,
+                                "response_time_ms": latency_ms,
+                                "error": None,
+                                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                            }
+                except Exception:
+                    pass
+
             latency_ms = round((time.perf_counter() - start_time) * 1000)
+            err_msg = str(e)[:80]
+            if isinstance(e, httpx.TimeoutException):
+                err_msg = f"Connection timed out (> {self.timeout_seconds}s)"
+            elif isinstance(e, httpx.ConnectError):
+                err_msg = f"DNS / Connection failed: {err_msg}"
+            else:
+                err_msg = f"Connection error: {err_msg}"
+
             return {
                 "health_status": "unreachable",
                 "status_code": None,
                 "response_time_ms": latency_ms,
-                "error": f"Connection error: {str(e)[:80]}",
+                "error": err_msg,
                 "last_checked_at": datetime.now(timezone.utc).isoformat(),
             }
 
