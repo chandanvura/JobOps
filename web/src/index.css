@@ -4,43 +4,49 @@
 
 @layer base {
   :root {
-    --bg-main: #F8FAFC;
+    --bg-main: #FAFAFB;
     --surface-primary: #FFFFFF;
-    --surface-secondary: #F1F5F9;
+    --surface-secondary: #F3F4F6;
     --surface-elevated: #FFFFFF;
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #64748B;
-    --border-color: #E2E8F0;
-    --border-subtle: #F1F5F9;
-    --action-primary: #2563EB;
-    --action-hover: #1D4ED8;
-    --accent-color: #38BDF8;
-    --accent-soft: #EFF6FF;
-    --success-color: #15803D;
-    --warning-color: #B45309;
-    --danger-color: #B91C1C;
-    --info-color: #1D4ED8;
+    --text-primary: #090A0F;
+    --text-secondary: #4B5563;
+    --text-muted: #6B7280;
+    --border-color: #E5E7EB;
+    --border-subtle: #F3F4F6;
+    --action-primary: #0F52BA; /* Sapphire Precision Blue */
+    --action-hover: #0A3C89;
+    --accent-color: #0284C7;
+    --accent-soft: #F0F9FF;
+    --success-color: #059669;
+    --warning-color: #D97706;
+    --danger-color: #DC2626;
+    --info-color: #0284C7;
+    --radar-glow: rgba(15, 82, 186, 0.12);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    --card-shadow-hover: 0 10px 25px -5px rgba(15, 82, 186, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
-    --bg-main: #000000;
-    --surface-primary: #181818;
-    --surface-secondary: #1F1F1F;
-    --surface-elevated: #272727;
-    --text-primary: #F1F5F9;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
-    --border-color: #313131;
-    --border-subtle: #272727;
+    --bg-main: #060709;
+    --surface-primary: #0F1115;
+    --surface-secondary: #16181F;
+    --surface-elevated: #1C1F28;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --border-color: #232733;
+    --border-subtle: #181B24;
     --action-primary: #3B82F6;
     --action-hover: #60A5FA;
     --accent-color: #38BDF8;
-    --accent-soft: #1F1F1F;
-    --success-color: #4ADE80;
-    --warning-color: #FBBF24;
-    --danger-color: #F87171;
-    --info-color: #60A5FA;
+    --accent-soft: rgba(59, 130, 246, 0.1);
+    --success-color: #10B981;
+    --warning-color: #F59E0B;
+    --danger-color: #EF4444;
+    --info-color: #38BDF8;
+    --radar-glow: rgba(59, 130, 246, 0.2);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 12px 30px -8px rgba(0, 0, 0, 0.7), 0 0 15px 1px rgba(59, 130, 246, 0.12);
   }
 
   html {
@@ -52,7 +58,9 @@
     background-color: var(--bg-main);
     color: var(--text-primary);
     min-height: 100dvh;
-    letter-spacing: -0.011em;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -62,6 +70,60 @@
   p, span, label {
     text-wrap: pretty;
   }
+}
+
+/* Subtle architectural grid pattern for header / hero section */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+}
+.dark .bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* Radar pulse animation for the live status beacon */
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.radar-beacon {
+  position: relative;
+}
+.radar-beacon::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: var(--action-primary);
+  animation: radar-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  z-index: 0;
+}
+
+/* Interactive Card Elevation & Glow on Hover */
+.job-card-interactive {
+  box-shadow: var(--card-shadow);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.22s ease;
+}
+.job-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 /* Tabular numbers for numerical alignment */
@@ -76,6 +138,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .job-card-interactive:hover {
+    transform: none !important;
   }
 }
 

@@ -83,7 +83,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const isCompact = density === "compact";
 
   return (
-    <article className={`bg-brand-surface rounded-2xl border border-brand-border hover:border-brand-primary/60 transition-all duration-300 flex flex-col justify-between group h-full relative ${
+    <article className={`bg-brand-surface rounded-2xl border border-brand-border hover:border-brand-primary/50 job-card-interactive flex flex-col justify-between group h-full relative ${
       isCompact ? "p-3.5 sm:p-4" : "p-4 sm:p-5"
     }`}>
       <div>

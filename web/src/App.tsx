@@ -803,14 +803,27 @@ export const App: React.FC = () => {
           />
         ) : (
           <>
-            {/* Hero Heading Banner (Capped at 680px, Left-to-Right Hero Text Gradient) */}
-            <div className="mb-6 max-w-[680px]">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-black to-[#666666] dark:from-white dark:to-[#9B9B9B] bg-clip-text text-transparent leading-[1.18] mb-2">
-                Direct ATS engineering intelligence radar
-              </h1>
-              <p className="text-xs sm:text-sm text-brand-secondary leading-relaxed">
-                Ingests verified engineering positions directly from employer career portals with a strict 24-hour freshness cycle. Zero third-party recruiter spam.
-              </p>
+            {/* Hero Heading Banner with Subtle Architectural Grid & Radar Live Beacon */}
+            <div className="relative mb-6 sm:mb-8 rounded-3xl p-6 sm:p-8 border border-brand-border bg-brand-surface/60 backdrop-blur-sm bg-grid-pattern overflow-hidden">
+              <div className="relative z-10 max-w-[720px]">
+                {/* Live System Signal Tag */}
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-brand-border bg-brand-elevated text-[11px] font-mono text-brand-secondary mb-3 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 radar-beacon flex-shrink-0" />
+                  <span className="font-semibold text-brand-text">Active ATS Ingestion</span>
+                  <span className="text-brand-muted">•</span>
+                  <span>Strict 24h cycle</span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-brand-text leading-[1.18] mb-2.5">
+                  Direct ATS engineering intelligence radar
+                </h1>
+                <p className="text-xs sm:text-sm text-brand-secondary leading-relaxed max-w-2xl">
+                  Ingests verified engineering positions directly from employer career portals with a strict 24-hour freshness cycle. Zero third-party recruiter spam.
+                </p>
+              </div>
+
+              {/* Decorative radial gradient ambient glow in dark mode */}
+              <div className="absolute right-0 top-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
             </div>
 
             {/* Mobile Search & Filter Action Bar */}
