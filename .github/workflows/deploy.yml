@@ -42,7 +42,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Python Backend Tests
-        run: python -m pytest -n auto || python -m pytest
+        run: |
+          export PYTHONPATH=$PWD
+          python -m pytest
 
   test-and-build-web:
     name: Frontend Tests & Build

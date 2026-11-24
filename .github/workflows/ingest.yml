@@ -43,6 +43,17 @@ jobs:
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
 
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: web/package.json
+
+      - name: Install Node Dependencies
+        working-directory: web
+        run: npm ci --prefer-offline
+
       - name: Run JobOps Ingestion Pipeline
         run: |
           export PYTHONPATH=$PWD
@@ -55,12 +66,17 @@ jobs:
       - name: Export Active Catalogue
         run: |
           export PYTHONPATH=$PWD
-          python -m engine.cli export --output web/public/jobs.json --limit 5000
+          python -m engine.cli export --output web/public/jobs.json --limit 10000
 
       - name: Auto-Heal & Validate Catalog Quality via Playbooks
         run: |
+          export PYTHONPATH=$PWD
           python -m engine.cli playbook resolve --auto
           python -m pytest
+
+      - name: Build Web Dashboard
+        working-directory: web
+        run: npm run build
 
       - name: Commit and Push Updated Jobs
         run: |
@@ -72,21 +88,6 @@ jobs:
             git pull --rebase origin main
             git push origin main
           fi
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: "npm"
-          cache-dependency-path: web/package.json
-
-      - name: Install Node Dependencies
-        working-directory: web
-        run: npm ci --prefer-offline
-
-      - name: Build Web Dashboard
-        working-directory: web
-        run: npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

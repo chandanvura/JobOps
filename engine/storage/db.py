@@ -5,14 +5,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from engine.models import Company, ProcessedJob
 
-DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "jobops.db"
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+DEFAULT_DB_PATH = REPO_ROOT / "data" / "jobops.db"
 
 
 class JobDatabase:
     def __init__(self, db_path: Path = DEFAULT_DB_PATH):
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
+        self.seed_from_cache_if_empty()
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -82,6 +84,82 @@ class JobDatabase:
                 );
                 """
             )
+
+    def seed_from_cache_if_empty(self) -> int:
+        """Seed the SQLite database from web/public/jobs.json or data/jobs.json if database has 0 jobs."""
+        with self._get_conn() as conn:
+            cursor = conn.execute("SELECT COUNT(*) FROM jobs")
+            count = cursor.fetchone()[0]
+            if count > 0:
+                return 0
+
+            candidates = [
+                REPO_ROOT / "web" / "public" / "jobs.json",
+                REPO_ROOT / "data" / "jobs.json",
+            ]
+            target_file = None
+            for cand in candidates:
+                if cand.exists() and cand.stat().st_size > 100:
+                    target_file = cand
+                    break
+
+            if not target_file:
+                return 0
+
+            try:
+                with open(target_file, "r", encoding="utf-8") as f:
+                    jobs = json.load(f)
+                if not jobs or not isinstance(jobs, list):
+                    return 0
+
+                now_iso = datetime.now(timezone.utc).isoformat()
+                rows = [
+                    (
+                        j.get("id"),
+                        j.get("external_id") or j.get("id"),
+                        j.get("company_id") or "unknown",
+                        j.get("company_name") or "Unknown",
+                        j.get("ats_provider") or "custom",
+                        j.get("title") or "Engineering Role",
+                        j.get("job_url") or "",
+                        1 if j.get("is_engineering", True) else 0,
+                        j.get("role_category") or "software_general",
+                        j.get("role_label") or "Software Engineering",
+                        j.get("location_raw") or "",
+                        j.get("city") or "India",
+                        j.get("work_mode") or "onsite",
+                        1 if j.get("is_india", True) else 0,
+                        j.get("min_years"),
+                        j.get("max_years"),
+                        j.get("experience_level") or "Any Experience",
+                        json.dumps(j.get("skills", [])) if isinstance(j.get("skills"), list) else (j.get("skills") or "[]"),
+                        j.get("posted_at"),
+                        j.get("age_hours", 0.0),
+                        1 if j.get("is_fresh_24h") else 0,
+                        j.get("first_seen_at") or j.get("posted_at") or now_iso,
+                        j.get("last_seen_at") or j.get("posted_at") or now_iso,
+                        1 if j.get("is_active", True) else 0,
+                        j.get("summary") or f"{j.get('title')} at {j.get('company_name')}",
+                    )
+                    for j in jobs
+                ]
+
+                conn.executemany(
+                    """
+                    INSERT OR IGNORE INTO jobs (
+                        id, external_id, company_id, company_name, ats_provider,
+                        title, job_url, is_engineering, role_category, role_label,
+                        location_raw, city, work_mode, is_india,
+                        min_years, max_years, experience_level, skills,
+                        posted_at, age_hours, is_fresh_24h,
+                        first_seen_at, last_seen_at, is_active, summary
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    rows,
+                )
+                return len(rows)
+            except Exception:
+                return 0
 
     def get_seen_job_ids(self) -> Set[str]:
         with self._get_conn() as conn:

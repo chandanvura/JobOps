@@ -75,6 +75,20 @@ def test_playbook_resolve_pb003_dependencies():
     assert "added_dependencies" in result
 
 
+def test_playbook_resolve_pb004_cache_sync():
+    """Verify PB-004 re-exports edge cache without truncation and keeps catalog synchronized."""
+    resolver = PlaybookResolver()
+    result = resolver.resolve_pb004()
+
+    assert result["status"] == "resolved"
+    assert result["playbook_id"] == "PB-004"
+    assert result["exported_jobs"] > 0
+
+    # Ensure no desync remains
+    issues = [i for i in resolver.diagnose() if i.playbook_id == "PB-004"]
+    assert len(issues) == 0, f"PB-004 should leave zero desync issues: {issues}"
+
+
 def test_playbook_resolve_all_report():
     """Verify that resolve_all generates a valid zero-cost remediation report."""
     resolver = PlaybookResolver()

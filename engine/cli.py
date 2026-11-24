@@ -29,7 +29,7 @@ def main():
     # Command: export
     export_parser = subparsers.add_parser("export", help="Export active jobs to JSON file for frontend/API")
     export_parser.add_argument("--output", default="data/jobs.json", help="Output file path")
-    export_parser.add_argument("--limit", type=int, default=5000, help="Maximum number of active jobs to export")
+    export_parser.add_argument("--limit", type=int, default=10000, help="Maximum number of active jobs to export")
 
     # Command: playbook
     playbook_parser = subparsers.add_parser("playbook", help="Manage and run autonomous zero-cost operational playbooks")

@@ -257,7 +257,7 @@ class PlaybookResolver:
             return {"status": "skipped", "reason": "SQLite DB does not exist"}
 
         db = JobDatabase(self.db_path)
-        jobs = db.get_filtered_jobs(limit=2500)
+        jobs = db.get_filtered_jobs(limit=10000)
         self.jobs_json_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.jobs_json_path, "w", encoding="utf-8") as f:
             json.dump(jobs, f, separators=(",", ":"))
