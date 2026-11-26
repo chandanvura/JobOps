@@ -29,7 +29,7 @@ def main():
     # Command: export
     export_parser = subparsers.add_parser("export", help="Export active jobs to JSON file for frontend/API")
     export_parser.add_argument("--output", default="data/jobs.json", help="Output file path")
-    export_parser.add_argument("--limit", type=int, default=10000, help="Maximum number of active jobs to export")
+    export_parser.add_argument("--limit", type=int, default=0, help="Maximum number of active jobs to export (0 = unlimited)")
 
     # Command: playbook
     playbook_parser = subparsers.add_parser("playbook", help="Manage and run autonomous zero-cost operational playbooks")
@@ -92,7 +92,9 @@ def main():
 
     elif args.command == "export":
         db = JobDatabase()
-        jobs = db.get_filtered_jobs(limit=args.limit)
+        db.refresh_freshness_and_prune(max_age_days=14)
+        export_limit = args.limit if args.limit and args.limit > 0 else None
+        jobs = db.get_filtered_jobs(limit=export_limit)
         out_path = Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w", encoding="utf-8") as f:

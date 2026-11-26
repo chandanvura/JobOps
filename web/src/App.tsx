@@ -10,6 +10,7 @@ import { CompaniesPage, CompanyItem } from "./components/CompaniesPage";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { ToastContainer, ToastMessage } from "./components/Toast";
 import { useTheme } from "./hooks/useDarkMode";
+import { runViewTransition } from "./utils/viewTransition";
 import {
   Search,
   Filter,
@@ -757,22 +758,30 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleTabChange = useCallback((tab: "jobs" | "companies") => {
+    if (tab === currentTab) return;
+    runViewTransition(() => setCurrentTab(tab));
+  }, [currentTab]);
+
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col bg-brand-bg text-brand-text transition-colors">
-      {/* Ambient Radial Spotlight Shader Effect */}
-      <div className="ambient-spotlight" aria-hidden="true" />
+      {/* Scroll-Driven Reading Progress Hairline */}
+      <div className="scroll-progress-bar" aria-hidden="true" />
+
+      {/* Apple Silk Ambient Shader Effect */}
+      <div className="apple-silk-shader" aria-hidden="true" />
 
       {/* Accessible Skip-to-Content Link for Keyboard Users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-brand-primary text-white dark:text-zinc-950 rounded-xl text-xs font-bold shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-brand-primary text-white rounded-[12px] text-xs font-bold shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-primary"
       >
         Skip to main content
       </a>
 
       <Navbar
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={handleTabChange}
         searchQuery={searchInput}
         setSearchQuery={setSearchInput}
         freshCount={freshCount}
@@ -806,27 +815,20 @@ export const App: React.FC = () => {
           />
         ) : (
           <>
-            {/* Hero Heading Banner with Subtle Architectural Grid & Radar Live Beacon */}
-            <div className="relative mb-6 sm:mb-8 rounded-3xl p-6 sm:p-8 border border-brand-border bg-brand-surface/75 backdrop-blur-md bg-grid-pattern overflow-hidden shadow-sm">
-              <div className="relative z-10 max-w-[720px]">
-                {/* Live System Signal Tag */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-border bg-brand-elevated text-[11px] font-mono text-brand-secondary mb-3 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 radar-beacon flex-shrink-0" />
-                  <span className="font-semibold text-brand-text">Active ATS Ingestion</span>
-                  <span className="text-brand-muted">•</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Strict 24h cycle</span>
-                </div>
-
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-brand-text leading-[1.18] mb-2.5">
-                  Direct ATS engineering intelligence radar
+            {/* Compact Architectural Masthead — opens directly into live workspace above the fold */}
+            <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-brand-borderSubtle">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-brand-text leading-tight">
+                  Direct ATS engineering radar
                 </h1>
-                <p className="text-xs sm:text-sm text-brand-secondary leading-relaxed max-w-2xl">
-                  Ingests verified engineering positions directly from employer career portals with a strict 24-hour freshness cycle. Zero third-party recruiter spam.
+                <p className="text-xs sm:text-sm text-brand-secondary mt-1 max-w-2xl">
+                  Verified engineering roles synced directly from {companies.length} employer career portals. Zero third-party recruiter spam.
                 </p>
               </div>
-
-              {/* Decorative radial gradient ambient glow in dark mode */}
-              <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+              <div className="inline-flex items-center gap-2 text-xs font-mono text-brand-secondary flex-shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 radar-beacon flex-shrink-0" aria-hidden="true" />
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Strict 24h cycle</span>
+              </div>
             </div>
 
             {/* Mobile Search & Filter Action Bar */}
@@ -864,7 +866,7 @@ export const App: React.FC = () => {
 
               <section className="flex-1 w-full min-w-0">
                 {/* Results Header Bar */}
-                <div className="bg-brand-surface p-4 rounded-2xl border border-brand-border mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
+                <div className="bg-brand-surface p-4 rounded-[20px] border border-brand-border mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition-colors">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm sm:text-base font-bold text-brand-text tabular-nums">
                       {filteredJobs.length.toLocaleString()} openings verified
@@ -904,9 +906,9 @@ export const App: React.FC = () => {
                     {/* Freshness Toggle */}
                     <button
                       onClick={() => setFilters((prev) => ({ ...prev, freshOnly: !prev.freshOnly }))}
-                      className={`px-3 py-1.5 rounded-xl border font-semibold transition-all min-h-[36px] active:scale-[0.98] ${
+                      className={`px-3 py-1.5 rounded-[12px] border font-semibold btn-tactile min-h-[36px] ${
                         filters.freshOnly
-                          ? "bg-brand-primary text-white dark:text-zinc-950 font-bold border-brand-hover shadow-sm"
+                          ? "bg-brand-primary text-white font-bold border-brand-hover shadow-sm"
                           : "bg-brand-elevated text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/40"
                       }`}
                     >
@@ -915,8 +917,8 @@ export const App: React.FC = () => {
 
                     {/* Density Toggle */}
                     <button
-                      onClick={() => setDensity((d) => (d === "comfortable" ? "compact" : "comfortable"))}
-                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text active:scale-[0.98] transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      onClick={() => runViewTransition(() => setDensity((d) => (d === "comfortable" ? "compact" : "comfortable")))}
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text btn-tactile min-h-[36px] min-w-[36px] flex items-center justify-center"
                       title={density === "comfortable" ? "Switch to compact density (D)" : "Switch to comfortable density (D)"}
                       aria-label={density === "comfortable" ? "Switch to compact density" : "Switch to comfortable density"}
                     >
@@ -926,7 +928,7 @@ export const App: React.FC = () => {
                     {/* Shortcuts Modal Trigger */}
                     <button
                       onClick={() => setIsShortcutsModalOpen(true)}
-                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text active:scale-[0.98] transition-colors min-h-[36px] min-w-[36px] hidden sm:flex items-center justify-center"
+                      className="p-2 rounded-xl border border-brand-border bg-brand-elevated hover:bg-brand-surface text-brand-secondary hover:text-brand-text btn-tactile min-h-[36px] min-w-[36px] hidden sm:flex items-center justify-center"
                       title="Keyboard shortcuts (?)"
                       aria-label="Keyboard shortcuts"
                     >
@@ -1090,7 +1092,7 @@ export const App: React.FC = () => {
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white dark:text-zinc-950 rounded-xl text-xs font-bold active:scale-[0.98] transition-colors shadow-sm"
+                      className="mt-4 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-white rounded-[12px] text-xs font-bold btn-tactile shadow-sm"
                     >
                       Reset all filters
                     </button>
@@ -1098,7 +1100,7 @@ export const App: React.FC = () => {
                 ) : (
                   <>
                     <div className={`grid grid-cols-1 ${density === "compact" ? "md:grid-cols-2 lg:grid-cols-3 gap-3" : "md:grid-cols-2 gap-4"}`}>
-                      {paginatedJobs.map((job) => (
+                      {paginatedJobs.map((job, idx) => (
                         <JobCard
                           key={job.id}
                           job={job}
@@ -1109,6 +1111,7 @@ export const App: React.FC = () => {
                           selectedSkills={filters.selectedSkills}
                           selectedRole={filters.roleCategory}
                           density={density}
+                          index={idx}
                         />
                       ))}
                     </div>

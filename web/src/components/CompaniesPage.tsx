@@ -232,7 +232,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
         </div>
 
         <div className="bg-brand-surface p-4 sm:p-5 rounded-2xl border border-brand-border shadow-sm flex items-center gap-3.5 sm:gap-4 transition-colors">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-[12px] bg-brand-accentSoft border border-brand-primary/20 flex items-center justify-center text-brand-primary flex-shrink-0">
             <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
@@ -467,7 +467,7 @@ export const CompaniesPage: React.FC<CompaniesPageProps> = ({
 
                           <button
                             onClick={() => onSelectCompany(comp.name)}
-                            className="px-2.5 py-1 rounded-lg bg-brand-surface hover:bg-brand-elevated text-brand-primary font-semibold text-xs active:scale-[0.98] transition-colors border border-brand-border shadow-sm"
+                            className="px-2.5 py-1 rounded-lg bg-brand-surface hover:bg-brand-elevated text-brand-primary font-semibold text-xs whitespace-nowrap btn-tactile border border-brand-border shadow-sm"
                           >
                             View Jobs
                           </button>

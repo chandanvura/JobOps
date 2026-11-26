@@ -7,30 +7,50 @@
     color-scheme: light dark;
     accent-color: var(--action-primary);
 
-    --bg-main: #FBFBFA;
+    /* Apple Precision — Light Canvas */
+    --bg-main: #F5F5F7;
     --surface-primary: #FFFFFF;
-    --surface-secondary: #F3F4F0;
-    --surface-elevated: #FFFFFF;
-    --text-primary: #121316;
-    --text-secondary: #4A4E57;
-    --text-muted: #717682;
-    --border-color: #E4E5DF;
-    --border-subtle: #ECECE6;
-    --action-primary: #D97706; /* Cyber Amber 600 */
-    --action-hover: #B45309;   /* Amber 700 */
-    --accent-color: #059669;   /* Terminal Emerald 600 */
-    --accent-soft: #FEF3C7;    /* Amber 100 */
-    --success-color: #059669;  /* Emerald 600 */
-    --warning-color: #D97706;  /* Amber 600 */
-    --danger-color: #DC2626;   /* Crimson 600 */
-    --info-color: #D97706;     /* Amber Telemetry */
-    --radar-glow: rgba(217, 119, 6, 0.16);
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-    --card-shadow-hover: 0 12px 28px -6px rgba(217, 119, 6, 0.12), 0 8px 12px -6px rgba(0, 0, 0, 0.04);
+    --surface-secondary: #ECECEE;
+    --surface-elevated: #F5F5F7;
+    --surface-tonal: rgba(0, 113, 227, 0.08);
+    --text-primary: #1D1D1F;
+    --text-secondary: #515154;
+    --text-muted: #86868B;
+    --border-color: rgba(0, 0, 0, 0.09);
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --action-primary: #0071E3;
+    --action-hover: #0077ED;
+    --accent-color: #0071E3;
+    --accent-soft: rgba(0, 113, 227, 0.10);
+    --success-color: #1E8E3E;
+    --warning-color: #D97706;
+    --danger-color: #D93025;
+    --info-color: #0071E3;
+    --radar-glow: rgba(0, 113, 227, 0.16);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.03);
+    --card-shadow-hover: 0 12px 28px -6px rgba(0, 113, 227, 0.14), 0 6px 14px -4px rgba(0, 0, 0, 0.06);
+
+    /* Apple Precision Motion Curve & Duration */
+    --motion-curve: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-duration: 260ms;
+    --spring-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+    --spring-spatial: cubic-bezier(0.22, 1, 0.36, 1);
+    --m3-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1.0);
 
     /* Standard Scrollbar Properties */
     scrollbar-color: var(--border-color) var(--bg-main);
     scrollbar-width: thin;
+  }
+
+  @supports (transition-timing-function: linear(0, 1)) {
+    :root {
+      /* Liquid damped spring curve */
+      --spring-spatial: linear(
+        0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%,
+        1.017, 1.077, 1.102 24.3%, 1.107, 1.099, 1.053 33.4%, 1.012 38%,
+        0.994, 0.988 45%, 0.99, 1 56%, 1.001, 1
+      );
+    }
   }
 
   :root:has(> head > meta[name="color-scheme"][content="dark"]) {
@@ -41,38 +61,46 @@
   }
 
   .dark {
-    --bg-main: #08090B;
-    --surface-primary: #101216;
-    --surface-secondary: #171A21;
-    --surface-elevated: #1F232D;
-    --text-primary: #F4F4F6;
-    --text-secondary: #9FA6B2;
-    --text-muted: #666E7D;
-    --border-color: #232733;
-    --border-subtle: #181B24;
-    --action-primary: #F59E0B; /* Electric Amber 500 */
-    --action-hover: #FBBF24;   /* Amber 400 */
-    --accent-color: #10B981;   /* Terminal Emerald 500 */
-    --accent-soft: rgba(245, 158, 11, 0.12);
-    --success-color: #10B981;  /* Terminal Emerald 500 */
-    --warning-color: #F59E0B;  /* Amber 500 */
-    --danger-color: #EF4444;   /* Crimson 500 */
-    --info-color: #F59E0B;     /* Amber Telemetry */
-    --radar-glow: rgba(245, 158, 11, 0.25);
-    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-    --card-shadow-hover: 0 14px 32px -8px rgba(0, 0, 0, 0.8), 0 0 20px 2px rgba(245, 158, 11, 0.14);
+    /* Apple Precision — Dark Canvas */
+    --bg-main: #09090D;
+    --surface-primary: #121217;
+    --surface-secondary: #1A1A22;
+    --surface-elevated: #1E1E26;
+    --surface-tonal: rgba(10, 132, 255, 0.12);
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1A6;
+    --text-muted: #6E6E73;
+    --border-color: rgba(255, 255, 255, 0.10);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --action-primary: #0A84FF;
+    --action-hover: #409CFF;
+    --accent-color: #0A84FF;
+    --accent-soft: rgba(10, 132, 255, 0.14);
+    --success-color: #30D158;
+    --warning-color: #FF9F0A;
+    --danger-color: #FF453A;
+    --info-color: #0A84FF;
+    --radar-glow: rgba(10, 132, 255, 0.24);
+    --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --card-shadow-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.85), 0 0 28px 0 rgba(10, 132, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   html {
     scroll-behavior: smooth;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   body {
-    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
     min-height: 100dvh;
-    letter-spacing: -0.012em;
+    letter-spacing: -0.014em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -86,52 +114,76 @@
   }
 }
 
-/* Ambient Bento Dot Matrix Pattern */
-.bg-grid-pattern {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-}
-.dark .bg-grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+/* Apple Silk Ambient Shader Effect */
+@keyframes silk-drift {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateX(-48%) translateY(8px) scale(1.03);
+    opacity: 1;
+  }
 }
 
-/* Ambient Radial Spotlight Shader Effect */
-.ambient-spotlight {
+.apple-silk-shader {
   position: absolute;
-  top: 0;
+  top: -60px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 1200px;
-  height: 480px;
-  background: radial-gradient(ellipse 65% 55% at 50% -10%, rgba(245, 158, 11, 0.12), transparent 75%);
+  max-width: 1280px;
+  height: 460px;
+  background:
+    radial-gradient(ellipse 60% 50% at 35% 10%, rgba(0, 113, 227, 0.10), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 70% 5%, rgba(120, 175, 255, 0.12), transparent 72%);
+  filter: blur(24px);
   pointer-events: none;
   z-index: 0;
 }
-.dark .ambient-spotlight {
-  background: radial-gradient(ellipse 65% 55% at 50% -10%, rgba(245, 158, 11, 0.15), rgba(16, 185, 129, 0.04) 40%, transparent 80%);
+
+.dark .apple-silk-shader {
+  background:
+    radial-gradient(ellipse 60% 50% at 35% 10%, rgba(10, 132, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 70% 5%, rgba(94, 92, 230, 0.10), transparent 72%);
 }
 
-/* Subtle Shimmer Animation for Badges and Feature Cards */
-@keyframes border-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+@media (prefers-reduced-motion: no-preference) {
+  .apple-silk-shader {
+    animation: silk-drift 14s var(--motion-curve) infinite;
   }
 }
 
-.shimmer-badge {
-  background-size: 200% 200%;
-  animation: border-shimmer 4s ease infinite;
+/* Scroll-Driven Reading Progress Hairline (Compositor-only) */
+@keyframes scroll-progress-scale {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--action-primary), #5AC8FA);
+  transform-origin: left center;
+  transform: scaleX(0);
+  z-index: 60;
+  pointer-events: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-progress-bar {
+      animation: scroll-progress-scale linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
 }
 
 /* Radar pulse animation for the live status beacon */
@@ -153,57 +205,203 @@
 .radar-beacon {
   position: relative;
 }
-.radar-beacon::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background: var(--action-primary);
-  animation: radar-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-  z-index: 0;
+
+@media (prefers-reduced-motion: no-preference) {
+  .radar-beacon::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    background: var(--success-color);
+    animation: radar-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    z-index: 0;
+  }
 }
 
-/* Interactive Card Elevation & Tactile Motion */
+/* Apple Precision Card Physics (260ms cubic-bezier(0.22, 1, 0.36, 1) + Spring Lift) */
 .job-card-interactive {
   box-shadow: var(--card-shadow);
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-              box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-              border-color 0.22s ease;
+  transition:
+    transform var(--motion-duration) var(--motion-curve),
+    box-shadow var(--motion-duration) var(--motion-curve),
+    border-color 200ms ease,
+    background-color 200ms ease;
 }
 .job-card-interactive:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: var(--card-shadow-hover);
 }
+.job-card-interactive:active {
+  transform: translateY(-1px) scale(0.992);
+  transition-duration: 140ms;
+}
 
-/* Tactile Button Feedback */
+@media (prefers-reduced-motion: reduce) {
+  .job-card-interactive {
+    transition: box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  }
+  .job-card-interactive:hover,
+  .job-card-interactive:active {
+    transform: none;
+  }
+}
+
+/* Staggered Card Entrance (Compositor-only transform + opacity) */
+@keyframes card-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-enter {
+    animation: card-reveal var(--motion-duration) var(--motion-curve) both;
+    animation-delay: calc(min(var(--stagger-index, 0), 8) * 24ms);
+  }
+}
+
+/* Apple Precision Tactile Button Physics (12px controls, 260ms liquid curve) */
 .btn-tactile {
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.12s ease;
+  transition:
+    transform var(--motion-duration) var(--motion-curve),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 200ms var(--motion-curve);
 }
 .btn-tactile:active {
-  transform: scale(0.98);
+  transform: scale(0.968);
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
 }
 
-/* Tabular numbers for numerical alignment */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Reduced motion handling */
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .btn-tactile {
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
   }
-  .job-card-interactive:hover {
-    transform: none !important;
+  .btn-tactile:active {
+    transform: none;
+  }
+}
+
+/* Sliding Segmented Pill Indicator */
+.segmented-pill {
+  transition: transform var(--motion-duration) var(--motion-curve), width var(--motion-duration) var(--motion-curve);
+}
+@media (prefers-reduced-motion: reduce) {
+  .segmented-pill {
+    transition: none;
+  }
+}
+
+/* Native <dialog> Top-Layer Sheet Physics & Scroll Containment */
+dialog:modal {
+  overscroll-behavior: contain;
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: min(44rem, calc(100vw - 1.5rem));
+  max-height: min(90dvh, calc(100dvh - 2rem));
+  width: 100%;
+  opacity: 0;
+  transform: translateY(14px) scale(0.975);
+  transition:
+    opacity var(--motion-duration) var(--motion-curve),
+    transform var(--motion-duration) var(--motion-curve),
+    display var(--motion-duration),
+    overlay var(--motion-duration);
+  transition-behavior: allow-discrete;
+}
+
+dialog[open]:modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@starting-style {
+  dialog[open]:modal {
+    opacity: 0;
+    transform: translateY(16px) scale(0.965);
+  }
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(9, 9, 13, 0);
+  backdrop-filter: blur(0px);
+  transition:
+    background-color var(--motion-duration) ease-out,
+    backdrop-filter var(--motion-duration) ease-out,
+    display var(--motion-duration),
+    overlay var(--motion-duration);
+  transition-behavior: allow-discrete;
+}
+
+dialog[open]::backdrop {
+  background-color: rgba(9, 9, 13, 0.56);
+  backdrop-filter: blur(12px);
+}
+
+@starting-style {
+  dialog[open]::backdrop {
+    background-color: rgba(9, 9, 13, 0);
+    backdrop-filter: blur(0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog:modal {
+    transform: none;
+    transition: opacity 120ms ease, display 120ms, overlay 120ms;
+    transition-behavior: allow-discrete;
+  }
+  @starting-style {
+    dialog[open]:modal {
+      opacity: 0;
+      transform: none;
+    }
+  }
+  dialog::backdrop {
+    backdrop-filter: blur(8px);
+    transition: background-color 120ms ease, display 120ms, overlay 120ms;
+    transition-behavior: allow-discrete;
   }
 }
 
 /* Modal dialog & drawer overscroll containment */
 [role="dialog"] {
   overscroll-behavior: contain;
+}
+
+/* View Transitions API Ergonomics */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-duration);
+  animation-timing-function: var(--motion-curve);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Tabular numbers for numerical alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Legacy fallback for WebKit/Blink browsers without standard scrollbar-color */

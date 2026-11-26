@@ -242,6 +242,50 @@ class JobDatabase:
                     )
         return new_count
 
+    def refresh_freshness_and_prune(self, max_age_days: int = 14) -> Dict[str, int]:
+        """Recompute age_hours & is_fresh_24h for active jobs and deactivate stale listings."""
+        from engine.dedup.freshness import parse_datetime, evaluate_freshness
+
+        now = datetime.now(timezone.utc)
+        updated_fresh = 0
+        pruned_count = 0
+
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT id, posted_at, first_seen_at, is_fresh_24h FROM jobs WHERE is_active = 1"
+            ).fetchall()
+
+            updates = []
+            prune_ids = []
+            for row in rows:
+                dt = parse_datetime(row["posted_at"]) or parse_datetime(row["first_seen_at"])
+                if not dt:
+                    continue
+                is_fresh, age_hours = evaluate_freshness(dt, max_hours=24.0)
+                age_val = age_hours if age_hours is not None else 0.0
+
+                if age_val > max_age_days * 24.0:
+                    prune_ids.append((row["id"],))
+                    pruned_count += 1
+                else:
+                    fresh_int = 1 if is_fresh else 0
+                    if fresh_int != row["is_fresh_24h"]:
+                        updated_fresh += 1
+                    updates.append((age_val, fresh_int, row["id"]))
+
+            if updates:
+                conn.executemany(
+                    "UPDATE jobs SET age_hours = ?, is_fresh_24h = ? WHERE id = ?",
+                    updates,
+                )
+            if prune_ids:
+                conn.executemany(
+                    "UPDATE jobs SET is_active = 0, is_fresh_24h = 0 WHERE id = ?",
+                    prune_ids,
+                )
+
+        return {"updated_freshness": updated_fresh, "pruned_stale": pruned_count}
+
     def get_filtered_jobs(
         self,
         role: Optional[str] = None,
@@ -250,7 +294,7 @@ class JobDatabase:
         work_mode: Optional[str] = None,
         fresh_only: bool = False,
         search_term: Optional[str] = None,
-        limit: int = 100,
+        limit: Optional[int] = 100,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
         query = "SELECT * FROM jobs WHERE is_active = 1 AND is_engineering = 1"
@@ -280,8 +324,13 @@ class JobDatabase:
             query += " AND (LOWER(title) LIKE ? OR LOWER(company_name) LIKE ? OR LOWER(skills) LIKE ?)"
             params.extend([term, term, term])
 
-        query += " ORDER BY is_fresh_24h DESC, posted_at DESC NULLS LAST LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
+        query += " ORDER BY is_fresh_24h DESC, posted_at DESC NULLS LAST"
+        if limit is not None and limit > 0:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+        elif offset > 0:
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
 
         with self._get_conn() as conn:
             cursor = conn.execute(query, params)

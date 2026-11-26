@@ -329,7 +329,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               >
                 <span className="truncate">{city}</span>
                 {count !== undefined && count > 0 && (
-                  <span className={`text-[10px] font-mono ml-1 tabular-nums ${isSelected ? "text-amber-100 dark:text-zinc-900" : "text-brand-muted"}`}>
+                  <span className={`text-[10px] font-mono ml-1 tabular-nums ${isSelected ? "text-white/80" : "text-brand-muted"}`}>
                     {count}
                   </span>
                 )}

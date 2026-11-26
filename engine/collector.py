@@ -167,6 +167,7 @@ class JobCollector:
                 all_new_jobs.extend(res)
 
         saved_count = self.db.save_processed_jobs(all_new_jobs)
+        maintenance = self.db.refresh_freshness_and_prune(max_age_days=14)
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         fresh_count = sum(1 for j in all_new_jobs if j.is_fresh_24h)

@@ -50,8 +50,10 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
         return <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />;
       case "error":
         return <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />;
+      case "info":
+        return <Info className="w-4 h-4 text-brand-primary flex-shrink-0" />;
       default:
-        return <Info className="w-4 h-4 text-amber-500 flex-shrink-0" />;
+        return <Info className="w-4 h-4 text-brand-primary flex-shrink-0" />;
     }
   };
 
