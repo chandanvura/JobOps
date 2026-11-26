@@ -266,7 +266,7 @@ class JobDatabase:
                 is_fresh, age_hours = evaluate_freshness(dt, max_hours=24.0)
                 age_val = age_hours if age_hours is not None else 0.0
 
-                if age_val > max_age_days * 24.0:
+                if max_age_days > 0 and age_val > max_age_days * 24.0:
                     prune_ids.append((row["id"],))
                     pruned_count += 1
                 else:

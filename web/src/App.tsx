@@ -668,11 +668,11 @@ export const App: React.FC = () => {
   const sortedJobs = useMemo(() => {
     const list = [...filteredJobs];
     if (sortBy === "relevance") {
-      return list.sort((a, b) => {
-        const scoreA = calculateRelevanceScore(a, filters.searchQuery, filters.selectedSkills, filters.roleCategory).score;
-        const scoreB = calculateRelevanceScore(b, filters.searchQuery, filters.selectedSkills, filters.roleCategory).score;
-        return scoreB - scoreA;
-      });
+      const scoreMap = new Map<string, number>();
+      for (const j of list) {
+        scoreMap.set(j.id, calculateRelevanceScore(j, filters.searchQuery, filters.selectedSkills, filters.roleCategory).score);
+      }
+      return list.sort((a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0));
     }
     if (sortBy === "company_asc") {
       return list.sort((a, b) => a.company_name.localeCompare(b.company_name));
@@ -709,9 +709,11 @@ export const App: React.FC = () => {
     return sortedJobs.slice(start, start + pageSize);
   }, [sortedJobs, currentPage]);
 
+  const savedJobIdSet = useMemo(() => new Set(savedJobIds), [savedJobIds]);
+
   const savedJobs = useMemo(() => {
-    return jobs.filter((j) => savedJobIds.includes(j.id));
-  }, [jobs, savedJobIds]);
+    return jobs.filter((j) => savedJobIdSet.has(j.id));
+  }, [jobs, savedJobIdSet]);
 
   // Genuine network refresh of the active jobs dataset from GitHub Pages edge cache
   const triggerLiveRefresh = async () => {
@@ -1104,7 +1106,7 @@ export const App: React.FC = () => {
                         <JobCard
                           key={job.id}
                           job={job}
-                          isSaved={savedJobIds.includes(job.id)}
+                          isSaved={savedJobIdSet.has(job.id)}
                           onToggleSave={toggleSaveJob}
                           onSelect={(j) => setSelectedJob(j)}
                           searchQuery={filters.searchQuery}

@@ -56,51 +56,50 @@ class PlaybookResolver:
     def diagnose(self) -> List[PlaybookIssue]:
         issues: List[PlaybookIssue] = []
 
-        # Check PB-001: Raw HTML & Unclosed Tag Sanitization
+        # Load jobs.json once for PB-001, PB-002, and PB-004 checks
+        cached_jobs: Optional[List[Dict[str, Any]]] = None
         if self.jobs_json_path.exists():
             try:
                 with open(self.jobs_json_path, "r", encoding="utf-8") as f:
-                    jobs = json.load(f)
-                bad_html_jobs = []
-                for j in jobs:
-                    summary = j.get("summary", "")
-                    title = j.get("title", "")
-                    if any(
-                        marker in summary or marker in title
-                        for marker in ["&lt;", "&gt;", "&amp;lt;", "<div", "<p", "<span", "&quot;", "&amp;"]
-                    ):
-                        bad_html_jobs.append((j.get("id"), j.get("company_name"), title))
-                if bad_html_jobs:
-                    issues.append(
-                        PlaybookIssue(
-                            playbook_id="PB-001",
-                            symptom=f"Found {len(bad_html_jobs)} jobs with uncleaned HTML or unclosed tags in catalog.",
-                            details={"count": len(bad_html_jobs), "sample": bad_html_jobs[:3]},
-                        )
-                    )
+                    cached_jobs = json.load(f)
             except Exception as e:
                 logger.error(f"Error checking jobs.json: {e}")
 
-        # Check PB-002: Location Normalization
-        if self.jobs_json_path.exists():
-            try:
-                with open(self.jobs_json_path, "r", encoding="utf-8") as f:
-                    jobs = json.load(f)
-                bad_locations = []
-                for j in jobs:
-                    city = j.get("city", "")
-                    if city in ["Other-India", "null", "undefined", "unknown"]:
-                        bad_locations.append((j.get("id"), j.get("company_name"), city))
-                if bad_locations:
-                    issues.append(
-                        PlaybookIssue(
-                            playbook_id="PB-002",
-                            symptom=f"Found {len(bad_locations)} jobs with un-normalized Indian locations.",
-                            details={"count": len(bad_locations), "sample": bad_locations[:3]},
-                        )
+        # Check PB-001: Raw HTML & Unclosed Tag Sanitization
+        if cached_jobs is not None:
+            bad_html_jobs = []
+            for j in cached_jobs:
+                summary = j.get("summary", "")
+                title = j.get("title", "")
+                if any(
+                    marker in summary or marker in title
+                    for marker in ["&lt;", "&gt;", "&amp;lt;", "<div", "<p", "<span", "&quot;", "&amp;"]
+                ):
+                    bad_html_jobs.append((j.get("id"), j.get("company_name"), title))
+            if bad_html_jobs:
+                issues.append(
+                    PlaybookIssue(
+                        playbook_id="PB-001",
+                        symptom=f"Found {len(bad_html_jobs)} jobs with uncleaned HTML or unclosed tags in catalog.",
+                        details={"count": len(bad_html_jobs), "sample": bad_html_jobs[:3]},
                     )
-            except Exception as e:
-                logger.error(f"Error checking locations: {e}")
+                )
+
+        # Check PB-002: Location Normalization
+        if cached_jobs is not None:
+            bad_locations = []
+            for j in cached_jobs:
+                city = j.get("city", "")
+                if city in ["Other-India", "null", "undefined", "unknown"]:
+                    bad_locations.append((j.get("id"), j.get("company_name"), city))
+            if bad_locations:
+                issues.append(
+                    PlaybookIssue(
+                        playbook_id="PB-002",
+                        symptom=f"Found {len(bad_locations)} jobs with un-normalized Indian locations.",
+                        details={"count": len(bad_locations), "sample": bad_locations[:3]},
+                    )
+                )
 
         # Check PB-003: Critical Dependencies in Environment
         missing_pkgs = []
@@ -119,14 +118,12 @@ class PlaybookResolver:
             )
 
         # Check PB-004: Edge Cache & SQLite Desync
-        if self.db_path.exists() and self.jobs_json_path.exists():
+        if self.db_path.exists() and cached_jobs is not None:
             try:
                 db = JobDatabase(self.db_path)
                 db_stats = db.get_stats()
                 db_job_count = db_stats.get("total_engineering_jobs", 0)
-                with open(self.jobs_json_path, "r", encoding="utf-8") as f:
-                    json_jobs = json.load(f)
-                json_count = len(json_jobs)
+                json_count = len(cached_jobs)
                 # If there's a significant desync between DB active jobs and exported JSON
                 if abs(db_job_count - json_count) > 0 and db_job_count > json_count:
                     issues.append(

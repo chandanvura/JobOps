@@ -291,7 +291,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <button
                 key={level}
                 onClick={() => toggleExperience(level)}
-                className={`px-2.5 py-1 text-xs rounded-full border active:scale-[0.98] transition-all ${
+                className={`px-2.5 py-1 text-xs rounded-full border btn-tactile ${
                   isSelected
                     ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
                     : "bg-brand-surface text-brand-secondary border-brand-border hover:border-brand-primary/50 hover:text-brand-text"
@@ -310,7 +310,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <MapPin className="w-3.5 h-3.5 text-brand-muted" />
           <span>Locations & hubs</span>
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {TECH_HUBS.map((city) => {
             const isSelected =
               city === "All"
@@ -321,15 +321,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <button
                 key={city}
                 onClick={() => toggleCity(city)}
-                className={`px-2 py-1.5 text-xs text-left truncate rounded-lg border active:scale-[0.98] transition-all flex items-center justify-between ${
+                className={`px-2.5 py-1 text-xs rounded-full border btn-tactile flex items-center gap-1.5 ${
                   isSelected
                     ? "bg-brand-primary border-brand-primary text-white font-semibold shadow-sm"
                     : "bg-brand-surface border-brand-border text-brand-secondary hover:text-brand-text hover:border-brand-primary/50"
                 }`}
               >
-                <span className="truncate">{city}</span>
+                <span>{city}</span>
                 {count !== undefined && count > 0 && (
-                  <span className={`text-[10px] font-mono ml-1 tabular-nums ${isSelected ? "text-white/80" : "text-brand-muted"}`}>
+                  <span className={`text-[10px] font-mono tabular-nums ${isSelected ? "text-white/80" : "text-brand-muted"}`}>
                     {count}
                   </span>
                 )}
@@ -355,7 +355,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <button
                 key={mode.id}
                 onClick={() => toggleWorkMode(mode.id)}
-                className={`px-2.5 py-1 text-xs rounded-full border active:scale-[0.98] transition-all ${
+                className={`px-2.5 py-1 text-xs rounded-full border btn-tactile ${
                   isSelected
                     ? "bg-brand-primary text-white border-brand-primary font-semibold shadow-sm"
                     : "bg-brand-surface text-brand-secondary border-brand-border hover:text-brand-text hover:border-brand-primary/50"
