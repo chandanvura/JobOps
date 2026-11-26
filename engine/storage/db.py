@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -7,6 +8,7 @@ from engine.models import Company, ProcessedJob
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB_PATH = REPO_ROOT / "data" / "jobops.db"
+DEFAULT_MAX_AGE_DAYS = int(os.environ.get("JOBOPS_MAX_AGE_DAYS", "14"))
 
 
 class JobDatabase:
@@ -242,7 +244,7 @@ class JobDatabase:
                     )
         return new_count
 
-    def refresh_freshness_and_prune(self, max_age_days: int = 14) -> Dict[str, int]:
+    def refresh_freshness_and_prune(self, max_age_days: int = DEFAULT_MAX_AGE_DAYS) -> Dict[str, int]:
         """Recompute age_hours & is_fresh_24h for active jobs and deactivate stale listings."""
         from engine.dedup.freshness import parse_datetime, evaluate_freshness
 

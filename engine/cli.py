@@ -30,6 +30,7 @@ def main():
     export_parser = subparsers.add_parser("export", help="Export active jobs to JSON file for frontend/API")
     export_parser.add_argument("--output", default="data/jobs.json", help="Output file path")
     export_parser.add_argument("--limit", type=int, default=0, help="Maximum number of active jobs to export (0 = unlimited)")
+    export_parser.add_argument("--max-age-days", type=int, default=None, help="Deactivate jobs older than N days (defaults to JOBOPS_MAX_AGE_DAYS or 14)")
 
     # Command: playbook
     playbook_parser = subparsers.add_parser("playbook", help="Manage and run autonomous zero-cost operational playbooks")
@@ -92,7 +93,10 @@ def main():
 
     elif args.command == "export":
         db = JobDatabase()
-        db.refresh_freshness_and_prune(max_age_days=14)
+        if args.max_age_days is not None:
+            db.refresh_freshness_and_prune(max_age_days=args.max_age_days)
+        else:
+            db.refresh_freshness_and_prune()
         export_limit = args.limit if args.limit and args.limit > 0 else None
         jobs = db.get_filtered_jobs(limit=export_limit)
         out_path = Path(args.output)
