@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { Job, FilterState } from "./types/job";
 import { Navbar } from "./components/Navbar";
 import { FilterSidebar } from "./components/FilterSidebar";
 import { JobCard } from "./components/JobCard";
-import { JobDetailModal } from "./components/JobDetailModal";
-import { FetchTriggerModal } from "./components/FetchTriggerModal";
-import { SavedJobsModal } from "./components/SavedJobsModal";
-import { CompaniesPage, CompanyItem } from "./components/CompaniesPage";
-import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
+import type { CompanyItem } from "./components/CompaniesPage";
 import { ToastContainer, ToastMessage } from "./components/Toast";
 import { useTheme } from "./hooks/useDarkMode";
 import { runViewTransition } from "./utils/viewTransition";
+
+const JobDetailModal = lazy(() => import("./components/JobDetailModal").then((m) => ({ default: m.JobDetailModal })));
+const FetchTriggerModal = lazy(() => import("./components/FetchTriggerModal").then((m) => ({ default: m.FetchTriggerModal })));
+const SavedJobsModal = lazy(() => import("./components/SavedJobsModal").then((m) => ({ default: m.SavedJobsModal })));
+const CompaniesPage = lazy(() => import("./components/CompaniesPage").then((m) => ({ default: m.CompaniesPage })));
+const KeyboardShortcutsModal = lazy(() => import("./components/KeyboardShortcutsModal").then((m) => ({ default: m.KeyboardShortcutsModal })));
 import {
   Search,
   Filter,
@@ -60,7 +62,7 @@ const ALLOWED_EXPERIENCES = [
 const ALLOWED_MODES = ["all", "remote", "hybrid", "onsite"];
 
 export const App: React.FC = () => {
-  const { themeMode, setThemeMode, isDark } = useTheme();
+  const { themeMode, setThemeMode } = useTheme();
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Parse Initial URL State supporting multi-select and legacy params
@@ -825,11 +827,19 @@ export const App: React.FC = () => {
         )}
 
         {currentTab === "companies" ? (
-          <CompaniesPage
-            companies={companies}
-            onSelectCompany={handleSelectCompanyFromDirectory}
-            onOpenAddModal={() => setIsFetchModalOpen(true)}
-          />
+          <Suspense
+            fallback={
+              <div className="bg-brand-surface rounded-[20px] border border-brand-border p-8 text-xs text-brand-secondary animate-pulse">
+                Loading employer portal health directory...
+              </div>
+            }
+          >
+            <CompaniesPage
+              companies={companies}
+              onSelectCompany={handleSelectCompanyFromDirectory}
+              onOpenAddModal={() => setIsFetchModalOpen(true)}
+            />
+          </Suspense>
         ) : (
           <>
             {/* Compact Architectural Masthead — opens directly into live workspace above the fold */}
@@ -1221,57 +1231,59 @@ export const App: React.FC = () => {
         </div>
       </footer>
 
-      <JobDetailModal
-        job={selectedJob}
-        isOpen={selectedJob !== null}
-        onClose={() => setSelectedJob(null)}
-        isSaved={selectedJob ? savedJobIds.includes(selectedJob.id) : false}
-        onToggleSave={toggleSaveJob}
-      />
+      <Suspense fallback={null}>
+        <JobDetailModal
+          job={selectedJob}
+          isOpen={selectedJob !== null}
+          onClose={() => setSelectedJob(null)}
+          isSaved={selectedJob ? savedJobIdSet.has(selectedJob.id) : false}
+          onToggleSave={toggleSaveJob}
+        />
 
-      <FetchTriggerModal
-        isOpen={isFetchModalOpen}
-        onClose={() => setIsFetchModalOpen(false)}
-        onTriggerRefresh={triggerLiveRefresh}
-        isFetching={isFetching}
-      />
+        <FetchTriggerModal
+          isOpen={isFetchModalOpen}
+          onClose={() => setIsFetchModalOpen(false)}
+          onTriggerRefresh={triggerLiveRefresh}
+          isFetching={isFetching}
+        />
 
-      <SavedJobsModal
-        isOpen={isSavedModalOpen}
-        onClose={() => setIsSavedModalOpen(false)}
-        savedJobs={savedJobs}
-        onRemove={(id) => {
-          const removedJob = jobs.find((j) => j.id === id);
-          setSavedJobIds((prev) => {
-            const next = prev.filter((item) => item !== id);
-            try {
-              localStorage.setItem("jobops_saved_ids", JSON.stringify(next));
-            } catch {}
-            return next;
-          });
-          if (removedJob) {
-            addToast("info", `Removed "${cleanJobText(removedJob.title)}" from pipeline.`, undefined, {
-              label: "Undo",
-              onClick: () => {
-                setSavedJobIds((current) => {
-                  const restored = [...current, id];
-                  try {
-                    localStorage.setItem("jobops_saved_ids", JSON.stringify(restored));
-                  } catch {}
-                  return restored;
-                });
-                addToast("success", `Restored "${cleanJobText(removedJob.title)}".`);
-              },
+        <SavedJobsModal
+          isOpen={isSavedModalOpen}
+          onClose={() => setIsSavedModalOpen(false)}
+          savedJobs={savedJobs}
+          onRemove={(id) => {
+            const removedJob = jobs.find((j) => j.id === id);
+            setSavedJobIds((prev) => {
+              const next = prev.filter((item) => item !== id);
+              try {
+                localStorage.setItem("jobops_saved_ids", JSON.stringify(next));
+              } catch {}
+              return next;
             });
-          }
-        }}
-        onImportBackup={handleImportBackup}
-      />
+            if (removedJob) {
+              addToast("info", `Removed "${cleanJobText(removedJob.title)}" from pipeline.`, undefined, {
+                label: "Undo",
+                onClick: () => {
+                  setSavedJobIds((current) => {
+                    const restored = [...current, id];
+                    try {
+                      localStorage.setItem("jobops_saved_ids", JSON.stringify(restored));
+                    } catch {}
+                    return restored;
+                  });
+                  addToast("success", `Restored "${cleanJobText(removedJob.title)}".`);
+                },
+              });
+            }
+          }}
+          onImportBackup={handleImportBackup}
+        />
 
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
-      />
+        <KeyboardShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
+        />
+      </Suspense>
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>

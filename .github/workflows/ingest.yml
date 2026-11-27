@@ -120,6 +120,7 @@ jobs:
               t = json.loads(t_path.read_text(encoding="utf-8"))
               cat = t.get("catalog", {})
               run = t.get("last_run") or {}
+              obs = t.get("observability") or {}
               print("\n| Metric | Value |")
               print("|---|---|")
               print(f"| Total Active Engineering Jobs | **{cat.get('total_engineering_jobs', 0):,}** |")
@@ -127,6 +128,10 @@ jobs:
               print(f"| Open Circuit Breakers (PB-005) | **{cat.get('tripped_circuits', 0)}** |")
               print(f"| New Jobs Saved This Run | **{run.get('new_jobs_saved', 0)}** |")
               print(f"| Run Duration | **{run.get('duration_seconds', 'n/a')}s** |")
+              if obs:
+                  print(f"| SRE SLO Status | **{obs.get('slo_status', 'N/A')}** ({obs.get('success_rate', 0):.1%}) |")
+                  drift = obs.get("schema_drift_suspected") or []
+                  print(f"| ATS Schema Drift Canary | **{', '.join(drift) if drift else 'None detected'}** |")
           else:
               print("_No telemetry.json snapshot found for this run._")
           EOF

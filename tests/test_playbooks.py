@@ -203,12 +203,23 @@ def test_playbook_pb005_circuit_breaker_and_telemetry(tmp_path):
     run_id = db.start_ingestion_run(companies_checked=1)
     for _ in range(5):
         db.record_company_outcome("flaky_co", success=False, error="HTTP 503 Timeout", failure_threshold=5)
-    db.finish_ingestion_run(run_id, raw_jobs_found=0, new_jobs_saved=0, fresh_24h_jobs=0, duration_seconds=1.25)
+    obs = {
+        "slo_status": "BREACHED",
+        "success_rate": 0.0,
+        "duration_seconds": 1.25,
+        "schema_drift_suspected": ["greenhouse"],
+        "adapter_health": {"greenhouse": {"checked": 5, "ok": 0, "errors": 5, "jobs": 0}},
+    }
+    db.finish_ingestion_run(
+        run_id, raw_jobs_found=0, new_jobs_saved=0, fresh_24h_jobs=0, duration_seconds=1.25, observability=obs
+    )
 
     assert "flaky_co" in db.get_open_circuit_company_ids()
     telemetry = db.get_latest_telemetry()
     assert telemetry["last_run"]["id"] == run_id
     assert telemetry["catalog"]["tripped_circuits"] == 1
+    assert telemetry["observability"]["slo_status"] == "BREACHED"
+    assert telemetry["observability"]["schema_drift_suspected"] == ["greenhouse"]
 
     # Recovering resets failure counter & closes circuit
     db.record_company_outcome("flaky_co", success=True, jobs_found=4)

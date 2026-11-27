@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Job } from "../types/job";
 import { X, Bookmark, ExternalLink, Trash2, Download, Upload, FileText, Calendar, Clock, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
-import { sanitizeExternalUrl, normalizeJobUrl, formatLocation, cleanJobText, sanitizeCsvField, validateJobImportData, ValidatedJobImport } from "../utils/jobUtils";
+import { normalizeJobUrl, formatLocation, cleanJobText, sanitizeCsvField, validateJobImportData, ValidatedJobImport } from "../utils/jobUtils";
 
 export type PipelineStage =
   | "Saved"

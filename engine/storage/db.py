@@ -25,8 +25,11 @@ class JobDatabase:
             self.seed_from_cache_if_empty()
 
     def _get_conn(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA busy_timeout=5000")
         return conn
 
     def init_db(self) -> None:
@@ -91,7 +94,8 @@ class JobDatabase:
                     new_jobs_saved INTEGER DEFAULT 0,
                     fresh_24h_jobs INTEGER DEFAULT 0,
                     duration_seconds REAL,
-                    status TEXT DEFAULT 'running'
+                    status TEXT DEFAULT 'running',
+                    observability_json TEXT
                 );
                 """
             )
@@ -105,6 +109,11 @@ class JobDatabase:
             ):
                 if col_name not in existing_cols:
                     conn.execute(f"ALTER TABLE companies ADD COLUMN {col_name} {col_def}")
+            run_cols = {
+                row[1] for row in conn.execute("PRAGMA table_info(ingestion_runs)").fetchall()
+            }
+            if "observability_json" not in run_cols:
+                conn.execute("ALTER TABLE ingestion_runs ADD COLUMN observability_json TEXT")
 
     def seed_from_cache_if_empty(self) -> int:
         """Seed the SQLite database from web/public/jobs.json or data/jobs.json if database has 0 jobs."""
@@ -466,17 +475,19 @@ class JobDatabase:
         fresh_24h_jobs: int,
         duration_seconds: float,
         status: str = "completed",
+        observability: Optional[Dict[str, Any]] = None,
     ) -> None:
         now_iso = datetime.now(timezone.utc).isoformat()
+        obs_str = json.dumps(observability) if observability is not None else None
         with self._get_conn() as conn:
             conn.execute(
                 """
                 UPDATE ingestion_runs
                 SET finished_at = ?, raw_jobs_found = ?, new_jobs_saved = ?,
-                    fresh_24h_jobs = ?, duration_seconds = ?, status = ?
+                    fresh_24h_jobs = ?, duration_seconds = ?, status = ?, observability_json = ?
                 WHERE id = ?
                 """,
-                (now_iso, raw_jobs_found, new_jobs_saved, fresh_24h_jobs, round(duration_seconds, 2), status, run_id),
+                (now_iso, raw_jobs_found, new_jobs_saved, fresh_24h_jobs, round(duration_seconds, 2), status, obs_str, run_id),
             )
 
     def get_latest_telemetry(self) -> Dict[str, Any]:
@@ -486,10 +497,19 @@ class JobDatabase:
                 "SELECT * FROM ingestion_runs ORDER BY id DESC LIMIT 1"
             ).fetchone()
             last_run = dict(row) if row else None
+        observability = None
+        if last_run:
+            raw_obs = last_run.pop("observability_json", None)
+            if raw_obs:
+                try:
+                    observability = json.loads(raw_obs)
+                except Exception:
+                    observability = None
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "catalog": stats,
             "last_run": last_run,
+            "observability": observability,
         }
 
     def get_oldest_active_jobs(self, limit: int = 120) -> List[Dict[str, Any]]:

@@ -11,7 +11,6 @@ import {
   RefreshCw,
   AlertTriangle,
   HelpCircle,
-  CheckCircle2,
 } from "lucide-react";
 import { sanitizeExternalUrl } from "../utils/jobUtils";
 

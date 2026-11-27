@@ -32,6 +32,7 @@ class JobCollector:
         self.skill_extractor = SkillExtractor()
         self.location_normalizer = LocationNormalizer()
         self.registry = SeenJobsRegistry(self.db.get_seen_job_ids())
+        self._last_company_ok: Dict[str, bool] = {}
 
     def load_companies(self) -> List[Company]:
         if not COMPANIES_PATH.exists():
@@ -54,8 +55,32 @@ class JobCollector:
         try:
             raw_jobs = await adapter.fetch_jobs(company, client)
             self.db.record_company_outcome(company.id, success=True, jobs_found=len(raw_jobs))
+            self._last_company_ok[company.id] = True
+        except httpx.HTTPStatusError as e:
+            if e.response is not None and e.response.status_code in (429, 503):
+                retry_after = e.response.headers.get("Retry-After", "1.5")
+                try:
+                    delay = min(3.0, max(0.5, float(retry_after)))
+                except ValueError:
+                    delay = 1.5
+                await asyncio.sleep(delay)
+                try:
+                    raw_jobs = await adapter.fetch_jobs(company, client)
+                    self.db.record_company_outcome(company.id, success=True, jobs_found=len(raw_jobs))
+                    self._last_company_ok[company.id] = True
+                except Exception as retry_err:
+                    self.db.record_company_outcome(company.id, success=False, error=str(retry_err))
+                    self._last_company_ok[company.id] = False
+                    logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}) after retry: {retry_err}")
+                    return []
+            else:
+                self.db.record_company_outcome(company.id, success=False, error=str(e))
+                self._last_company_ok[company.id] = False
+                logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}): {e}")
+                return []
         except Exception as e:
             self.db.record_company_outcome(company.id, success=False, error=str(e))
+            self._last_company_ok[company.id] = False
             logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}): {e}")
             return []
 
@@ -151,17 +176,34 @@ class JobCollector:
             "Accept": "application/json, text/plain, */*",
         }
 
+        adapter_stats: Dict[str, Dict[str, Any]] = {}
+        ok_companies = 0
+        err_companies = 0
+
         async with httpx.AsyncClient(timeout=12.0, limits=limits, headers=headers) as client:
             async def worker(comp: Company):
+                nonlocal ok_companies, err_companies
                 if comp.health_status == "unreachable" or comp.id in open_circuits:
                     return []
+                provider = comp.ats_provider
+                bucket = adapter_stats.setdefault(provider, {"checked": 0, "ok": 0, "errors": 0, "jobs": 0})
+                bucket["checked"] += 1
                 async with semaphore:
                     try:
                         jobs = await self.collect_from_company(comp, client, strict_24h=strict_24h)
+                        if self._last_company_ok.get(comp.id, True):
+                            bucket["ok"] += 1
+                            ok_companies += 1
+                        else:
+                            bucket["errors"] += 1
+                            err_companies += 1
+                        bucket["jobs"] += len(jobs)
                         if jobs:
                             logger.info(f"[{comp.name}] Found {len(jobs)} new engineering jobs.")
                         return jobs
                     except Exception as e:
+                        bucket["errors"] += 1
+                        err_companies += 1
                         logger.debug(f"[{comp.name}] Collection exception: {e}")
                         return []
 
@@ -175,6 +217,27 @@ class JobCollector:
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         fresh_count = sum(1 for j in all_new_jobs if j.is_fresh_24h)
+        total_attempted = max(1, ok_companies + err_companies)
+        success_rate = round(ok_companies / total_attempted, 4)
+
+        core_providers = {"greenhouse", "lever", "ashby", "workday", "smartrecruiters", "eightfold", "oracle"}
+        schema_drift_suspected = [
+            prov for prov, st in adapter_stats.items()
+            if prov in core_providers and st["checked"] >= 5 and st["ok"] == 0
+        ]
+        slo_status = (
+            "BREACHED"
+            if (success_rate < 0.80 or duration > 600 or schema_drift_suspected)
+            else ("DEGRADED" if (success_rate < 0.90 or duration > 300) else "HEALTHY")
+        )
+        observability = {
+            "slo_status": slo_status,
+            "success_rate": success_rate,
+            "duration_seconds": round(duration, 2),
+            "schema_drift_suspected": schema_drift_suspected,
+            "adapter_health": adapter_stats,
+        }
+
         self.db.finish_ingestion_run(
             run_id=run_id,
             raw_jobs_found=len(all_new_jobs),
@@ -182,11 +245,13 @@ class JobCollector:
             fresh_24h_jobs=fresh_count,
             duration_seconds=duration,
             status="completed",
+            observability=observability,
         )
 
         logger.info(
             f"Run #{run_id} completed in {duration:.2f}s. Scanned: {len(companies)} companies "
-            f"(skipped circuits: {len(open_circuits)}). New Jobs: {saved_count}. Fresh (24h): {fresh_count}."
+            f"(skipped circuits: {len(open_circuits)}, SLO: {slo_status} @ {success_rate:.1%}). "
+            f"New Jobs: {saved_count}. Fresh (24h): {fresh_count}."
         )
 
         return {
@@ -196,4 +261,7 @@ class JobCollector:
             "new_jobs_saved": saved_count,
             "fresh_24h_jobs": fresh_count,
             "duration_seconds": round(duration, 2),
+            "slo_status": slo_status,
+            "success_rate": success_rate,
+            "schema_drift_suspected": schema_drift_suspected,
         }
