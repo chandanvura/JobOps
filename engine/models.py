@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -31,12 +32,12 @@ class Company(BaseModel):
     name: str
     ats_provider: str
     ats_identifier: str
-    careers_url: Optional[str] = None
+    careers_url: str | None = None
     priority: int = 1
-    tier: Optional[str] = "Growth Tech"
+    tier: str | None = "Growth Tech"
     enabled: bool = True
-    health_status: Optional[str] = "healthy"
-    tags: List[str] = Field(default_factory=list)
+    health_status: str | None = "healthy"
+    tags: list[str] = Field(default_factory=list)
 
 
 class RawJob(BaseModel):
@@ -48,9 +49,9 @@ class RawJob(BaseModel):
     job_url: str
     location_raw: str = ""
     description_text: str = ""
-    description_html: Optional[str] = ""
-    posted_at: Optional[datetime] = None
-    raw_payload: Optional[Dict[str, Any]] = None
+    description_html: str | None = ""
+    posted_at: datetime | None = None
+    raw_payload: dict[str, Any] | None = None
 
 
 class ProcessedJob(BaseModel):
@@ -74,19 +75,19 @@ class ProcessedJob(BaseModel):
     is_india: bool = True
 
     # Experience
-    min_years: Optional[float] = None
-    max_years: Optional[float] = None
+    min_years: float | None = None
+    max_years: float | None = None
     experience_level: str = "Any Experience"
 
     # Skills & Tech stack
-    skills: List[str] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
 
     # Freshness & Timestamps
-    posted_at: Optional[datetime] = None
+    posted_at: datetime | None = None
     age_hours: float = 0.0
     is_fresh_24h: bool = True
-    first_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    last_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    first_seen_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_seen_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = True
 
     # UI snippet

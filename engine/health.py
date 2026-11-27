@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import httpx
 
 try:
@@ -28,7 +29,7 @@ class CompanyHealthChecker:
     def __init__(self, timeout_seconds: float = 10.0):
         self.timeout_seconds = timeout_seconds
 
-    async def probe_url(self, client: httpx.AsyncClient, url: str) -> Dict[str, Any]:
+    async def probe_url(self, client: httpx.AsyncClient, url: str) -> dict[str, Any]:
         """Probes a single URL with real HTTP GET/HEAD and captures telemetry."""
         if not url or not url.startswith(("http://", "https://")):
             return {
@@ -36,7 +37,7 @@ class CompanyHealthChecker:
                 "status_code": None,
                 "response_time_ms": None,
                 "error": "Invalid or missing URL scheme",
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                "last_checked_at": datetime.now(UTC).isoformat(),
             }
 
         start_time = time.perf_counter()
@@ -46,7 +47,7 @@ class CompanyHealthChecker:
                 response = await client.head(url, follow_redirects=True)
                 if response.status_code in (405, 403, 400):
                     response = await client.get(url, follow_redirects=True)
-            except Exception:
+            except (httpx.HTTPError, OSError):
                 response = await client.get(url, follow_redirects=True)
 
             latency_ms = round((time.perf_counter() - start_time) * 1000)
@@ -60,8 +61,8 @@ class CompanyHealthChecker:
                         if 200 <= c_resp.status_code < 400:
                             status_code = c_resp.status_code
                             latency_ms = round((time.perf_counter() - start_time) * 1000)
-                except Exception:
-                    pass
+                except OSError as c_err:
+                    logger.debug(f"curl_cffi WAF bypass fallback failed for {url}: {c_err}")
 
             # Classify based on true HTTP status and latency
             if 200 <= status_code < 400:
@@ -95,10 +96,10 @@ class CompanyHealthChecker:
                 "status_code": status_code,
                 "response_time_ms": latency_ms,
                 "error": error,
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                "last_checked_at": datetime.now(UTC).isoformat(),
             }
 
-        except Exception as e:
+        except (httpx.HTTPError, OSError) as e:
             if HAS_CURL_CFFI:
                 try:
                     async with CurlAsyncSession(impersonate="chrome124", verify=False, timeout=self.timeout_seconds) as c_session:
@@ -110,10 +111,10 @@ class CompanyHealthChecker:
                                 "status_code": c_resp.status_code,
                                 "response_time_ms": latency_ms,
                                 "error": None,
-                                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                                "last_checked_at": datetime.now(UTC).isoformat(),
                             }
-                except Exception:
-                    pass
+                except OSError as c_err:
+                    logger.debug(f"curl_cffi fallback failed for {url}: {c_err}")
 
             latency_ms = round((time.perf_counter() - start_time) * 1000)
             err_msg = str(e)[:80]
@@ -129,12 +130,12 @@ class CompanyHealthChecker:
                 "status_code": None,
                 "response_time_ms": latency_ms,
                 "error": err_msg,
-                "last_checked_at": datetime.now(timezone.utc).isoformat(),
+                "last_checked_at": datetime.now(UTC).isoformat(),
             }
 
     async def check_company(
-        self, client: httpx.AsyncClient, company_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, client: httpx.AsyncClient, company_record: dict[str, Any]
+    ) -> dict[str, Any]:
         """Probes a company's career URL and returns updated record."""
         target_url = company_record.get("careers_url") or ""
         probe_result = await self.probe_url(client, target_url)
@@ -153,14 +154,14 @@ class CompanyHealthChecker:
 
     async def run_checks(
         self,
-        companies: List[Dict[str, Any]],
+        companies: list[dict[str, Any]],
         concurrency: int = 10,
-        limit: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
         """Runs health checks across companies with controlled concurrency."""
         to_check = companies[:limit] if limit else companies
         semaphore = asyncio.Semaphore(concurrency)
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
 
         headers = {
             "User-Agent": USER_AGENT,
@@ -169,7 +170,7 @@ class CompanyHealthChecker:
         }
 
         async with httpx.AsyncClient(timeout=self.timeout_seconds, headers=headers) as client:
-            async def worker(item: Dict[str, Any]):
+            async def worker(item: dict[str, Any]):
                 async with semaphore:
                     # Small jitter delay to prevent bursting
                     await asyncio.sleep(0.05)
@@ -197,7 +198,7 @@ class CompanyHealthChecker:
         db: Any,
         sample: int = 120,
         concurrency: int = 15,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Probe oldest active job URLs and deactivate confirmed HTTP 404/410 closed requisitions."""
         candidates = db.get_oldest_active_jobs(limit=sample)
         if not candidates:
@@ -208,17 +209,17 @@ class CompanyHealthChecker:
             "User-Agent": USER_AGENT,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         }
-        dead_ids: List[str] = []
+        dead_ids: list[str] = []
 
         async with httpx.AsyncClient(timeout=self.timeout_seconds, headers=headers) as client:
-            async def check_one(item: Dict[str, Any]) -> Optional[str]:
+            async def check_one(item: dict[str, Any]) -> str | None:
                 async with semaphore:
                     await asyncio.sleep(0.03)
                     try:
                         telemetry = await self.probe_url(client, item.get("job_url", ""))
                         if telemetry.get("status_code") in (404, 410):
                             return item["id"]
-                    except Exception as e:
+                    except (httpx.HTTPError, OSError, ValueError) as e:
                         logger.debug(f"Error probing job URL {item.get('job_url')}: {e}")
                     return None
 
@@ -229,14 +230,14 @@ class CompanyHealthChecker:
         return {"probed": len(candidates), "reaped_dead_jobs": deactivated}
 
 
-def validate_companies_dataset(companies: List[Dict[str, Any]]) -> Dict[str, Any]:
+def validate_companies_dataset(companies: list[dict[str, Any]]) -> dict[str, Any]:
     """Validates the schema, uniqueness, and integrity of the companies dataset."""
     total = len(companies)
     seen_ids = set()
     duplicate_ids = []
     invalid_urls = []
     missing_fields = []
-    status_counts: Dict[str, int] = {}
+    status_counts: dict[str, int] = {}
 
     required_keys = {"id", "name", "ats_provider", "careers_url"}
 

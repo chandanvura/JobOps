@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Optional, Tuple
+
 from engine.models import WorkMode
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "locations.json"
@@ -19,7 +19,7 @@ class LocationNormalizer:
                 self.cities = data.get("cities", {})
                 self.country_tokens = data.get("country_tokens", self.country_tokens)
 
-    def normalize(self, raw_location: Optional[str], title: str = "", description: str = "") -> Tuple[Optional[str], bool, WorkMode]:
+    def normalize(self, raw_location: str | None, title: str = "", description: str = "") -> tuple[str | None, bool, WorkMode]:
         """
         Returns (city_name, is_india, work_mode).
         """

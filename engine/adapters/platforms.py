@@ -1,8 +1,9 @@
 import json
 import logging
 import re
-from typing import List
+
 import httpx
+
 try:
     from bs4 import BeautifulSoup
 except ImportError:
@@ -29,7 +30,7 @@ class GenericPlatformAdapter(BaseATS):
     def __init__(self, provider_name: str = "platform"):
         self.provider_name = provider_name
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         if not company.careers_url:
             return []
 
@@ -67,8 +68,8 @@ class GenericPlatformAdapter(BaseATS):
                         )
                     if jobs:
                         return jobs
-            except Exception:
-                pass
+            except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
+                logger.debug(f"Platform API attempt failed for {company.name}: {e}")
 
         # 2. Scrape careers URL and extract JSON-LD JobPosting schemas
         try:
@@ -76,7 +77,7 @@ class GenericPlatformAdapter(BaseATS):
             if res.status_code != 200:
                 return []
             html = res.text
-        except Exception as e:
+        except (httpx.HTTPError, OSError) as e:
             logger.warning(f"Failed to fetch {company.name} ({self.provider_name}): {e}")
             return []
 
@@ -86,7 +87,7 @@ class GenericPlatformAdapter(BaseATS):
 
         if BeautifulSoup is not None:
             soup = BeautifulSoup(html, "html.parser")
-            for tag in soup.find_all("script", type=re.compile(r"application/ld\+json", re.I)):
+            for tag in soup.find_all("script", type=re.compile(r"application/ld\+json", re.IGNORECASE)):
                 text = tag.get_text().strip()
                 if text:
                     script_texts.append(text)
@@ -136,7 +137,8 @@ class GenericPlatformAdapter(BaseATS):
                                 posted_at=posted_at,
                             )
                         )
-            except Exception:
+            except (json.JSONDecodeError, ValueError, TypeError, KeyError) as e:
+                logger.debug(f"Skipping malformed JSON-LD block for {company.name}: {e}")
                 continue
 
         return raw_jobs

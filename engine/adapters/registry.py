@@ -1,20 +1,20 @@
-from typing import Dict, Optional
-from engine.adapters.base import BaseATS
-from engine.adapters.greenhouse import GreenhouseAdapter
-from engine.adapters.lever import LeverAdapter
+
+from engine.adapters.amazon import AmazonAdapter
 from engine.adapters.ashby import AshbyAdapter
+from engine.adapters.bamboohr import BambooHRAdapter
+from engine.adapters.base import BaseATS
+from engine.adapters.custom import CustomAdapter
+from engine.adapters.darwinbox import DarwinboxAdapter
+from engine.adapters.eightfold import EightfoldAdapter
+from engine.adapters.greenhouse import GreenhouseAdapter
+from engine.adapters.jobvite import JobviteAdapter
+from engine.adapters.lever import LeverAdapter
+from engine.adapters.oracle import OracleAdapter
+from engine.adapters.phenom import PhenomAdapter
+from engine.adapters.platforms import GenericPlatformAdapter
+from engine.adapters.recruitee import RecruiteeAdapter
 from engine.adapters.smartrecruiters import SmartRecruitersAdapter
 from engine.adapters.workday import WorkdayAdapter
-from engine.adapters.recruitee import RecruiteeAdapter
-from engine.adapters.bamboohr import BambooHRAdapter
-from engine.adapters.jobvite import JobviteAdapter
-from engine.adapters.oracle import OracleAdapter
-from engine.adapters.custom import CustomAdapter
-from engine.adapters.eightfold import EightfoldAdapter
-from engine.adapters.phenom import PhenomAdapter
-from engine.adapters.darwinbox import DarwinboxAdapter
-from engine.adapters.amazon import AmazonAdapter
-from engine.adapters.platforms import GenericPlatformAdapter
 
 _greenhouse = GreenhouseAdapter()
 _lever = LeverAdapter()
@@ -31,7 +31,7 @@ _phenom = PhenomAdapter()
 _darwinbox = DarwinboxAdapter()
 _amazon = AmazonAdapter()
 
-ADAPTER_REGISTRY: Dict[str, BaseATS] = {
+ADAPTER_REGISTRY: dict[str, BaseATS] = {
     "greenhouse": _greenhouse,
     "lever": _lever,
     "ashby": _ashby,
@@ -79,7 +79,7 @@ ADAPTER_REGISTRY: Dict[str, BaseATS] = {
 }
 
 
-def get_adapter(ats_provider: str) -> Optional[BaseATS]:
+def get_adapter(ats_provider: str) -> BaseATS | None:
     """Returns the adapter instance for the specified ATS provider or alias."""
     provider_key = ats_provider.strip().lower()
     return ADAPTER_REGISTRY.get(provider_key, _custom)

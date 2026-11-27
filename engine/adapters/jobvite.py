@@ -1,7 +1,8 @@
 import re
-from typing import List
 import xml.etree.ElementTree as ET
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -10,7 +11,7 @@ from engine.models import Company, RawJob
 class JobviteAdapter(BaseATS):
     provider_name = "jobvite"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         identifier = company.ats_identifier.strip()
         feed_url = f"https://app.jobvite.com/CompanyJobs/Xml.aspx?c={identifier}"
 
@@ -29,7 +30,7 @@ class JobviteAdapter(BaseATS):
                 return []
 
             root = ET.fromstring(response.text)
-            results: List[RawJob] = []
+            results: list[RawJob] = []
 
             for item in root.findall(".//job"):
                 job_id = item.findtext("id") or item.findtext("requisitionId") or ""
@@ -60,5 +61,5 @@ class JobviteAdapter(BaseATS):
                 )
 
             return results
-        except Exception:
+        except (httpx.HTTPError, ET.ParseError, OSError, ValueError, TypeError):
             return []

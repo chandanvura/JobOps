@@ -1,7 +1,8 @@
 import logging
-from typing import List
 from urllib.parse import urlparse
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -16,7 +17,7 @@ class PhenomAdapter(BaseATS):
     """
     provider_name = "phenom"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         if not company.careers_url:
             return []
 
@@ -82,7 +83,7 @@ class PhenomAdapter(BaseATS):
                             posted_at=posted_at,
                         )
                     )
-        except Exception as e:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
             logger.error(f"Error fetching Phenom jobs for {company.name}: {e}")
 
         return raw_jobs

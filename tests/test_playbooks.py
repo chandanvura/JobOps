@@ -1,6 +1,7 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+
 from engine.models import ProcessedJob, RoleCategory, WorkMode
 from engine.playbooks import PLAYBOOKS, PlaybookResolver
 from engine.storage.db import JobDatabase
@@ -18,7 +19,7 @@ def _make_isolated_repo(tmp_path: Path) -> PlaybookResolver:
     )
 
     db = JobDatabase(tmp_path / "data" / "jobops.db")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     sample_job = ProcessedJob(
         id="pb_test_1",
         external_id="ext_1",
@@ -157,7 +158,7 @@ def test_playbook_resolve_all_report(tmp_path):
 def test_db_refresh_freshness_and_prune(tmp_path):
     """Verify stale 24h flags are aged out and expired >14d jobs are deactivated."""
     db = JobDatabase(tmp_path / "test_prune.db")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     fresh_job = ProcessedJob(
         id="j_fresh", external_id="1", company_id="c1", company_name="Co", ats_provider="greenhouse",

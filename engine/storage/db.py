@@ -2,9 +2,10 @@ import json
 import logging
 import os
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
+
 from engine.models import Company, ProcessedJob
 
 logger = logging.getLogger("jobops.db")
@@ -15,7 +16,7 @@ DEFAULT_MAX_AGE_DAYS = int(os.environ.get("JOBOPS_MAX_AGE_DAYS", "14"))
 
 
 class JobDatabase:
-    def __init__(self, db_path: Path = DEFAULT_DB_PATH, auto_seed: Optional[bool] = None):
+    def __init__(self, db_path: Path = DEFAULT_DB_PATH, auto_seed: bool | None = None):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
@@ -145,7 +146,7 @@ class JobDatabase:
                 if not jobs or not isinstance(jobs, list):
                     return 0
 
-                now_iso = datetime.now(timezone.utc).isoformat()
+                now_iso = datetime.now(UTC).isoformat()
                 rows = [
                     (
                         j.get("id"),
@@ -191,11 +192,11 @@ class JobDatabase:
                     rows,
                 )
                 return len(rows)
-            except Exception as e:
+            except (OSError, json.JSONDecodeError, sqlite3.Error, ValueError, TypeError) as e:
                 logger.warning(f"Failed seeding database from cache {target_file}: {e}")
                 return 0
 
-    def get_seen_job_ids(self) -> Set[str]:
+    def get_seen_job_ids(self) -> set[str]:
         with self._get_conn() as conn:
             cursor = conn.execute("SELECT id FROM jobs")
             return {row["id"] for row in cursor.fetchall()}
@@ -217,11 +218,11 @@ class JobDatabase:
                 (company.id, company.name, company.ats_provider, company.ats_identifier, company.careers_url, company.priority, 1 if company.enabled else 0),
             )
 
-    def save_processed_jobs(self, jobs: List[ProcessedJob]) -> int:
+    def save_processed_jobs(self, jobs: list[ProcessedJob]) -> int:
         if not jobs:
             return 0
         new_count = 0
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
 
         with self._get_conn() as conn:
             for job in jobs:
@@ -276,9 +277,9 @@ class JobDatabase:
                     )
         return new_count
 
-    def refresh_freshness_and_prune(self, max_age_days: int = DEFAULT_MAX_AGE_DAYS) -> Dict[str, int]:
+    def refresh_freshness_and_prune(self, max_age_days: int = DEFAULT_MAX_AGE_DAYS) -> dict[str, int]:
         """Recompute age_hours & is_fresh_24h for active jobs and deactivate stale listings."""
-        from engine.dedup.freshness import parse_datetime, evaluate_freshness
+        from engine.dedup.freshness import evaluate_freshness, parse_datetime
 
         updated_fresh = 0
         pruned_count = 0
@@ -321,17 +322,17 @@ class JobDatabase:
 
     def get_filtered_jobs(
         self,
-        role: Optional[str] = None,
-        experience_level: Optional[str] = None,
-        city: Optional[str] = None,
-        work_mode: Optional[str] = None,
+        role: str | None = None,
+        experience_level: str | None = None,
+        city: str | None = None,
+        work_mode: str | None = None,
         fresh_only: bool = False,
-        search_term: Optional[str] = None,
-        limit: Optional[int] = 100,
+        search_term: str | None = None,
+        limit: int | None = 100,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         query = "SELECT * FROM jobs WHERE is_active = 1 AND is_engineering = 1"
-        params: List[Any] = []
+        params: list[Any] = []
 
         if fresh_only:
             query += " AND is_fresh_24h = 1"
@@ -375,12 +376,12 @@ class JobDatabase:
                 results.append(d)
             return results
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         with self._get_conn() as conn:
             total_jobs = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_engineering = 1").fetchone()[0]
             fresh_24h = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_fresh_24h = 1 AND is_engineering = 1").fetchone()[0]
             companies_count = conn.execute("SELECT COUNT(*) FROM companies WHERE enabled = 1").fetchone()[0]
-            now_iso = datetime.now(timezone.utc).isoformat()
+            now_iso = datetime.now(UTC).isoformat()
             tripped_circuits = conn.execute(
                 "SELECT COUNT(*) FROM companies WHERE circuit_open_until IS NOT NULL AND circuit_open_until > ?",
                 (now_iso,),
@@ -397,11 +398,11 @@ class JobDatabase:
         company_id: str,
         success: bool,
         jobs_found: int = 0,
-        error: Optional[str] = None,
+        error: str | None = None,
         failure_threshold: int = 5,
     ) -> None:
         """Track per-company scrape outcomes and trip exponential backoff circuit breakers on repeat failures."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         now_iso = now.isoformat()
         with self._get_conn() as conn:
             if success:
@@ -432,8 +433,8 @@ class JobDatabase:
                     (now_iso, failures, (error or "unknown error")[:300], circuit_until, company_id),
                 )
 
-    def get_open_circuit_company_ids(self) -> Set[str]:
-        now_iso = datetime.now(timezone.utc).isoformat()
+    def get_open_circuit_company_ids(self) -> set[str]:
+        now_iso = datetime.now(UTC).isoformat()
         with self._get_conn() as conn:
             rows = conn.execute(
                 "SELECT id FROM companies WHERE circuit_open_until IS NOT NULL AND circuit_open_until > ?",
@@ -441,7 +442,7 @@ class JobDatabase:
             ).fetchall()
             return {r["id"] for r in rows}
 
-    def get_failing_companies(self, min_failures: int = 3) -> List[Dict[str, Any]]:
+    def get_failing_companies(self, min_failures: int = 3) -> list[dict[str, Any]]:
         with self._get_conn() as conn:
             rows = conn.execute(
                 """
@@ -462,7 +463,7 @@ class JobDatabase:
             )
 
     def start_ingestion_run(self, companies_checked: int) -> int:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         with self._get_conn() as conn:
             cursor = conn.execute(
                 "INSERT INTO ingestion_runs (started_at, companies_checked, status) VALUES (?, ?, 'running')",
@@ -478,9 +479,9 @@ class JobDatabase:
         fresh_24h_jobs: int,
         duration_seconds: float,
         status: str = "completed",
-        observability: Optional[Dict[str, Any]] = None,
+        observability: dict[str, Any] | None = None,
     ) -> None:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         obs_str = json.dumps(observability) if observability is not None else None
         with self._get_conn() as conn:
             conn.execute(
@@ -493,7 +494,7 @@ class JobDatabase:
                 (now_iso, raw_jobs_found, new_jobs_saved, fresh_24h_jobs, round(duration_seconds, 2), status, obs_str, run_id),
             )
 
-    def get_latest_telemetry(self) -> Dict[str, Any]:
+    def get_latest_telemetry(self) -> dict[str, Any]:
         stats = self.get_stats()
         with self._get_conn() as conn:
             row = conn.execute(
@@ -506,17 +507,17 @@ class JobDatabase:
             if raw_obs:
                 try:
                     observability = json.loads(raw_obs)
-                except Exception as e:
+                except (json.JSONDecodeError, ValueError, TypeError) as e:
                     logger.warning(f"Failed parsing ingestion run observability JSON: {e}")
                     observability = None
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "catalog": stats,
             "last_run": last_run,
             "observability": observability,
         }
 
-    def get_oldest_active_jobs(self, limit: int = 120) -> List[Dict[str, Any]]:
+    def get_oldest_active_jobs(self, limit: int = 120) -> list[dict[str, Any]]:
         with self._get_conn() as conn:
             rows = conn.execute(
                 """
@@ -530,7 +531,7 @@ class JobDatabase:
             ).fetchall()
             return [dict(r) for r in rows]
 
-    def deactivate_jobs(self, job_ids: List[str]) -> int:
+    def deactivate_jobs(self, job_ids: list[str]) -> int:
         if not job_ids:
             return 0
         with self._get_conn() as conn:
@@ -543,12 +544,12 @@ class JobDatabase:
     def export_with_lkg_guard(
         self,
         output_path: Path,
-        limit: Optional[int] = None,
-        max_age_days: Optional[int] = None,
+        limit: int | None = None,
+        max_age_days: int | None = None,
         max_drop_ratio: float = 0.25,
         force: bool = False,
-        telemetry_path: Optional[Path] = None,
-    ) -> Dict[str, Any]:
+        telemetry_path: Path | None = None,
+    ) -> dict[str, Any]:
         """Export active jobs while refusing catastrophic catalog drops (Last-Known-Good protection)."""
         out = Path(output_path)
         prev_count = 0
@@ -558,7 +559,7 @@ class JobDatabase:
                     prev_data = json.load(f)
                 if isinstance(prev_data, list):
                     prev_count = len(prev_data)
-            except Exception as e:
+            except (OSError, json.JSONDecodeError, ValueError, TypeError) as e:
                 logger.warning(f"Could not read previous catalog {out} for LKG check: {e}")
                 prev_count = 0
 

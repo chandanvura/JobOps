@@ -1,6 +1,7 @@
 import logging
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -20,7 +21,7 @@ class EightfoldAdapter(BaseATS):
     """
     provider_name = "eightfold"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         parts = company.ats_identifier.split("|")
         host = parts[0].strip()
         domain = parts[1].strip() if len(parts) > 1 else host
@@ -47,7 +48,7 @@ class EightfoldAdapter(BaseATS):
                         data = res.json().get("data", {})
                         positions = data.get("positions", [])
                         return self._parse_positions(positions, company, base_url, domain)
-            except Exception as e:
+            except (OSError, ValueError, TypeError, KeyError) as e:
                 logger.warning(f"Eightfold curl_cffi failed for {company.name}: {e}")
 
         # Fallback to standard httpx
@@ -65,12 +66,12 @@ class EightfoldAdapter(BaseATS):
                 data = res.json().get("data", {})
                 positions = data.get("positions", [])
                 return self._parse_positions(positions, company, base_url, domain)
-        except Exception as e:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
             logger.error(f"Error fetching Eightfold jobs for {company.name}: {e}")
 
         return []
 
-    def _parse_positions(self, positions: list, company: Company, base_url: str, domain: str = "") -> List[RawJob]:
+    def _parse_positions(self, positions: list, company: Company, base_url: str, domain: str = "") -> list[RawJob]:
         raw_jobs = []
         for pos in positions:
             if not isinstance(pos, dict):
@@ -99,8 +100,8 @@ class EightfoldAdapter(BaseATS):
             if posted_ts:
                 try:
                     posted_at = parse_datetime(posted_ts)
-                except Exception:
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Could not parse Eightfold postedTs {posted_ts!r}: {e}")
 
             desc_raw = pos.get("jobDescription") or pos.get("description") or ""
             clean_desc = self.clean_html(desc_raw)

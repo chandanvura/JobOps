@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 from engine.adapters.registry import get_adapter
 from engine.models import Company
 

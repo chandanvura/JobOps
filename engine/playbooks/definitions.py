@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import Any
 
 
 @dataclass
@@ -9,12 +9,12 @@ class Playbook:
     category: str  # "data_quality", "runtime", "caching", "reliability", "build"
     severity: str  # "critical", "high", "medium", "low"
     description: str
-    trigger_symptoms: List[str]
+    trigger_symptoms: list[str]
     auto_resolvable: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
-PLAYBOOKS: Dict[str, Playbook] = {
+PLAYBOOKS: dict[str, Playbook] = {
     "PB-001": Playbook(
         id="PB-001",
         name="Raw HTML Entities & Unclosed Tag Sanitization",

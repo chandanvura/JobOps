@@ -1,5 +1,6 @@
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -8,7 +9,7 @@ from engine.models import Company, RawJob
 class AshbyAdapter(BaseATS):
     provider_name = "ashby"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         org_id = company.ats_identifier.strip()
         url = f"https://api.ashbyhq.com/posting-api/job-board/{org_id}?includeCompensation=true"
 
@@ -18,7 +19,7 @@ class AshbyAdapter(BaseATS):
 
         data = response.json()
         jobs_list = data.get("jobs", [])
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         for item in jobs_list:
             if item.get("isListed") is False:

@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Tuple
+
 from engine.models import RoleCategory
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "roles.json"
@@ -17,7 +17,7 @@ class RoleClassifier:
                 data = json.load(f)
                 self.rules = data.get("categories", {})
 
-    def classify(self, title: str, description: str = "") -> Tuple[RoleCategory, str]:
+    def classify(self, title: str, description: str = "") -> tuple[RoleCategory, str]:
         """
         Returns (RoleCategory, readable_label).
         Prioritizes specific technical domains over general titles.

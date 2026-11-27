@@ -1,6 +1,7 @@
 import logging
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -15,7 +16,7 @@ class AmazonAdapter(BaseATS):
     """
     provider_name = "amazon"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         api_url = "https://www.amazon.jobs/en/search.json"
         params = [
             ("country", "IND"),
@@ -63,7 +64,7 @@ class AmazonAdapter(BaseATS):
                             posted_at=posted_at,
                         )
                     )
-        except Exception as e:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
             logger.error(f"Error fetching Amazon jobs: {e}")
 
         return raw_jobs

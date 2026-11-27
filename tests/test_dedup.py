@@ -1,5 +1,6 @@
-from datetime import datetime, timezone, timedelta
-from engine.dedup.fingerprint import compute_job_id, SeenJobsRegistry
+from datetime import UTC, datetime, timedelta
+
+from engine.dedup.fingerprint import SeenJobsRegistry, compute_job_id
 from engine.dedup.freshness import evaluate_freshness, parse_datetime
 
 
@@ -36,7 +37,7 @@ def test_seen_registry():
 
 
 def test_freshness_boundary_conditions():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # 23.9 hours ago -> within 24h
     t_23_9 = now - timedelta(hours=23.9)
@@ -58,7 +59,7 @@ def test_freshness_boundary_conditions():
 
 
 def test_clock_skew_and_future_dates():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # 10 minutes in future due to server clock drift
     future_time = now + timedelta(minutes=10)
     is_fresh, age = evaluate_freshness(future_time, max_hours=24.0)
@@ -78,4 +79,4 @@ def test_parse_datetime_multi_timezone():
 def test_parse_datetime_relative():
     dt = parse_datetime("3 hours ago")
     assert dt is not None
-    assert (datetime.now(timezone.utc) - dt).total_seconds() < 4 * 3600
+    assert (datetime.now(UTC) - dt).total_seconds() < 4 * 3600

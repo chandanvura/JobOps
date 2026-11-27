@@ -1,8 +1,8 @@
 from engine.classifier.engineering import is_engineering_job
-from engine.classifier.roles import RoleClassifier
 from engine.classifier.experience import extract_experience
-from engine.classifier.skills import SkillExtractor
 from engine.classifier.location import LocationNormalizer
+from engine.classifier.roles import RoleClassifier
+from engine.classifier.skills import SkillExtractor
 from engine.models import RoleCategory, WorkMode
 
 
@@ -22,16 +22,16 @@ def test_engineering_segregation():
 
 def test_role_classification():
     clf = RoleClassifier()
-    role, label = clf.classify("Senior Backend Engineer - Python")
+    role, _label = clf.classify("Senior Backend Engineer - Python")
     assert role == RoleCategory.BACKEND
 
-    role, label = clf.classify("Frontend Developer (React/TypeScript)")
+    role, _label = clf.classify("Frontend Developer (React/TypeScript)")
     assert role == RoleCategory.FRONTEND
 
-    role, label = clf.classify("DevOps / Cloud Engineer")
+    role, _label = clf.classify("DevOps / Cloud Engineer")
     assert role == RoleCategory.DEVOPS_SRE
 
-    role, label = clf.classify("AI Research Scientist (GenAI)")
+    role, _label = clf.classify("AI Research Scientist (GenAI)")
     assert role == RoleCategory.AI_ML
 
 

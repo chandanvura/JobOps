@@ -1,5 +1,6 @@
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -8,7 +9,7 @@ from engine.models import Company, RawJob
 class GreenhouseAdapter(BaseATS):
     provider_name = "greenhouse"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         board_token = company.ats_identifier.strip()
         url = f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs?content=true"
 
@@ -18,7 +19,7 @@ class GreenhouseAdapter(BaseATS):
 
         data = response.json()
         jobs_list = data.get("jobs", [])
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         for item in jobs_list:
             job_id = str(item.get("id"))

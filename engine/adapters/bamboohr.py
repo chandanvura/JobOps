@@ -1,5 +1,6 @@
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.models import Company, RawJob
 
@@ -7,7 +8,7 @@ from engine.models import Company, RawJob
 class BambooHRAdapter(BaseATS):
     provider_name = "bamboohr"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         subdomain = company.ats_identifier.strip()
         url = f"https://{subdomain}.bamboohr.com/careers/list"
 
@@ -23,7 +24,7 @@ class BambooHRAdapter(BaseATS):
 
             data = response.json()
             jobs_list = data.get("result", [])
-            results: List[RawJob] = []
+            results: list[RawJob] = []
 
             for item in jobs_list:
                 job_id = str(item.get("id"))
@@ -55,5 +56,5 @@ class BambooHRAdapter(BaseATS):
                 )
 
             return results
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError):
             return []

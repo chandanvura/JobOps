@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
-from typing import List
+from datetime import UTC, datetime
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.models import Company, RawJob
 
@@ -8,7 +9,7 @@ from engine.models import Company, RawJob
 class LeverAdapter(BaseATS):
     provider_name = "lever"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         site_token = company.ats_identifier.strip()
         url = f"https://api.lever.co/v0/postings/{site_token}?mode=json"
 
@@ -20,7 +21,7 @@ class LeverAdapter(BaseATS):
         if not isinstance(postings, list):
             return []
 
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         for item in postings:
             job_id = str(item.get("id"))
@@ -39,7 +40,7 @@ class LeverAdapter(BaseATS):
             created_at_ms = item.get("createdAt")
             posted_at = None
             if created_at_ms and isinstance(created_at_ms, (int, float)):
-                posted_at = datetime.fromtimestamp(created_at_ms / 1000.0, tz=timezone.utc)
+                posted_at = datetime.fromtimestamp(created_at_ms / 1000.0, tz=UTC)
 
             job_url = item.get("hostedUrl") or f"https://jobs.lever.co/{site_token}/{job_id}"
 

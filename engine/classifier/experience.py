@@ -1,6 +1,4 @@
 import re
-from typing import Optional, Tuple
-
 
 # Word-to-number mapping for spelled-out years in job descriptions
 WORD_NUMS = {
@@ -21,14 +19,14 @@ WORD_NUMS = {
 WORD_NUMS_PATTERN = r"(?:\d+|" + "|".join(WORD_NUMS.keys()) + r")"
 
 
-def _parse_num(val: str) -> Optional[int]:
+def _parse_num(val: str) -> int | None:
     val = val.strip().lower()
     if val.isdigit():
         return int(val)
     return WORD_NUMS.get(val)
 
 
-def extract_experience(title: str, description: str = "") -> Tuple[Optional[int], Optional[int], str]:
+def extract_experience(title: str, description: str = "") -> tuple[int | None, int | None, str]:
     """
     Extracts experience requirements in years (min, max, label).
     Deeply analyzes title seniority, corporate leveling tokens (I, II, III, IV, Senior, Lead, Staff),
@@ -58,7 +56,7 @@ def extract_experience(title: str, description: str = "") -> Tuple[Optional[int]
     if range_match:
         mn = _parse_num(range_match.group(1))
         mx = _parse_num(range_match.group(2))
-        if mn is not None and mx is not None and mn <= mx and mx <= 30:
+        if mn is not None and mx is not None and mn <= mx <= 30:
             return mn, mx, _format_level(mn, mx)
 
     # Pattern B: "minimum of X years", "at least X+ years", "X+ years of hands-on experience"
@@ -105,7 +103,7 @@ def extract_experience(title: str, description: str = "") -> Tuple[Optional[int]
     return None, None, "Any Experience"
 
 
-def _format_level(min_y: Optional[int], max_y: Optional[int]) -> str:
+def _format_level(min_y: int | None, max_y: int | None) -> str:
     if min_y is None and max_y is None:
         return "Any Experience"
     if min_y == 0 and (max_y is None or max_y <= 1):

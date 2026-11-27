@@ -1,5 +1,4 @@
 import hashlib
-from typing import Set
 
 
 def compute_job_id(company_id: str, ats_provider: str, external_id: str) -> str:
@@ -17,8 +16,8 @@ class SeenJobsRegistry:
     Prevents redundant processing, re-fetching of details, and duplicate DB writes.
     """
 
-    def __init__(self, initial_ids: Set[str] | None = None):
-        self._seen: Set[str] = set(initial_ids or [])
+    def __init__(self, initial_ids: set[str] | None = None):
+        self._seen: set[str] = set(initial_ids or [])
 
     def is_seen(self, job_id: str) -> bool:
         return job_id in self._seen
@@ -29,5 +28,5 @@ class SeenJobsRegistry:
     def count(self) -> int:
         return len(self._seen)
 
-    def all_ids(self) -> Set[str]:
+    def all_ids(self) -> set[str]:
         return set(self._seen)

@@ -1,5 +1,6 @@
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -8,7 +9,7 @@ from engine.models import Company, RawJob
 class RecruiteeAdapter(BaseATS):
     provider_name = "recruitee"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         company_slug = company.ats_identifier.strip()
         url = f"https://api.recruitee.com/c/{company_slug}/offers"
 
@@ -18,7 +19,7 @@ class RecruiteeAdapter(BaseATS):
 
         data = response.json()
         offers = data.get("offers", [])
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         for item in offers:
             job_id = str(item.get("id"))

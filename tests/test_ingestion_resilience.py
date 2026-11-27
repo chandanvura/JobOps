@@ -1,5 +1,7 @@
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
+
 from engine.collector import JobCollector
 from engine.models import Company, RawJob
 from engine.storage.db import JobDatabase
@@ -46,7 +48,7 @@ async def test_partial_source_failure_resilience(tmp_path):
         job_url="https://example.com/job/999",
         location_raw="Bengaluru, India",
         description_text="Building distributed Golang microservices and PostgreSQL systems.",
-        posted_at=datetime.now(timezone.utc),
+        posted_at=datetime.now(UTC),
     )
 
     import engine.adapters.registry

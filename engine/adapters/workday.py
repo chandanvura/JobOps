@@ -1,6 +1,7 @@
-from typing import List
 from urllib.parse import urlparse
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -31,7 +32,7 @@ class WorkdayAdapter(BaseATS):
         site = parts[1] if len(parts) > 1 else "careers"
         return host, tenant, site
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         host, tenant, site = self._resolve_config(company)
         if not host or not tenant or not site:
             return []
@@ -51,7 +52,7 @@ class WorkdayAdapter(BaseATS):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
 
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         try:
             # Use curl_cffi for browser TLS/JA3 impersonation to bypass Cloudflare 429
@@ -99,7 +100,7 @@ class WorkdayAdapter(BaseATS):
                         raw_payload={"bulletFields": item.get("bulletFields", [])},
                     )
                 )
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError):
             return []
 
         return results

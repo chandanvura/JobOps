@@ -1,10 +1,14 @@
 import json
+import logging
 import re
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
+
+logger = logging.getLogger("JobOpsCustom")
 
 
 class CustomAdapter(BaseATS):
@@ -14,7 +18,7 @@ class CustomAdapter(BaseATS):
     """
     provider_name = "custom"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         if not company.careers_url:
             return []
 
@@ -29,7 +33,7 @@ class CustomAdapter(BaseATS):
                 html = response.text
             else:
                 html = ""
-        except Exception:
+        except (httpx.HTTPError, OSError):
             html = ""
 
         if not html:
@@ -39,7 +43,7 @@ class CustomAdapter(BaseATS):
                     c_resp = await c_session.get(company.careers_url, allow_redirects=True)
                     if c_resp.status_code == 200:
                         html = c_resp.text
-            except Exception:
+            except (ImportError, OSError):
                 return []
 
         if not html:
@@ -70,7 +74,7 @@ class CustomAdapter(BaseATS):
             return await AshbyAdapter().fetch_jobs(sub_comp, client)
 
         # 4. Check for JSON-LD JobPosting schemas
-        results: List[RawJob] = []
+        results: list[RawJob] = []
         json_ld_blocks = re.findall(r'<script[^>]*type=[\'"]application/ld\+json[\'"][^>]*>(.*?)</script>', html, re.DOTALL | re.IGNORECASE)
 
         for block in json_ld_blocks:
@@ -107,7 +111,8 @@ class CustomAdapter(BaseATS):
                                 posted_at=posted_at,
                             )
                         )
-            except Exception:
+            except (json.JSONDecodeError, ValueError, TypeError, KeyError) as e:
+                logger.debug(f"Skipping malformed custom JSON-LD block for {company.name}: {e}")
                 continue
 
         return results

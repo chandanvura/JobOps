@@ -1,9 +1,10 @@
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import httpx
 
 from engine.adapters.base import sanitize_text
@@ -25,15 +26,15 @@ COMPANIES_PATH = Path(__file__).resolve().parent.parent / "registry" / "companie
 
 
 class JobCollector:
-    def __init__(self, db: Optional[JobDatabase] = None):
+    def __init__(self, db: JobDatabase | None = None):
         self.db = db or JobDatabase()
         self.role_classifier = RoleClassifier()
         self.skill_extractor = SkillExtractor()
         self.location_normalizer = LocationNormalizer()
         self.registry = SeenJobsRegistry(self.db.get_seen_job_ids())
-        self._last_company_ok: Dict[str, bool] = {}
+        self._last_company_ok: dict[str, bool] = {}
 
-    def load_companies(self) -> List[Company]:
+    def load_companies(self) -> list[Company]:
         if not COMPANIES_PATH.exists():
             return []
         with open(COMPANIES_PATH, "r", encoding="utf-8") as f:
@@ -45,7 +46,7 @@ class JobCollector:
 
     async def collect_from_company(
         self, company: Company, client: httpx.AsyncClient, strict_24h: bool = True
-    ) -> List[ProcessedJob]:
+    ) -> list[ProcessedJob]:
         adapter = get_adapter(company.ats_provider)
         if not adapter:
             logger.warning(f"No adapter found for ATS provider: {company.ats_provider}")
@@ -67,7 +68,7 @@ class JobCollector:
                     raw_jobs = await adapter.fetch_jobs(company, client)
                     self.db.record_company_outcome(company.id, success=True, jobs_found=len(raw_jobs))
                     self._last_company_ok[company.id] = True
-                except Exception as retry_err:
+                except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as retry_err:
                     self.db.record_company_outcome(company.id, success=False, error=str(retry_err))
                     self._last_company_ok[company.id] = False
                     logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}) after retry: {retry_err}")
@@ -77,13 +78,13 @@ class JobCollector:
                 self._last_company_ok[company.id] = False
                 logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}): {e}")
                 return []
-        except Exception as e:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
             self.db.record_company_outcome(company.id, success=False, error=str(e))
             self._last_company_ok[company.id] = False
             logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}): {e}")
             return []
 
-        processed: List[ProcessedJob] = []
+        processed: list[ProcessedJob] = []
 
         for raw in raw_jobs:
             job_id = compute_job_id(company.id, company.ats_provider, raw.external_id)
@@ -101,7 +102,7 @@ class JobCollector:
             # Freshness Evaluation (Strict 24h Window)
             is_fresh, hours_ago = evaluate_freshness(raw.posted_at, max_hours=24.0)
 
-            now_utc = datetime.now(timezone.utc)
+            now_utc = datetime.now(UTC)
 
             # If strict 24h is requested and an explicit date is given that exceeds 24h, skip
             if strict_24h and raw.posted_at is not None and not is_fresh:
@@ -155,14 +156,14 @@ class JobCollector:
 
         return processed
 
-    async def run(self, strict_24h: bool = True, concurrency: int = 10) -> Dict[str, Any]:
+    async def run(self, strict_24h: bool = True, concurrency: int = 10) -> dict[str, Any]:
         companies = self.load_companies()
         open_circuits = self.db.get_open_circuit_company_ids()
         run_id = self.db.start_ingestion_run(companies_checked=len(companies))
         logger.info(f"Loaded {len(companies)} active companies from registry (open circuits skipped: {len(open_circuits)}).")
 
-        start_time = datetime.now(timezone.utc)
-        all_new_jobs: List[ProcessedJob] = []
+        start_time = datetime.now(UTC)
+        all_new_jobs: list[ProcessedJob] = []
 
         semaphore = asyncio.Semaphore(concurrency)
         limits = httpx.Limits(max_keepalive_connections=25, max_connections=60)
@@ -175,7 +176,7 @@ class JobCollector:
             "Accept": "application/json, text/plain, */*",
         }
 
-        adapter_stats: Dict[str, Dict[str, Any]] = {}
+        adapter_stats: dict[str, dict[str, Any]] = {}
         ok_companies = 0
         err_companies = 0
 
@@ -200,7 +201,7 @@ class JobCollector:
                         if jobs:
                             logger.info(f"[{comp.name}] Found {len(jobs)} new engineering jobs.")
                         return jobs
-                    except Exception as e:
+                    except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError) as e:
                         bucket["errors"] += 1
                         err_companies += 1
                         logger.debug(f"[{comp.name}] Collection exception: {e}")
@@ -213,7 +214,7 @@ class JobCollector:
 
         saved_count = self.db.save_processed_jobs(all_new_jobs)
         self.db.refresh_freshness_and_prune()
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+        duration = (datetime.now(UTC) - start_time).total_seconds()
 
         fresh_count = sum(1 for j in all_new_jobs if j.is_fresh_24h)
         total_attempted = max(1, ok_companies + err_companies)

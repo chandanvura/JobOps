@@ -1,5 +1,6 @@
-from typing import List
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -8,7 +9,7 @@ from engine.models import Company, RawJob
 class SmartRecruitersAdapter(BaseATS):
     provider_name = "smartrecruiters"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         identifier = company.ats_identifier.strip()
         url = f"https://api.smartrecruiters.com/v1/companies/{identifier}/postings?limit=100"
 
@@ -18,7 +19,7 @@ class SmartRecruitersAdapter(BaseATS):
 
         data = response.json()
         postings = data.get("content", [])
-        results: List[RawJob] = []
+        results: list[RawJob] = []
 
         for item in postings:
             job_id = str(item.get("id"))

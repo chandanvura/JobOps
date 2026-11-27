@@ -2,9 +2,10 @@ import asyncio
 import json
 import logging
 import urllib.request
-from typing import List
 from urllib.parse import urlparse
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -19,7 +20,7 @@ class DarwinboxAdapter(BaseATS):
     """
     provider_name = "darwinbox"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         parts = company.ats_identifier.split("|")
         subdomain = parts[0].strip()
         if not subdomain:
@@ -46,7 +47,7 @@ class DarwinboxAdapter(BaseATS):
         loop = asyncio.get_running_loop()
         try:
             data = await loop.run_in_executor(None, _fetch_sync)
-        except Exception as e:
+        except (OSError, ValueError, TypeError, KeyError) as e:
             logger.warning(f"Darwinbox candidate API failed for {company.name}: {e}")
             return []
 

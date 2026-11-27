@@ -3,9 +3,10 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+
+from engine.adapters.registry import get_adapter
 from engine.collector import JobCollector
 from engine.models import Company
-from engine.adapters.registry import get_adapter
 from engine.storage.db import JobDatabase
 
 

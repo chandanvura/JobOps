@@ -2,12 +2,13 @@ import json
 import logging
 import sqlite3
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from engine.adapters.base import sanitize_text
 from engine.storage.db import JobDatabase
+
 from .definitions import PLAYBOOKS, Playbook
 
 logger = logging.getLogger("jobops.playbooks")
@@ -15,12 +16,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 class PlaybookIssue:
-    def __init__(self, playbook_id: str, symptom: str, details: Dict[str, Any]):
+    def __init__(self, playbook_id: str, symptom: str, details: dict[str, Any]):
         self.playbook_id = playbook_id
         self.symptom = symptom
         self.details = details
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "playbook_id": self.playbook_id,
             "playbook_name": PLAYBOOKS.get(self.playbook_id, Playbook("", "", "", "", "", [])).name,
@@ -36,7 +37,7 @@ class PlaybookResolver:
         self.jobs_json_path = self.repo_root / "web" / "public" / "jobs.json"
         self.companies_json_path = self.repo_root / "web" / "public" / "companies.json"
 
-    def list_playbooks(self) -> List[Dict[str, Any]]:
+    def list_playbooks(self) -> list[dict[str, Any]]:
         return [
             {
                 "id": pb.id,
@@ -50,16 +51,16 @@ class PlaybookResolver:
             for pb in PLAYBOOKS.values()
         ]
 
-    def diagnose(self) -> List[PlaybookIssue]:
-        issues: List[PlaybookIssue] = []
+    def diagnose(self) -> list[PlaybookIssue]:
+        issues: list[PlaybookIssue] = []
 
         # Load jobs.json once for PB-001, PB-002, and PB-004 checks
-        cached_jobs: Optional[List[Dict[str, Any]]] = None
+        cached_jobs: list[dict[str, Any]] | None = None
         if self.jobs_json_path.exists():
             try:
                 with open(self.jobs_json_path, "r", encoding="utf-8") as f:
                     cached_jobs = json.load(f)
-            except Exception as e:
+            except (OSError, json.JSONDecodeError, ValueError) as e:
                 logger.error(f"Error checking jobs.json: {e}")
 
         # Check PB-001: Raw HTML & Unclosed Tag Sanitization
@@ -130,7 +131,7 @@ class PlaybookResolver:
                             details={"db_count": db_job_count, "json_count": json_count},
                         )
                     )
-            except Exception as e:
+            except (sqlite3.Error, OSError, ValueError, TypeError) as e:
                 logger.error(f"Error checking cache desync: {e}")
 
         # Check PB-005: Chronically failing companies without an active circuit breaker cooldown
@@ -149,7 +150,7 @@ class PlaybookResolver:
                             details={"count": len(failing), "sample": [c["id"] for c in failing[:5]]},
                         )
                     )
-            except Exception as e:
+            except (sqlite3.Error, OSError) as e:
                 logger.error(f"Error checking failing company circuits: {e}")
 
         # Check PB-006: Web Build Integrity
@@ -165,7 +166,7 @@ class PlaybookResolver:
 
         return issues
 
-    def resolve_pb001(self) -> Dict[str, Any]:
+    def resolve_pb001(self) -> dict[str, Any]:
         """Auto-Resolve PB-001: Sanitize HTML tags & entities."""
         cleaned_count = 0
         sanitize_str = lambda text: sanitize_text(text, strip_boilerplate=True)
@@ -204,7 +205,7 @@ class PlaybookResolver:
 
         return {"status": "resolved", "playbook_id": "PB-001", "records_sanitized": cleaned_count}
 
-    def resolve_pb002(self) -> Dict[str, Any]:
+    def resolve_pb002(self) -> dict[str, Any]:
         """Auto-Resolve PB-002: Normalize locations to Indian tech hubs."""
         from engine.classifier.location import LocationNormalizer
 
@@ -242,7 +243,7 @@ class PlaybookResolver:
 
         return {"status": "resolved", "playbook_id": "PB-002", "locations_normalized": normalized_count}
 
-    def resolve_pb003(self) -> Dict[str, Any]:
+    def resolve_pb003(self) -> dict[str, Any]:
         """Auto-Resolve PB-003: Check and ensure requirements.txt contains all core dependencies."""
         req_file = self.repo_root / "requirements.txt"
         required_deps = {
@@ -264,7 +265,7 @@ class PlaybookResolver:
 
         return {"status": "resolved", "playbook_id": "PB-003", "added_dependencies": added}
 
-    def resolve_pb004(self) -> Dict[str, Any]:
+    def resolve_pb004(self) -> dict[str, Any]:
         """Auto-Resolve PB-004: Re-export edge caches from SQLite DB with LKG guard."""
         if not self.db_path.exists():
             return {"status": "skipped", "reason": "SQLite DB does not exist"}
@@ -273,7 +274,7 @@ class PlaybookResolver:
         res = db.export_with_lkg_guard(self.jobs_json_path, limit=None, force=True)
         return {"status": "resolved", "playbook_id": "PB-004", "exported_jobs": res.get("exported_jobs", 0)}
 
-    def resolve_pb005(self) -> Dict[str, Any]:
+    def resolve_pb005(self) -> dict[str, Any]:
         """Auto-Resolve PB-005: Isolate chronically failing ATS endpoints into exponential backoff."""
         if not self.db_path.exists():
             return {"status": "skipped", "reason": "SQLite DB does not exist"}
@@ -287,12 +288,13 @@ class PlaybookResolver:
             db.record_company_outcome(co["id"], success=False, error=co.get("last_error") or "PB-005 circuit tripped")
         return {"status": "resolved", "playbook_id": "PB-005", "tripped_circuits": len(failing)}
 
-    def resolve_pb008(self, sample: int = 100) -> Dict[str, Any]:
+    def resolve_pb008(self, sample: int = 100) -> dict[str, Any]:
         """Auto-Resolve PB-008: Probe oldest job URLs and deactivate confirmed 404/410 dead links."""
         if not self.db_path.exists():
             return {"status": "skipped", "reason": "SQLite DB does not exist"}
 
         import asyncio
+
         from engine.health import CompanyHealthChecker
 
         db = JobDatabase(self.db_path)
@@ -300,7 +302,7 @@ class PlaybookResolver:
         outcome = asyncio.run(checker.reap_dead_jobs(db, sample=sample))
         return {"status": "resolved", "playbook_id": "PB-008", **outcome}
 
-    def resolve_pb006(self) -> Dict[str, Any]:
+    def resolve_pb006(self) -> dict[str, Any]:
         """Auto-Resolve PB-006: Rebuild web distribution."""
         web_dir = self.repo_root / "web"
         if not web_dir.exists():
@@ -310,6 +312,7 @@ class PlaybookResolver:
             res = subprocess.run(
                 ["npm", "run", "build"],
                 cwd=str(web_dir),
+                check=False,
                 shell=True,
                 capture_output=True,
                 text=True,
@@ -319,13 +322,13 @@ class PlaybookResolver:
                 return {"status": "resolved", "playbook_id": "PB-006", "output": "Build completed successfully"}
             else:
                 return {"status": "failed", "playbook_id": "PB-006", "error": res.stderr[:300]}
-        except Exception as e:
+        except (OSError, subprocess.SubprocessError) as e:
             return {"status": "failed", "playbook_id": "PB-006", "error": str(e)}
 
-    def resolve_all(self) -> Dict[str, Any]:
+    def resolve_all(self) -> dict[str, Any]:
         """Diagnose and automatically resolve all known issues."""
         diagnosed_issues = self.diagnose()
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
 
         for issue in diagnosed_issues:
             pb_id = issue.playbook_id
@@ -348,7 +351,7 @@ class PlaybookResolver:
         # Re-diagnose to confirm resolution
         remaining_issues = self.diagnose()
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "diagnosed_count": len(diagnosed_issues),
             "resolved_count": sum(1 for r in results if r.get("status") == "resolved"),
             "remaining_unresolved": len(remaining_issues),

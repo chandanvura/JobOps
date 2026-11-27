@@ -1,9 +1,11 @@
-from datetime import datetime, timezone, timedelta
-from typing import Optional, Tuple
+import logging
 import re
+from datetime import UTC, datetime, timedelta
+
+logger = logging.getLogger("jobops.freshness")
 
 
-def parse_datetime(dt_str: Optional[str]) -> Optional[datetime]:
+def parse_datetime(dt_str: str | None) -> datetime | None:
     """Parses various date/time formats into UTC datetime."""
     if not dt_str:
         return None
@@ -11,14 +13,14 @@ def parse_datetime(dt_str: Optional[str]) -> Optional[datetime]:
         from dateutil import parser
         dt = parser.parse(dt_str)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
-    except Exception:
-        pass
+            dt = dt.replace(tzinfo=UTC)
+        return dt.astimezone(UTC)
+    except (ValueError, TypeError, OverflowError) as e:
+        logger.debug(f"Falling back to regex date parse for {dt_str!r}: {e}")
 
     # Fallback to regex for relative times
     low = str(dt_str).lower().strip()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if "today" in low or "just now" in low:
         return now
@@ -36,7 +38,7 @@ def parse_datetime(dt_str: Optional[str]) -> Optional[datetime]:
     return None
 
 
-def evaluate_freshness(posted_at: Optional[datetime], max_hours: float = 24.0) -> Tuple[bool, Optional[float]]:
+def evaluate_freshness(posted_at: datetime | None, max_hours: float = 24.0) -> tuple[bool, float | None]:
     """
     Evaluates whether a job posting is within the freshness window (default: 24 hours).
     Returns (is_fresh, hours_ago).
@@ -44,7 +46,7 @@ def evaluate_freshness(posted_at: Optional[datetime], max_hours: float = 24.0) -
     if not posted_at:
         return False, None
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     diff = (now - posted_at).total_seconds() / 3600.0
 
     if diff < 0:

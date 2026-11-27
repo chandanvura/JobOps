@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
-from typing import List
-import httpx
 import re
+from abc import ABC, abstractmethod
+
+import httpx
+
 from engine.models import Company, RawJob
 
 
@@ -25,7 +26,7 @@ def sanitize_text(text: str, strip_boilerplate: bool = False) -> str:
             r"^[\s\S]*?(?:content-intro|company-intro)[\s\S]*?(?:Summary|Overview|Role|Responsibilities|About the Role|About the Job|Position Overview|Job Description):?\s*",
             "",
             curr,
-            flags=re.I,
+            flags=re.IGNORECASE,
         )
     return re.sub(r"\s+", " ", curr).strip()
 
@@ -36,9 +37,8 @@ class BaseATS(ABC):
     provider_name: str = "base"
 
     @abstractmethod
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         """Fetches raw jobs from the target company ATS endpoint."""
-        pass
 
     @staticmethod
     def clean_html(html_text: str) -> str:

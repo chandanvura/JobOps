@@ -1,6 +1,7 @@
-from typing import List
 from urllib.parse import urlparse
+
 import httpx
+
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime
 from engine.models import Company, RawJob
@@ -9,7 +10,7 @@ from engine.models import Company, RawJob
 class OracleAdapter(BaseATS):
     provider_name = "oracle"
 
-    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> List[RawJob]:
+    async def fetch_jobs(self, company: Company, client: httpx.AsyncClient) -> list[RawJob]:
         parts = [p.strip() for p in (company.ats_identifier or "").split("|") if p.strip()]
         parsed = urlparse(company.careers_url or "")
 
@@ -43,7 +44,7 @@ class OracleAdapter(BaseATS):
             # Requisitions are in the expanded requisitionList of the search response
             req_list = items_arr[0].get("requisitionList", [])
             items = req_list if req_list else items_arr
-            results: List[RawJob] = []
+            results: list[RawJob] = []
 
             for item in items:
                 job_id = str(item.get("Id") or item.get("RequisitionNumber") or "")
@@ -77,5 +78,5 @@ class OracleAdapter(BaseATS):
                 )
 
             return results
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError, TypeError, KeyError):
             return []
