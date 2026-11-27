@@ -72,7 +72,7 @@ jobs:
       - name: Restore Persistent SQLite Telemetry & Circuit-Breaker State
         uses: actions/cache@v6
         with:
-          path: data/jobops.db
+          path: data/jobops.db*
           key: jobops-sqlite-${{ github.run_id }}
           restore-keys: |
             jobops-sqlite-
@@ -95,16 +95,16 @@ jobs:
             python -m engine.cli export --output web/public/jobs.json
           fi
 
-      - name: Auto-Heal & Validate Catalog Quality via Playbooks
-        run: |
-          python -m engine.cli playbook resolve --auto
-          python -m pytest -q
-
       - name: Run Frontend Tests & Production Build (Vite 8 + Tailwind v4)
         working-directory: web
         run: |
           npm test
           npm run build
+
+      - name: Auto-Heal & Validate Catalog Quality via Playbooks
+        run: |
+          python -m engine.cli playbook resolve --auto
+          python -m pytest -q
 
       - name: Publish SRE Pipeline Summary
         if: always()
@@ -143,7 +143,7 @@ jobs:
           git add web/public/jobs.json web/public/companies.json web/public/telemetry.json
           if ! git diff --quiet || ! git diff --staged --quiet; then
             git commit -m "chore(catalog): auto-sync latest 24h engineering jobs [skip ci]"
-            git pull --rebase origin main
+            git pull --rebase -X theirs origin main
             git push origin main
           fi
 

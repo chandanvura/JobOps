@@ -580,6 +580,9 @@ class JobDatabase:
         with open(t_path, "w", encoding="utf-8") as f:
             json.dump(self.get_latest_telemetry(), f, separators=(",", ":"))
 
+        with self._get_conn() as conn:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
         return {
             "status": "exported",
             "exported_jobs": new_count,
