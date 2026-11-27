@@ -1,7 +1,6 @@
 import json
 import re
 from typing import List
-from urllib.parse import urljoin
 import httpx
 from engine.adapters.base import BaseATS
 from engine.dedup.freshness import parse_datetime

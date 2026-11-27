@@ -50,7 +50,7 @@ jobs:
         run: uv pip install -r requirements.txt
 
       - name: Static Lint (Ruff)
-        run: uvx ruff check --select E9,F63,F7,F82 engine tests
+        run: uvx ruff check engine tests
 
       - name: Run Pytest Suite
         run: python -m pytest -v

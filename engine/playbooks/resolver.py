@@ -1,7 +1,5 @@
-import html
 import json
 import logging
-import re
 import sqlite3
 import subprocess
 from datetime import datetime, timezone
@@ -9,8 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from engine.adapters.base import sanitize_text
-from engine.models import Company
-from engine.storage.db import JobDatabase, DEFAULT_DB_PATH
+from engine.storage.db import JobDatabase
 from .definitions import PLAYBOOKS, Playbook
 
 logger = logging.getLogger("jobops.playbooks")

@@ -2,7 +2,6 @@ import json
 import logging
 import re
 from typing import List
-from urllib.parse import urlparse, urljoin
 import httpx
 try:
     from bs4 import BeautifulSoup

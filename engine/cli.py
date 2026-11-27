@@ -131,7 +131,7 @@ def main():
                 print(f"[{pb['id']}] {pb['name']} ({pb['severity'].upper()}) - Auto-Resolvable: {pb['auto_resolvable']}")
                 print(f"   Category: {pb['category']}")
                 print(f"   Description: {pb['description']}")
-                print(f"   Symptoms:")
+                print("   Symptoms:")
                 for sym in pb['trigger_symptoms']:
                     print(f"     * {sym}")
                 print()

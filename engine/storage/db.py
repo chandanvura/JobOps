@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from engine.models import Company, ProcessedJob
+
+logger = logging.getLogger("jobops.db")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB_PATH = REPO_ROOT / "data" / "jobops.db"
@@ -188,7 +191,8 @@ class JobDatabase:
                     rows,
                 )
                 return len(rows)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed seeding database from cache {target_file}: {e}")
                 return 0
 
     def get_seen_job_ids(self) -> Set[str]:
@@ -276,7 +280,6 @@ class JobDatabase:
         """Recompute age_hours & is_fresh_24h for active jobs and deactivate stale listings."""
         from engine.dedup.freshness import parse_datetime, evaluate_freshness
 
-        now = datetime.now(timezone.utc)
         updated_fresh = 0
         pruned_count = 0
 
@@ -503,7 +506,8 @@ class JobDatabase:
             if raw_obs:
                 try:
                     observability = json.loads(raw_obs)
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Failed parsing ingestion run observability JSON: {e}")
                     observability = None
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -554,7 +558,8 @@ class JobDatabase:
                     prev_data = json.load(f)
                 if isinstance(prev_data, list):
                     prev_count = len(prev_data)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Could not read previous catalog {out} for LKG check: {e}")
                 prev_count = 0
 
         maintenance = self.refresh_freshness_and_prune(

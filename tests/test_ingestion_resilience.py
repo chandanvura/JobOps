@@ -1,5 +1,3 @@
-import asyncio
-import json
 import pytest
 from datetime import datetime, timezone
 from engine.collector import JobCollector

@@ -4,5 +4,6 @@ pydantic>=2.14.4
 selectolax>=1.0.2
 python-dateutil>=4.0.0
 beautifulsoup4>=4.15.0
+anyio>=4.16.0
 pytest>=9.2.0
 pytest-asyncio>=1.5.0

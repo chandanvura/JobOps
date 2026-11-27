@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import time
 from datetime import datetime, timezone
@@ -215,9 +214,12 @@ class CompanyHealthChecker:
             async def check_one(item: Dict[str, Any]) -> Optional[str]:
                 async with semaphore:
                     await asyncio.sleep(0.03)
-                    telemetry = await self.probe_url(client, item.get("job_url", ""))
-                    if telemetry.get("status_code") in (404, 410):
-                        return item["id"]
+                    try:
+                        telemetry = await self.probe_url(client, item.get("job_url", ""))
+                        if telemetry.get("status_code") in (404, 410):
+                            return item["id"]
+                    except Exception as e:
+                        logger.debug(f"Error probing job URL {item.get('job_url')}: {e}")
                     return None
 
             outcomes = await asyncio.gather(*(check_one(c) for c in candidates))

@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -16,7 +15,7 @@ from engine.classifier.roles import RoleClassifier
 from engine.classifier.skills import SkillExtractor
 from engine.dedup.fingerprint import SeenJobsRegistry, compute_job_id
 from engine.dedup.freshness import evaluate_freshness
-from engine.models import Company, ProcessedJob, RawJob
+from engine.models import Company, ProcessedJob
 from engine.storage.db import JobDatabase
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
