@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import sys
 from pathlib import Path
 from engine.collector import JobCollector
 from engine.models import Company
@@ -31,6 +32,12 @@ def main():
     export_parser.add_argument("--output", default="data/jobs.json", help="Output file path")
     export_parser.add_argument("--limit", type=int, default=0, help="Maximum number of active jobs to export (0 = unlimited)")
     export_parser.add_argument("--max-age-days", type=int, default=None, help="Deactivate jobs older than N days (defaults to JOBOPS_MAX_AGE_DAYS or 14)")
+    export_parser.add_argument("--force", action="store_true", help="Bypass Last-Known-Good >25%% drop safety guard")
+
+    # Command: reap
+    reap_parser = subparsers.add_parser("reap", help="Probe oldest active job URLs and deactivate 404/410 dead listings")
+    reap_parser.add_argument("--sample", type=int, default=120, help="Number of oldest active URLs to verify")
+    reap_parser.add_argument("--concurrency", type=int, default=15, help="Concurrent HTTP probes")
 
     # Command: playbook
     playbook_parser = subparsers.add_parser("playbook", help="Manage and run autonomous zero-cost operational playbooks")
@@ -93,18 +100,25 @@ def main():
 
     elif args.command == "export":
         db = JobDatabase()
-        if args.max_age_days is not None:
-            db.refresh_freshness_and_prune(max_age_days=args.max_age_days)
-        else:
-            db.refresh_freshness_and_prune()
         export_limit = args.limit if args.limit and args.limit > 0 else None
-        jobs = db.get_filtered_jobs(limit=export_limit)
         out_path = Path(args.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(out_path, "w", encoding="utf-8") as f:
-            # Compact JSON representation for faster edge loading over CDN
-            json.dump(jobs, f, separators=(",", ":"))
-        print(f"Exported {len(jobs)} active jobs to {out_path.resolve()}")
+        res = db.export_with_lkg_guard(
+            output_path=out_path,
+            limit=export_limit,
+            max_age_days=args.max_age_days,
+            force=args.force,
+        )
+        if res["status"] == "aborted_lkg":
+            print(f"ERROR: {res['reason']}", file=sys.stderr)
+            sys.exit(1)
+        print(f"Exported {res['exported_jobs']} active jobs to {out_path.resolve()} (telemetry updated)")
+
+    elif args.command == "reap":
+        from engine.health import CompanyHealthChecker
+        db = JobDatabase()
+        checker = CompanyHealthChecker(timeout_seconds=8.0)
+        res = asyncio.run(checker.reap_dead_jobs(db, sample=args.sample, concurrency=args.concurrency))
+        print(json.dumps({"command": "reap", **res}, indent=2))
 
     elif args.command == "playbook":
         from engine.playbooks.resolver import PlaybookResolver
@@ -147,8 +161,12 @@ def main():
                     res = resolver.resolve_pb003()
                 elif pb_id == "PB-004":
                     res = resolver.resolve_pb004()
+                elif pb_id == "PB-005":
+                    res = resolver.resolve_pb005()
                 elif pb_id == "PB-006":
                     res = resolver.resolve_pb006()
+                elif pb_id == "PB-008":
+                    res = resolver.resolve_pb008()
                 else:
                     print(f"Unknown or manual playbook ID: {pb_id}")
                     return

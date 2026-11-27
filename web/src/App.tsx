@@ -130,6 +130,7 @@ export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<"jobs" | "companies">(initialUrlParams.tab);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -438,6 +439,7 @@ export const App: React.FC = () => {
 
       let loadedJobs: Job[] | null = null;
       let loadedCompanies: CompanyItem[] | null = null;
+      let loadedTelemetryAt: string | null = null;
 
       for (const basePath of candidatePaths) {
         const cleanBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
@@ -462,10 +464,23 @@ export const App: React.FC = () => {
             }
           }
 
+          if (!loadedTelemetryAt) {
+            const res = await fetch(`${cleanBase}telemetry.json?v=${Date.now()}`, { cache: "no-cache" });
+            if (res.ok) {
+              const tData = await res.json();
+              const ts = tData?.last_run?.finished_at || tData?.generated_at;
+              if (typeof ts === "string") loadedTelemetryAt = ts;
+            }
+          }
+
           if (loadedJobs && loadedCompanies) break;
         } catch {
           continue;
         }
+      }
+
+      if (loadedTelemetryAt) {
+        setLastSyncedAt(loadedTelemetryAt);
       }
 
       if (loadedJobs) {
@@ -830,6 +845,16 @@ export const App: React.FC = () => {
               <div className="inline-flex items-center gap-2 text-xs font-mono text-brand-secondary flex-shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 radar-beacon flex-shrink-0" aria-hidden="true" />
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Strict 24h cycle</span>
+                {lastSyncedAt && (() => {
+                  const diffMins = Math.max(0, Math.round((Date.now() - new Date(lastSyncedAt).getTime()) / 60000));
+                  const label = diffMins < 60 ? `${diffMins}m ago` : `${Math.round(diffMins / 60)}h ago`;
+                  return (
+                    <>
+                      <span className="text-brand-muted" aria-hidden="true">·</span>
+                      <span className="text-brand-muted tabular-nums">synced {label}</span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

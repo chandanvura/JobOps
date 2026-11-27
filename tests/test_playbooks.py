@@ -187,3 +187,44 @@ def test_db_refresh_freshness_and_prune(tmp_path):
     assert set(active_map.keys()) == {"j_fresh", "j_aged"}
     assert active_map["j_fresh"]["is_fresh_24h"] == 1
     assert active_map["j_aged"]["is_fresh_24h"] == 0
+
+
+def test_playbook_pb005_circuit_breaker_and_telemetry(tmp_path):
+    """Verify PB-005 isolates repeatedly failing portals and ingestion_runs telemetry records runs."""
+    from engine.models import Company
+
+    db = JobDatabase(tmp_path / "pb005.db")
+    co = Company(
+        id="flaky_co", name="Flaky Co", ats_provider="custom", ats_identifier="flaky",
+        careers_url="https://example.com/careers",
+    )
+    db.upsert_company(co)
+
+    run_id = db.start_ingestion_run(companies_checked=1)
+    for _ in range(5):
+        db.record_company_outcome("flaky_co", success=False, error="HTTP 503 Timeout", failure_threshold=5)
+    db.finish_ingestion_run(run_id, raw_jobs_found=0, new_jobs_saved=0, fresh_24h_jobs=0, duration_seconds=1.25)
+
+    assert "flaky_co" in db.get_open_circuit_company_ids()
+    telemetry = db.get_latest_telemetry()
+    assert telemetry["last_run"]["id"] == run_id
+    assert telemetry["catalog"]["tripped_circuits"] == 1
+
+    # Recovering resets failure counter & closes circuit
+    db.record_company_outcome("flaky_co", success=True, jobs_found=4)
+    assert "flaky_co" not in db.get_open_circuit_company_ids()
+
+
+def test_lkg_export_guard_aborts_catastrophic_drop(tmp_path):
+    """Verify PB-007 LKG guard blocks >25% sudden catalog drops unless force=True."""
+    out_file = tmp_path / "jobs.json"
+    out_file.write_text(json.dumps([{"id": f"prev_{i}"} for i in range(600)]), encoding="utf-8")
+
+    db = JobDatabase(tmp_path / "lkg.db")
+    res = db.export_with_lkg_guard(out_file, limit=None, force=False)
+    assert res["status"] == "aborted_lkg"
+    assert res["prev_count"] == 600
+    assert res["new_count"] == 0
+    # Existing Last-Known-Good catalog must remain untouched
+    assert len(json.loads(out_file.read_text(encoding="utf-8"))) == 600
+

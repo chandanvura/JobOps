@@ -193,6 +193,39 @@ class CompanyHealthChecker:
 
         return results
 
+    async def reap_dead_jobs(
+        self,
+        db: Any,
+        sample: int = 120,
+        concurrency: int = 15,
+    ) -> Dict[str, Any]:
+        """Probe oldest active job URLs and deactivate confirmed HTTP 404/410 closed requisitions."""
+        candidates = db.get_oldest_active_jobs(limit=sample)
+        if not candidates:
+            return {"probed": 0, "reaped_dead_jobs": 0}
+
+        semaphore = asyncio.Semaphore(concurrency)
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        dead_ids: List[str] = []
+
+        async with httpx.AsyncClient(timeout=self.timeout_seconds, headers=headers) as client:
+            async def check_one(item: Dict[str, Any]) -> Optional[str]:
+                async with semaphore:
+                    await asyncio.sleep(0.03)
+                    telemetry = await self.probe_url(client, item.get("job_url", ""))
+                    if telemetry.get("status_code") in (404, 410):
+                        return item["id"]
+                    return None
+
+            outcomes = await asyncio.gather(*(check_one(c) for c in candidates))
+            dead_ids = [jid for jid in outcomes if jid]
+
+        deactivated = db.deactivate_jobs(dead_ids)
+        return {"probed": len(candidates), "reaped_dead_jobs": deactivated}
+
 
 def validate_companies_dataset(companies: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Validates the schema, uniqueness, and integrity of the companies dataset."""

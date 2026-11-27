@@ -93,4 +93,28 @@ PLAYBOOKS: Dict[str, Playbook] = {
         ],
         auto_resolvable=True,
     ),
+    "PB-007": Playbook(
+        id="PB-007",
+        name="Last-Known-Good (LKG) Catalog Regression Guard",
+        category="reliability",
+        severity="critical",
+        description="Prevents catastrophic catalog drops (>25%) caused by upstream outages from overwriting web/public/jobs.json.",
+        trigger_symptoms=[
+            "Active exported job count drops >25% compared to previous jobs.json",
+            "Upstream DNS or ATS network outage during scheduled cron",
+        ],
+        auto_resolvable=True,
+    ),
+    "PB-008": Playbook(
+        id="PB-008",
+        name="Dead-Link & Ghost-Job Reaper",
+        category="data_quality",
+        severity="medium",
+        description="Samples oldest active job URLs and deactivates confirmed HTTP 404/410 closed requisitions before candidates click Apply.",
+        trigger_symptoms=[
+            "Job URL returns HTTP 404 or 410 Gone",
+            "Closed requisition still marked is_active = 1",
+        ],
+        auto_resolvable=True,
+    ),
 }

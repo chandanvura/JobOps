@@ -1,7 +1,7 @@
 import json
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from engine.models import Company, ProcessedJob
@@ -43,7 +43,10 @@ class JobDatabase:
                     enabled INTEGER DEFAULT 1,
                     last_checked_at TEXT,
                     last_success_at TEXT,
-                    total_jobs_found INTEGER DEFAULT 0
+                    total_jobs_found INTEGER DEFAULT 0,
+                    consecutive_failures INTEGER DEFAULT 0,
+                    last_error TEXT,
+                    circuit_open_until TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS jobs (
@@ -92,6 +95,16 @@ class JobDatabase:
                 );
                 """
             )
+            existing_cols = {
+                row[1] for row in conn.execute("PRAGMA table_info(companies)").fetchall()
+            }
+            for col_name, col_def in (
+                ("consecutive_failures", "INTEGER DEFAULT 0"),
+                ("last_error", "TEXT"),
+                ("circuit_open_until", "TEXT"),
+            ):
+                if col_name not in existing_cols:
+                    conn.execute(f"ALTER TABLE companies ADD COLUMN {col_name} {col_def}")
 
     def seed_from_cache_if_empty(self) -> int:
         """Seed the SQLite database from web/public/jobs.json or data/jobs.json if database has 0 jobs."""
@@ -355,8 +368,202 @@ class JobDatabase:
             total_jobs = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_engineering = 1").fetchone()[0]
             fresh_24h = conn.execute("SELECT COUNT(*) FROM jobs WHERE is_active = 1 AND is_fresh_24h = 1 AND is_engineering = 1").fetchone()[0]
             companies_count = conn.execute("SELECT COUNT(*) FROM companies WHERE enabled = 1").fetchone()[0]
+            now_iso = datetime.now(timezone.utc).isoformat()
+            tripped_circuits = conn.execute(
+                "SELECT COUNT(*) FROM companies WHERE circuit_open_until IS NOT NULL AND circuit_open_until > ?",
+                (now_iso,),
+            ).fetchone()[0]
             return {
                 "total_engineering_jobs": total_jobs,
                 "fresh_24h_jobs": fresh_24h,
                 "active_companies": companies_count,
+                "tripped_circuits": tripped_circuits,
             }
+
+    def record_company_outcome(
+        self,
+        company_id: str,
+        success: bool,
+        jobs_found: int = 0,
+        error: Optional[str] = None,
+        failure_threshold: int = 5,
+    ) -> None:
+        """Track per-company scrape outcomes and trip exponential backoff circuit breakers on repeat failures."""
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        with self._get_conn() as conn:
+            if success:
+                conn.execute(
+                    """
+                    UPDATE companies
+                    SET last_checked_at = ?, last_success_at = ?, total_jobs_found = ?,
+                        consecutive_failures = 0, last_error = NULL, circuit_open_until = NULL
+                    WHERE id = ?
+                    """,
+                    (now_iso, now_iso, jobs_found, company_id),
+                )
+            else:
+                row = conn.execute(
+                    "SELECT consecutive_failures FROM companies WHERE id = ?", (company_id,)
+                ).fetchone()
+                failures = (row["consecutive_failures"] or 0) + 1 if row else 1
+                circuit_until = None
+                if failures >= failure_threshold:
+                    backoff_hours = min(168, 6 * (2 ** (failures - failure_threshold)))
+                    circuit_until = (now + timedelta(hours=backoff_hours)).isoformat()
+                conn.execute(
+                    """
+                    UPDATE companies
+                    SET last_checked_at = ?, consecutive_failures = ?, last_error = ?, circuit_open_until = ?
+                    WHERE id = ?
+                    """,
+                    (now_iso, failures, (error or "unknown error")[:300], circuit_until, company_id),
+                )
+
+    def get_open_circuit_company_ids(self) -> Set[str]:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT id FROM companies WHERE circuit_open_until IS NOT NULL AND circuit_open_until > ?",
+                (now_iso,),
+            ).fetchall()
+            return {r["id"] for r in rows}
+
+    def get_failing_companies(self, min_failures: int = 3) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, name, ats_provider, careers_url, consecutive_failures, last_error, circuit_open_until
+                FROM companies
+                WHERE enabled = 1 AND consecutive_failures >= ?
+                ORDER BY consecutive_failures DESC
+                """,
+                (min_failures,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def reset_company_circuit(self, company_id: str) -> None:
+        with self._get_conn() as conn:
+            conn.execute(
+                "UPDATE companies SET consecutive_failures = 0, last_error = NULL, circuit_open_until = NULL WHERE id = ?",
+                (company_id,),
+            )
+
+    def start_ingestion_run(self, companies_checked: int) -> int:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_conn() as conn:
+            cursor = conn.execute(
+                "INSERT INTO ingestion_runs (started_at, companies_checked, status) VALUES (?, ?, 'running')",
+                (now_iso, companies_checked),
+            )
+            return int(cursor.lastrowid)
+
+    def finish_ingestion_run(
+        self,
+        run_id: int,
+        raw_jobs_found: int,
+        new_jobs_saved: int,
+        fresh_24h_jobs: int,
+        duration_seconds: float,
+        status: str = "completed",
+    ) -> None:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_conn() as conn:
+            conn.execute(
+                """
+                UPDATE ingestion_runs
+                SET finished_at = ?, raw_jobs_found = ?, new_jobs_saved = ?,
+                    fresh_24h_jobs = ?, duration_seconds = ?, status = ?
+                WHERE id = ?
+                """,
+                (now_iso, raw_jobs_found, new_jobs_saved, fresh_24h_jobs, round(duration_seconds, 2), status, run_id),
+            )
+
+    def get_latest_telemetry(self) -> Dict[str, Any]:
+        stats = self.get_stats()
+        with self._get_conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM ingestion_runs ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            last_run = dict(row) if row else None
+        return {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "catalog": stats,
+            "last_run": last_run,
+        }
+
+    def get_oldest_active_jobs(self, limit: int = 120) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, company_name, title, job_url, last_seen_at
+                FROM jobs
+                WHERE is_active = 1 AND is_engineering = 1 AND job_url != ''
+                ORDER BY last_seen_at ASC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def deactivate_jobs(self, job_ids: List[str]) -> int:
+        if not job_ids:
+            return 0
+        with self._get_conn() as conn:
+            conn.executemany(
+                "UPDATE jobs SET is_active = 0, is_fresh_24h = 0 WHERE id = ?",
+                [(jid,) for jid in job_ids],
+            )
+        return len(job_ids)
+
+    def export_with_lkg_guard(
+        self,
+        output_path: Path,
+        limit: Optional[int] = None,
+        max_age_days: Optional[int] = None,
+        max_drop_ratio: float = 0.25,
+        force: bool = False,
+        telemetry_path: Optional[Path] = None,
+    ) -> Dict[str, Any]:
+        """Export active jobs while refusing catastrophic catalog drops (Last-Known-Good protection)."""
+        out = Path(output_path)
+        prev_count = 0
+        if out.exists():
+            try:
+                with open(out, "r", encoding="utf-8") as f:
+                    prev_data = json.load(f)
+                if isinstance(prev_data, list):
+                    prev_count = len(prev_data)
+            except Exception:
+                prev_count = 0
+
+        maintenance = self.refresh_freshness_and_prune(
+            max_age_days=max_age_days if max_age_days is not None else DEFAULT_MAX_AGE_DAYS
+        )
+        jobs = self.get_filtered_jobs(limit=limit)
+        new_count = len(jobs)
+
+        if not force and prev_count >= 500 and new_count < int(prev_count * (1.0 - max_drop_ratio)):
+            return {
+                "status": "aborted_lkg",
+                "prev_count": prev_count,
+                "new_count": new_count,
+                "maintenance": maintenance,
+                "reason": f"Export aborted by LKG guard: active jobs dropped from {prev_count} to {new_count} (> {int(max_drop_ratio * 100)}% drop).",
+            }
+
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(jobs, f, separators=(",", ":"))
+
+        t_path = telemetry_path or (out.parent / "telemetry.json")
+        with open(t_path, "w", encoding="utf-8") as f:
+            json.dump(self.get_latest_telemetry(), f, separators=(",", ":"))
+
+        return {
+            "status": "exported",
+            "exported_jobs": new_count,
+            "prev_count": prev_count,
+            "maintenance": maintenance,
+            "telemetry_path": str(t_path),
+        }

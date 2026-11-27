@@ -1,6 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-bg: var(--bg-main);
+  --color-brand-surface: var(--surface-primary);
+  --color-brand-secondarySurface: var(--surface-secondary);
+  --color-brand-elevated: var(--surface-elevated);
+  --color-brand-text: var(--text-primary);
+  --color-brand-secondary: var(--text-secondary);
+  --color-brand-muted: var(--text-muted);
+  --color-brand-border: var(--border-color);
+  --color-brand-borderSubtle: var(--border-subtle);
+  --color-brand-primary: var(--action-primary);
+  --color-brand-hover: var(--action-hover);
+  --color-brand-accent: var(--accent-color);
+  --color-brand-accentSoft: var(--accent-soft);
+  --color-brand-success: var(--success-color);
+  --color-brand-warning: var(--warning-color);
+  --color-brand-danger: var(--danger-color);
+  --color-brand-info: var(--info-color);
+
+  --color-obsidian-950: #09090D;
+  --color-obsidian-900: #121217;
+  --color-obsidian-850: #16161D;
+  --color-obsidian-800: #1A1A22;
+  --color-obsidian-700: #22222C;
+  --color-obsidian-600: #2C2C38;
+
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-outer: 20px;
+  --radius-control: 12px;
+
+  --ease-base: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
 @layer base {
   :root {

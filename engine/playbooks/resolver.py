@@ -136,6 +136,25 @@ class PlaybookResolver:
             except Exception as e:
                 logger.error(f"Error checking cache desync: {e}")
 
+        # Check PB-005: Chronically failing companies without an active circuit breaker cooldown
+        if self.db_path.exists():
+            try:
+                db = JobDatabase(self.db_path)
+                failing = [
+                    c for c in db.get_failing_companies(min_failures=5)
+                    if not c.get("circuit_open_until")
+                ]
+                if failing:
+                    issues.append(
+                        PlaybookIssue(
+                            playbook_id="PB-005",
+                            symptom=f"Found {len(failing)} persistently failing company endpoints without an active cooldown.",
+                            details={"count": len(failing), "sample": [c["id"] for c in failing[:5]]},
+                        )
+                    )
+            except Exception as e:
+                logger.error(f"Error checking failing company circuits: {e}")
+
         # Check PB-006: Web Build Integrity
         dist_index = self.repo_root / "web" / "dist" / "index.html"
         if not dist_index.exists():
@@ -249,18 +268,40 @@ class PlaybookResolver:
         return {"status": "resolved", "playbook_id": "PB-003", "added_dependencies": added}
 
     def resolve_pb004(self) -> Dict[str, Any]:
-        """Auto-Resolve PB-004: Re-export edge caches from SQLite DB."""
+        """Auto-Resolve PB-004: Re-export edge caches from SQLite DB with LKG guard."""
         if not self.db_path.exists():
             return {"status": "skipped", "reason": "SQLite DB does not exist"}
 
         db = JobDatabase(self.db_path)
-        db.refresh_freshness_and_prune()
-        jobs = db.get_filtered_jobs(limit=None)
-        self.jobs_json_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.jobs_json_path, "w", encoding="utf-8") as f:
-            json.dump(jobs, f, separators=(",", ":"))
+        res = db.export_with_lkg_guard(self.jobs_json_path, limit=None, force=True)
+        return {"status": "resolved", "playbook_id": "PB-004", "exported_jobs": res.get("exported_jobs", 0)}
 
-        return {"status": "resolved", "playbook_id": "PB-004", "exported_jobs": len(jobs)}
+    def resolve_pb005(self) -> Dict[str, Any]:
+        """Auto-Resolve PB-005: Isolate chronically failing ATS endpoints into exponential backoff."""
+        if not self.db_path.exists():
+            return {"status": "skipped", "reason": "SQLite DB does not exist"}
+
+        db = JobDatabase(self.db_path)
+        failing = [
+            c for c in db.get_failing_companies(min_failures=5)
+            if not c.get("circuit_open_until")
+        ]
+        for co in failing:
+            db.record_company_outcome(co["id"], success=False, error=co.get("last_error") or "PB-005 circuit tripped")
+        return {"status": "resolved", "playbook_id": "PB-005", "tripped_circuits": len(failing)}
+
+    def resolve_pb008(self, sample: int = 100) -> Dict[str, Any]:
+        """Auto-Resolve PB-008: Probe oldest job URLs and deactivate confirmed 404/410 dead links."""
+        if not self.db_path.exists():
+            return {"status": "skipped", "reason": "SQLite DB does not exist"}
+
+        import asyncio
+        from engine.health import CompanyHealthChecker
+
+        db = JobDatabase(self.db_path)
+        checker = CompanyHealthChecker(timeout_seconds=8.0)
+        outcome = asyncio.run(checker.reap_dead_jobs(db, sample=sample))
+        return {"status": "resolved", "playbook_id": "PB-008", **outcome}
 
     def resolve_pb006(self) -> Dict[str, Any]:
         """Auto-Resolve PB-006: Rebuild web distribution."""
@@ -299,6 +340,8 @@ class PlaybookResolver:
                 res = self.resolve_pb003()
             elif pb_id == "PB-004":
                 res = self.resolve_pb004()
+            elif pb_id == "PB-005":
+                res = self.resolve_pb005()
             elif pb_id == "PB-006":
                 res = self.resolve_pb006()
             else:

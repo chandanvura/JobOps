@@ -53,7 +53,9 @@ class JobCollector:
 
         try:
             raw_jobs = await adapter.fetch_jobs(company, client)
+            self.db.record_company_outcome(company.id, success=True, jobs_found=len(raw_jobs))
         except Exception as e:
+            self.db.record_company_outcome(company.id, success=False, error=str(e))
             logger.error(f"Error fetching jobs for {company.name} ({company.ats_provider}): {e}")
             return []
 
@@ -131,7 +133,9 @@ class JobCollector:
 
     async def run(self, strict_24h: bool = True, concurrency: int = 10) -> Dict[str, Any]:
         companies = self.load_companies()
-        logger.info(f"Loaded {len(companies)} active companies from registry.")
+        open_circuits = self.db.get_open_circuit_company_ids()
+        run_id = self.db.start_ingestion_run(companies_checked=len(companies))
+        logger.info(f"Loaded {len(companies)} active companies from registry (open circuits skipped: {len(open_circuits)}).")
 
         start_time = datetime.now(timezone.utc)
         all_new_jobs: List[ProcessedJob] = []
@@ -149,7 +153,7 @@ class JobCollector:
 
         async with httpx.AsyncClient(timeout=12.0, limits=limits, headers=headers) as client:
             async def worker(comp: Company):
-                if comp.health_status == "unreachable":
+                if comp.health_status == "unreachable" or comp.id in open_circuits:
                     return []
                 async with semaphore:
                     try:
@@ -171,14 +175,24 @@ class JobCollector:
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         fresh_count = sum(1 for j in all_new_jobs if j.is_fresh_24h)
+        self.db.finish_ingestion_run(
+            run_id=run_id,
+            raw_jobs_found=len(all_new_jobs),
+            new_jobs_saved=saved_count,
+            fresh_24h_jobs=fresh_count,
+            duration_seconds=duration,
+            status="completed",
+        )
 
         logger.info(
-            f"Run completed in {duration:.2f}s. Scanned: {len(companies)} companies. "
-            f"New Jobs: {saved_count}. Fresh (24h): {fresh_count}."
+            f"Run #{run_id} completed in {duration:.2f}s. Scanned: {len(companies)} companies "
+            f"(skipped circuits: {len(open_circuits)}). New Jobs: {saved_count}. Fresh (24h): {fresh_count}."
         )
 
         return {
+            "run_id": run_id,
             "companies_scanned": len(companies),
+            "circuits_skipped": len(open_circuits),
             "new_jobs_saved": saved_count,
             "fresh_24h_jobs": fresh_count,
             "duration_seconds": round(duration, 2),
