@@ -1,6 +1,6 @@
 httpx>=0.29.0
 curl_cffi>=0.17.0
-pydantic>=2.14.0
+pydantic>=2.14.4
 selectolax>=1.0.2
 python-dateutil>=4.0.0
 beautifulsoup4>=4.15.0
