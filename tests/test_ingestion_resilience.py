@@ -21,10 +21,10 @@ class SuccessfulAdapter:
 
 
 @pytest.mark.asyncio
-async def test_partial_source_failure_resilience():
+async def test_partial_source_failure_resilience(tmp_path):
     """Verify that when one ATS source crashes, the collector still saves jobs from other sources."""
     import httpx
-    collector = JobCollector()
+    collector = JobCollector(db=JobDatabase(tmp_path / "resilience.db"))
 
     failing_co = Company(
         id="failing_co",
@@ -72,10 +72,10 @@ async def test_partial_source_failure_resilience():
 
 
 @pytest.mark.asyncio
-async def test_malformed_source_data_handling():
+async def test_malformed_source_data_handling(tmp_path):
     """Verify that raw jobs with messy/missing fields and dirty HTML are safely normalized."""
     import httpx
-    collector = JobCollector()
+    collector = JobCollector(db=JobDatabase(tmp_path / "malformed.db"))
     co = Company(
         id="messy_co",
         name="Messy Co",

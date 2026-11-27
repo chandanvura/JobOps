@@ -12,11 +12,17 @@ DEFAULT_MAX_AGE_DAYS = int(os.environ.get("JOBOPS_MAX_AGE_DAYS", "14"))
 
 
 class JobDatabase:
-    def __init__(self, db_path: Path = DEFAULT_DB_PATH):
+    def __init__(self, db_path: Path = DEFAULT_DB_PATH, auto_seed: Optional[bool] = None):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
-        self.seed_from_cache_if_empty()
+        should_seed = (
+            auto_seed
+            if auto_seed is not None
+            else self.db_path.resolve() == DEFAULT_DB_PATH.resolve()
+        )
+        if should_seed:
+            self.seed_from_cache_if_empty()
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)

@@ -1,16 +1,57 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from engine.models import ProcessedJob, RoleCategory, WorkMode
 from engine.playbooks import PLAYBOOKS, PlaybookResolver
-from engine.playbooks.definitions import Playbook
+from engine.storage.db import JobDatabase
+
+
+def _make_isolated_repo(tmp_path: Path) -> PlaybookResolver:
+    """Create a hermetic synthetic repo structure in tmp_path so tests never mutate production files."""
+    (tmp_path / "web" / "public").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "web" / "dist").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "web" / "dist" / "index.html").write_text("<html></html>", encoding="utf-8")
+    (tmp_path / "data").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "requirements.txt").write_text(
+        "beautifulsoup4>=4.12.0\nhttpx>=0.28.0\nselectolax>=0.3.21\npytest>=8.0.0\npydantic>=2.0.0\n",
+        encoding="utf-8",
+    )
+
+    db = JobDatabase(tmp_path / "data" / "jobops.db")
+    now = datetime.now(timezone.utc)
+    sample_job = ProcessedJob(
+        id="pb_test_1",
+        external_id="ext_1",
+        company_id="testco",
+        company_name="TestCo",
+        ats_provider="greenhouse",
+        title="Backend Engineer",
+        job_url="https://example.com/jobs/1",
+        role_category=RoleCategory.BACKEND,
+        role_label="Backend Engineering",
+        location_raw="Bengaluru, India",
+        city="Bengaluru",
+        work_mode=WorkMode.HYBRID,
+        experience_level="1-3 yrs",
+        posted_at=now - timedelta(hours=3),
+        is_fresh_24h=True,
+        summary="Build scalable Python & Go services.",
+    )
+    db.save_processed_jobs([sample_job])
+    jobs = db.get_filtered_jobs(limit=None)
+    (tmp_path / "web" / "public" / "jobs.json").write_text(
+        json.dumps(jobs, separators=(",", ":")), encoding="utf-8"
+    )
+    return PlaybookResolver(repo_root=tmp_path)
 
 
 def test_playbook_definitions_integrity():
     """Verify that all playbooks have required fields and valid schema."""
     assert len(PLAYBOOKS) >= 6, "At least 6 core playbooks must be registered"
-    
+
     valid_categories = {"data_quality", "runtime", "caching", "reliability", "build"}
     valid_severities = {"critical", "high", "medium", "low"}
-    
+
     for pb_id, pb in PLAYBOOKS.items():
         assert pb.id == pb_id
         assert len(pb.name) > 5
@@ -24,7 +65,7 @@ def test_playbook_resolver_listing():
     """Test that PlaybookResolver.list_playbooks() returns structured records."""
     resolver = PlaybookResolver()
     playbooks = resolver.list_playbooks()
-    
+
     assert len(playbooks) == len(PLAYBOOKS)
     for pb in playbooks:
         assert "id" in pb
@@ -36,83 +77,87 @@ def test_playbook_resolver_listing():
 
 
 def test_playbook_diagnose_clean_catalog():
-    """Test that on a healthy production state, diagnose finds no data corruption."""
+    """Test that on the production catalog, diagnose finds no HTML or location corruption."""
     resolver = PlaybookResolver()
     issues = resolver.diagnose()
-    
-    # In clean catalog, there should be no data quality issues (PB-001, PB-002)
+
     data_quality_issues = [i for i in issues if i.playbook_id in ("PB-001", "PB-002")]
     assert len(data_quality_issues) == 0, f"Catalog should not have uncleaned data: {data_quality_issues}"
 
 
-def test_playbook_resolve_pb001_sanitizer():
-    """Verify PB-001 sanitization cleans escaped HTML and unclosed tags."""
-    resolver = PlaybookResolver()
+def test_playbook_resolve_pb001_sanitizer(tmp_path):
+    """Verify PB-001 sanitization cleans escaped HTML and unclosed tags in an isolated repo."""
+    resolver = _make_isolated_repo(tmp_path)
+    dirty = json.loads(resolver.jobs_json_path.read_text(encoding="utf-8"))
+    dirty[0]["summary"] = "<div class='x'>Hello &amp;quot;World&amp;quot;</div>"
+    resolver.jobs_json_path.write_text(json.dumps(dirty), encoding="utf-8")
+
     result = resolver.resolve_pb001()
-    
     assert result["status"] == "resolved"
     assert result["playbook_id"] == "PB-001"
-    assert "records_sanitized" in result
+    assert result["records_sanitized"] == 1
+    assert not any(i.playbook_id == "PB-001" for i in resolver.diagnose())
 
 
-def test_playbook_resolve_pb002_location_normalizer():
-    """Verify PB-002 normalizes Indian locations."""
-    resolver = PlaybookResolver()
+def test_playbook_resolve_pb002_location_normalizer(tmp_path):
+    """Verify PB-002 normalizes Indian locations in an isolated repo."""
+    resolver = _make_isolated_repo(tmp_path)
+    bad = json.loads(resolver.jobs_json_path.read_text(encoding="utf-8"))
+    bad[0]["city"] = "Other-India"
+    bad[0]["location_raw"] = "Bengaluru, India"
+    resolver.jobs_json_path.write_text(json.dumps(bad), encoding="utf-8")
+
     result = resolver.resolve_pb002()
-    
     assert result["status"] == "resolved"
     assert result["playbook_id"] == "PB-002"
-    assert "locations_normalized" in result
+    assert result["locations_normalized"] == 1
+    assert not any(i.playbook_id == "PB-002" for i in resolver.diagnose())
 
 
-def test_playbook_resolve_pb003_dependencies():
-    """Verify PB-003 dependency checker checks requirements.txt."""
-    resolver = PlaybookResolver()
+def test_playbook_resolve_pb003_dependencies(tmp_path):
+    """Verify PB-003 dependency checker verifies requirements.txt safely."""
+    resolver = _make_isolated_repo(tmp_path)
     result = resolver.resolve_pb003()
-    
+
     assert result["status"] == "resolved"
     assert result["playbook_id"] == "PB-003"
-    assert "added_dependencies" in result
+    assert result["added_dependencies"] == []
 
 
-def test_playbook_resolve_pb004_cache_sync():
-    """Verify PB-004 re-exports edge cache without truncation and keeps catalog synchronized."""
-    resolver = PlaybookResolver()
+def test_playbook_resolve_pb004_cache_sync(tmp_path):
+    """Verify PB-004 detects missing or stale cache rows and restores exact parity."""
+    resolver = _make_isolated_repo(tmp_path)
+    # Simulate stale extra job in JSON cache
+    stale_cache = json.loads(resolver.jobs_json_path.read_text(encoding="utf-8"))
+    stale_cache.append({**stale_cache[0], "id": "stale_ghost_job"})
+    resolver.jobs_json_path.write_text(json.dumps(stale_cache), encoding="utf-8")
+
+    assert any(i.playbook_id == "PB-004" for i in resolver.diagnose())
+
     result = resolver.resolve_pb004()
-
     assert result["status"] == "resolved"
     assert result["playbook_id"] == "PB-004"
-    assert result["exported_jobs"] > 0
-
-    # Ensure no desync remains
-    issues = [i for i in resolver.diagnose() if i.playbook_id == "PB-004"]
-    assert len(issues) == 0, f"PB-004 should leave zero desync issues: {issues}"
+    assert result["exported_jobs"] == 1
+    assert not any(i.playbook_id == "PB-004" for i in resolver.diagnose())
 
 
-def test_playbook_resolve_all_report():
+def test_playbook_resolve_all_report(tmp_path):
     """Verify that resolve_all generates a valid zero-cost remediation report."""
-    resolver = PlaybookResolver()
+    resolver = _make_isolated_repo(tmp_path)
     report = resolver.resolve_all()
-    
+
     assert "timestamp" in report
     assert "diagnosed_count" in report
     assert "resolved_count" in report
     assert "remaining_unresolved" in report
     assert "remediation_actions" in report
-    assert report["system_health"] in ("100% HEALTHY", "ATTENTION_REQUIRED")
+    assert report["system_health"] == "100% HEALTHY"
 
 
 def test_db_refresh_freshness_and_prune(tmp_path):
     """Verify stale 24h flags are aged out and expired >14d jobs are deactivated."""
-    from datetime import datetime, timedelta, timezone
-    from engine.storage.db import JobDatabase
-    from engine.models import ProcessedJob, RoleCategory, WorkMode
-
     db = JobDatabase(tmp_path / "test_prune.db")
     now = datetime.now(timezone.utc)
-    # Clear any seeded records for isolated test
-    with db._get_conn() as conn:
-        conn.execute("DELETE FROM jobs")
 
     fresh_job = ProcessedJob(
         id="j_fresh", external_id="1", company_id="c1", company_name="Co", ats_provider="greenhouse",

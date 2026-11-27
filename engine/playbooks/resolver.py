@@ -124,12 +124,12 @@ class PlaybookResolver:
                 db_stats = db.get_stats()
                 db_job_count = db_stats.get("total_engineering_jobs", 0)
                 json_count = len(cached_jobs)
-                # If there's a significant desync between DB active jobs and exported JSON
-                if abs(db_job_count - json_count) > 0 and db_job_count > json_count:
+                # Detect any count discrepancy between active DB jobs and exported JSON (missing or stale rows)
+                if db_job_count != json_count:
                     issues.append(
                         PlaybookIssue(
                             playbook_id="PB-004",
-                            symptom=f"Desync detected: SQLite has {db_job_count} active jobs but jobs.json only has {json_count}.",
+                            symptom=f"Desync detected: SQLite has {db_job_count} active jobs while jobs.json has {json_count}.",
                             details={"db_count": db_job_count, "json_count": json_count},
                         )
                     )
