@@ -8,7 +8,6 @@ on:
       - "web/**"
       - "tests/**"
       - "requirements.txt"
-      - "package.json"
       - ".github/workflows/deploy.yml"
   pull_request:
     branches: [main]
@@ -17,57 +16,79 @@ on:
       - "web/**"
       - "tests/**"
       - "requirements.txt"
-      - "package.json"
       - ".github/workflows/deploy.yml"
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONPATH: ${{ github.workspace }}
+
 jobs:
   test-python:
-    name: Backend Tests
-    runs-on: ubuntu-latest
+    name: Backend Tests & Playbook Verification
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Set up uv & Python 3.12
+        uses: astral-sh/setup-uv@v10
         with:
           python-version: "3.12"
-          cache: "pip"
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
 
-      - name: Install Python Dependencies
-        run: pip install -r requirements.txt
+      - name: Install Python Dependencies (uv)
+        run: uv pip install --system -r requirements.txt
 
-      - name: Run Python Backend Tests
-        run: |
-          export PYTHONPATH=$PWD
-          python -m pytest
+      - name: Run Pytest Suite
+        run: python -m pytest -v
+
+      - name: Verify Playbook System Diagnosis
+        run: python -m engine.cli playbook diagnose
 
   test-and-build-web:
-    name: Frontend Tests & Build
-    runs-on: ubuntu-latest
+    name: Frontend Tests, Security Audit & Build
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: "24"
           cache: "npm"
-          cache-dependency-path: web/package.json
+          cache-dependency-path: web/package-lock.json
 
       - name: Install Web Dependencies
         working-directory: web
         run: npm ci --prefer-offline
 
+      - name: Dependency Vulnerability Audit
+        working-directory: web
+        run: npm audit --audit-level=high
+
       - name: Run Web Automated Tests
         working-directory: web
         run: npm test
 
-      - name: Build Web Application
+      - name: TypeCheck & Production Build
         working-directory: web
         run: npm run build
+
+      - name: Bundle Size Summary
+        working-directory: web
+        run: |
+          {
+            echo '### Web Build Artifacts (`ubuntu-26.04` / Node 24 LTS)'
+            ls -lh dist/assets/
+          } >> "$GITHUB_STEP_SUMMARY"

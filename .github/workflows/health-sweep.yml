@@ -7,36 +7,62 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: "jobops-health-sweep"
   cancel-in-progress: false
 
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONPATH: ${{ github.workspace }}
+
 jobs:
   health-sweep:
-    runs-on: ubuntu-latest
+    name: Probe All Employer Career Portals
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Set up uv & Python 3.12
+        uses: astral-sh/setup-uv@v10
         with:
           python-version: "3.12"
-          cache: "pip"
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
 
-      - name: Install Python Dependencies
-        run: pip install -r requirements.txt
+      - name: Install Python Dependencies (uv)
+        run: uv pip install --system -r requirements.txt
 
       - name: Execute Portal Health Sweep
         run: |
-          export PYTHONPATH=$PWD
           python -m engine.cli health --concurrency 15 --output web/public/companies.json
           python -m pytest tests/test_health.py
+
+      - name: Publish Portal Health Summary
+        if: always()
+        run: |
+          python - << 'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import collections, json
+          from pathlib import Path
+
+          p = Path("web/public/companies.json")
+          if p.exists():
+              data = json.loads(p.read_text(encoding="utf-8"))
+              counts = collections.Counter(c.get("health_status", "unknown") for c in data)
+              print("## Weekly Portal Health Sweep (`ubuntu-26.04`)\n")
+              print(f"- **Total Monitored Portals**: {len(data)}")
+              for k, v in counts.most_common():
+                  print(f"- **{k}**: {v}")
+          EOF
 
       - name: Commit Updated Portal Telemetry
         run: |
